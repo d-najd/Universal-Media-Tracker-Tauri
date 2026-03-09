@@ -4,7 +4,7 @@ export default class LocalPluginLoader implements PluginLoader {
 	id = 'localPluginLoader'
 
 	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
-		if (!uri.startsWith('src/app/plugins/')) {
+		if (!uri.startsWith('/src/app/plugins/')) {
 			return { status: 'skip' }
 		}
 

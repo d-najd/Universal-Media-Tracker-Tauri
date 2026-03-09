@@ -6,8 +6,14 @@ import basePlugins from '@/app/plugins/basePlugins'
 export default class PluginManagerStore {
 	private static loaders: PluginLoader[] = []
 	private static descriptors: PluginDescriptor[] = []
+	private static initialized = false
 
 	static async init() {
+		if (this.initialized) {
+			return
+		}
+		this.initialized = true
+
 		console.log("HELLO")
 		this.registerLoader(new LocalPluginLoader())
 		await this.loadBasePlugins()
