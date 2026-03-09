@@ -1,15 +1,15 @@
 import PluginLoader from '@/lib/plugin/pluginLoader'
 import LocalPluginLoader from '@/lib/plugin/localPluginLoader'
 import PluginDescriptor from '@/types/pluginDescriptor'
-import Plugin from '@/sdk/pluginSdk'
-import { LoadedPluginDescriptor } from '@/types/LoadedPluginDescriptor'
+import basePlugins from '@/app/plugins/basePlugins'
 
 export default class PluginManagerStore {
 	private static loaders: PluginLoader[]
 	private static descriptors: PluginDescriptor[]
 
-	static init() {
+	static async init() {
 		this.registerLoader(new LocalPluginLoader())
+		await this.loadBasePlugins()
 	}
 
 	static registerLoader(pluginLoader: PluginLoader) {
@@ -18,8 +18,7 @@ export default class PluginManagerStore {
 		)
 		if (!exists) {
 			this.loaders.push(pluginLoader)
-
-			// Want to ensure consistent behaviour
+			// ensure consistent behaviour
 			this.loaders.sort((a, b) => a.id.localeCompare(b.id))
 		}
 	}
@@ -30,16 +29,14 @@ export default class PluginManagerStore {
 	 */
 	static async loadPlugins(...pluginDescriptors: PluginDescriptor[]) {
 		pluginDescriptors.forEach((descriptor) => {
-			if (descriptor.status === "error") {
-				console.log(`plugin with uri ${descriptor.uri} has state ${descriptor.status}, reload will be attempted`)
+			if (descriptor.status === 'error') {
+				console.log(
+					`plugin with uri ${descriptor.uri} has state ${descriptor.status}, reload will be attempted`
+				)
 			}
 
-			if (descriptor.spec && descriptor.status !== "error") {
-				this.addDescriptorIfNotExists({
-					...descriptor,
-					spec: descriptor.spec
-				})
-
+			if (descriptor.status !== 'error' && descriptor.spec) {
+				this.addDescriptorIfNotExists(descriptor)
 				return
 			}
 
@@ -50,32 +47,50 @@ export default class PluginManagerStore {
 					case 'loaded':
 						this.addDescriptorIfNotExists({
 							uri: descriptor.uri,
-							status: descriptor.status === "error" ? "enabled" : descriptor.status,
-							spec: result.plugin.getSpec()
+							status:
+								descriptor.status === 'error'
+									? 'enabled'
+									: descriptor.status,
+							spec: result.spec
 						})
-
-						this.descriptors.push(
-							{
-								uri: descriptor.uri,
-								status: "enabled",
-								uri: string
-							}
+						break
+					case 'skip':
+						break
+					case 'invalid':
+						console.error(
+							`Loading of plugin with uri ${descriptor.uri} and loader by id ${loader.id} failed with result ${result.reason}`
 						)
 						break
 				}
 			})
 		})
+	}
 
-		this.loaders.forEach((o) => {
-			o.loadPlugin()
+	private static addDescriptorIfNotExists(descriptor: PluginDescriptor) {
+		if (descriptor.status === 'error' || !descriptor.spec) {
+			throw Error('Invalid descriptor passed')
+		}
+
+		let matches = this.descriptors.some((o) => {
+			if (o.status === 'error') {
+				return false
+			}
+			return o.spec?.config.id === descriptor.spec!!.config.id
 		})
 
-		for (loader in this.loaders) {
-
+		if (!matches) {
+			this.descriptors.push(descriptor)
+			// ensure consistent behaviour
+			this.descriptors.sort((a, b) => a.uri.localeCompare(b.uri))
 		}
 	}
 
-	private static addDescriptorIfNotExists(descriptor: LoadedPluginDescriptor) {
-		this.descriptors.some(o => o.spec?.config.id === descriptor.spec.config.id)
+	private static async loadBasePlugins() {
+		let descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
+			uri: o,
+			status: 'enabled'
+		}))
+
+		await this.loadPlugins(...descriptors)
 	}
 }

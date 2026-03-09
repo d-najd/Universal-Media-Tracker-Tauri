@@ -1,4 +1,4 @@
-import Plugin from "@/sdk/pluginSdk"
+import PluginSpec from '@/sdk/types/pluginSpec'
 
 export default interface PluginLoader {
 	id: string,
@@ -6,7 +6,7 @@ export default interface PluginLoader {
 }
 
 export type LoadPluginResponse =
-	| { status: 'loaded'; plugin: Plugin }
+	| { status: 'loaded'; spec: PluginSpec }
 	| { status: 'skip'; reason?: string }
 	| { status: 'invalid'; reason: string }
 

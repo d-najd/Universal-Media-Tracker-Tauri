@@ -1,14 +1,8 @@
-import PluginConfig from '@/sdk/types/pluginConfig'
-import Plugin from '@/sdk/pluginSdk'
 import PluginSpec from '@/sdk/types/pluginSpec'
 
-export type LoadPluginResponse =
-	| { status: 'loaded'; plugin: Plugin }
-	| { status: 'skip'; reason?: string }
-	| { status: 'invalid'; reason: string }
+type PluginDescriptor =
+	| { uri: string; status: 'enabled'; spec?: PluginSpec }
+	| { uri: string; status: 'disabled'; spec?: PluginSpec }
+	| { uri: string; status: 'error'; }
 
-export default interface PluginDescriptor {
-    uri: string
-    status: "enabled" | "disabled" | "error"
-	spec?: PluginSpec
-}
+export default PluginDescriptor

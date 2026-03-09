@@ -1,4 +1,5 @@
 import ExampleCatalogPlugin from '@/app/plugins/exampleCatalogPlugin'
 
-const basePlugins = [ ExampleCatalogPlugin ]
+const basePlugins = Object.keys(import.meta.glob('@/app/plugins/*.ts'))
+
 export default basePlugins

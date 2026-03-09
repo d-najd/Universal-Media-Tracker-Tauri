@@ -4,14 +4,19 @@ export default class LocalPluginLoader implements PluginLoader {
 	id = "localPluginLoader"
 
 	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
-		if (!uri.startsWith('@')) {
+		if (!uri.startsWith('src/app/plugins/')) {
 			return { status: 'skip' }
 		}
 
 		try {
-			const plugin = await import(uri)
+			const module = await import(uri)
+			const plugin = module.default
 
-			return { status: 'skip'}
+			if (!plugin) {
+				return { status: 'invalid', reason: 'No default export found' }
+			}
+
+			return { status: "loaded", spec: plugin}
 		} catch (err: any) {
 			return { status: 'invalid', reason: err.message }
 		}
