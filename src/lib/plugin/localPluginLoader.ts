@@ -1,6 +1,8 @@
 import PluginLoader, { LoadPluginResponse } from '@/lib/plugin/pluginLoader'
 
-class LocalPluginLoader implements PluginLoader {
+export default class LocalPluginLoader implements PluginLoader {
+	id = "localPluginLoader"
+
 	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
 		if (!uri.startsWith('@')) {
 			return { status: 'skip' }

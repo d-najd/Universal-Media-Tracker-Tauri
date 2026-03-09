@@ -1,3 +1,5 @@
-export default interface CatalogHandlerArgs {
+type CatalogHandlerArgs = {
     search?: string
 }
+
+export default CatalogHandlerArgs

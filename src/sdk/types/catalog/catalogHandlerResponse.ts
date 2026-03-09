@@ -1,5 +1,7 @@
 import MetaPreview from '@/sdk/types/catalog/metaPreview'
 
-export default interface CatalogHandlerResponse {
+type CatalogHandlerResponse = {
     metas: MetaPreview[]
 }
+
+export default CatalogHandlerResponse

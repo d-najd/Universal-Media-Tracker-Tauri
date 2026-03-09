@@ -1,7 +1,8 @@
 import Plugin from "@/sdk/pluginSdk"
 
 export default interface PluginLoader {
-	 loadPlugin(uri: string): Promise<LoadPluginResponse>
+	id: string,
+	loadPlugin(uri: string): Promise<LoadPluginResponse>
 }
 
 export type LoadPluginResponse =
