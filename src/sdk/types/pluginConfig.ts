@@ -1,4 +1,4 @@
-export default interface PluginOptions {
+export default interface PluginConfig {
     id: string
     name: string
     version: string

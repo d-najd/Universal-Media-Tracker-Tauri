@@ -1,15 +1,15 @@
-import PluginOptions from '@/assets/plugin/pluginOptions'
-import CatalogHandlerResponse from '@/assets/plugin/catalogHandlerResponse'
-import CatalogHandlerArgs from '@/assets/plugin/catalogHandlerArgs'
+import PluginConfig from '@/sdk/types/pluginConfig'
+import CatalogHandlerArgs from '@/sdk/types/catalog/catalogHandlerArgs'
+import CatalogHandlerResponse from '@/sdk/types/catalog/catalogHandlerResponse'
 
 type Handler = (args: unknown) => Promise<unknown>
 
 export default class Plugin {
-    options: PluginOptions
+    config: PluginConfig
     private handlers = new Map<string, Handler>
 
-    constructor(options: PluginOptions) {
-        this.options = options
+    constructor(options: PluginConfig) {
+        this.config = options
     }
 
     defineCatalogHandler(
@@ -18,9 +18,9 @@ export default class Plugin {
         this.handlers.set("catalog", handler as Handler)
     }
 
-    getPluginSpec() {
+    getSpec() {
         return {
-            options: this.options,
+            config: this.config,
             handlers: this.handlers
         }
     }
