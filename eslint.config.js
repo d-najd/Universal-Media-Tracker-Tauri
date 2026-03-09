@@ -21,8 +21,8 @@ export default [
 	eslintConfigPrettier,
 	{
 		rules: {
-			'react/react-in-jsx-scope': 'off',
-			'@typescript-eslint/no-unused-vars': ['warning']
+			// 'react/react-in-jsx-scope': 'off',
+			'@typescript-eslint/no-unused-vars': ['warn']
 		}
 	}
 ]

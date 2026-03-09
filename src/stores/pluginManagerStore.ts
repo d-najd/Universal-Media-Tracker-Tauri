@@ -4,10 +4,11 @@ import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 
 export default class PluginManagerStore {
-	private static loaders: PluginLoader[]
-	private static descriptors: PluginDescriptor[]
+	private static loaders: PluginLoader[] = []
+	private static descriptors: PluginDescriptor[] = []
 
 	static async init() {
+		console.log("HELLO")
 		this.registerLoader(new LocalPluginLoader())
 		await this.loadBasePlugins()
 	}
@@ -71,11 +72,11 @@ export default class PluginManagerStore {
 			throw Error('Invalid descriptor passed')
 		}
 
-		let matches = this.descriptors.some((o) => {
+		const matches = this.descriptors.some((o) => {
 			if (o.status === 'error') {
 				return false
 			}
-			return o.spec?.config.id === descriptor.spec!!.config.id
+			return o.spec?.config.id === descriptor.spec!.config.id
 		})
 
 		if (!matches) {
@@ -86,7 +87,7 @@ export default class PluginManagerStore {
 	}
 
 	private static async loadBasePlugins() {
-		let descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
+		const descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
 			uri: o,
 			status: 'enabled'
 		}))
@@ -94,3 +95,4 @@ export default class PluginManagerStore {
 		await this.loadPlugins(...descriptors)
 	}
 }
+
