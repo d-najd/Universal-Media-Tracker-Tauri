@@ -14,7 +14,6 @@ export default class PluginManagerStore {
 		}
 		this.initialized = true
 
-		console.log("HELLO")
 		this.registerLoader(new LocalPluginLoader())
 		await this.loadBasePlugins()
 	}

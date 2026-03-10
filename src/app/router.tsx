@@ -4,7 +4,8 @@ const createAppRouter = () =>
     createBrowserRouter([
         {
             path: '/',
-            lazy: () => import('@/app/routes/home')
+            // lazy: () => import('@/app/routes/home')
+			lazy: () => import('@/app/routes/library')
         },
         {
             path: '*',

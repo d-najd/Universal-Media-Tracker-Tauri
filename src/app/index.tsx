@@ -10,6 +10,10 @@ export default function App() {
 		PluginManagerStore.init().then(r => {})
 	}, [])
 
+	useEffect(() => {
+		document.documentElement.classList.add('dark')
+	}, [])
+
     return (
         <AppProvider>
             <AppRouter />
