@@ -1,9 +1,11 @@
-import PluginLoader, { LoadPluginResponse } from '@/lib/plugin/pluginLoader'
+import PluginSpecLoader, {
+	LoadPluginSpecResponse
+} from '@/lib/plugin/pluginSpecLoader'
 
-export default class LocalPluginLoader implements PluginLoader {
-	id = 'localPluginLoader'
+export default class LocalPluginSpecLoader implements PluginSpecLoader {
+	id = 'localPluginSpecLoader'
 
-	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
+	async loadPluginSpec(uri: string): Promise<LoadPluginSpecResponse> {
 		if (!uri.startsWith('/src/app/plugins/')) {
 			return { status: 'skip' }
 		}

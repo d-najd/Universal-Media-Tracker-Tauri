@@ -1,5 +1,5 @@
 type CatalogHandlerArgs = {
-    search?: string
+	readonly search?: string
 }
 
 export default CatalogHandlerArgs

@@ -1,6 +1,8 @@
 import PluginSpec from '@/sdk/types/pluginSpec'
 
 export type LoadPluginResponse =
-	| { status: 'loaded'; spec: PluginSpec }
-	| { status: 'skip'; reason?: string }
-	| { status: 'invalid'; reason: string }
+	| { readonly status: 'loaded'; readonly spec: PluginSpec }
+	| { readonly status: 'skip'; readonly reason?: string }
+	| { readonly status: 'invalid'; readonly reason: string }
+
+export default LoadPluginResponse

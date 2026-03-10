@@ -1,8 +1,8 @@
 type MetaPreview = {
-    id: string
-    type: string
-    name: string
-    poster: string
+	readonly id: string
+	readonly type: string
+	readonly name: string
+	readonly poster: string
 }
 
 export default MetaPreview

@@ -1,7 +1,7 @@
 type PluginConfig = {
-    id: string
-    name: string
-    version: string
+	readonly id: string
+	readonly name: string
+	readonly version: string
 }
 
 export default PluginConfig

@@ -1,5 +1,10 @@
 export default function LibraryContent() {
-	return <></>
+	return (
+		<>
+			<div className="absolute top-0 left-4 bg-blue-500">Box1</div>
+			<div></div>
+		</>
+	)
 }
 
 /*
