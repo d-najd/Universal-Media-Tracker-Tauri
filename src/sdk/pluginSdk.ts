@@ -47,7 +47,7 @@ export default class Plugin {
 		callback: (args: CatalogHandlerArgs) => Promise<CatalogHandlerResponse>
 	): string {
 		const id = `${this.config.id}-catalog-handler}`
-		this.defineHandler(callback, 'cata', id)
+		this.defineHandler(callback, 'catalog-request', id)
 		return id
 	}
 
