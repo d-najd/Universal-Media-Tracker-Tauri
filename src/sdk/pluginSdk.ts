@@ -17,10 +17,17 @@ export default class Plugin {
 
 	onUnload() {}
 
+	defineHandler(handler: (args: unknown) => Promise<unknown>, id: string) {
+		this.handlers.set(id, handler)
+	}
+
 	defineCatalogHandler(
 		handler: (args: CatalogHandlerArgs) => Promise<CatalogHandlerResponse>
 	) {
-		this.handlers.set('catalog', handler as Handler)
+		this.defineHandler(
+			handler as Handler,
+			`${this.config.id}-catalog-handler}`
+		)
 	}
 
 	getSpec() {
