@@ -1,24 +1,23 @@
-import PluginSpecLoader, {
-	LoadPluginSpecResponse
-} from '@/lib/plugin/pluginSpecLoader'
+import PluginLoader, { LoadPluginResponse } from '@/lib/plugin/pluginSpecLoader'
+import Plugin from '@/sdk/pluginSdk'
 
-export default class LocalPluginSpecLoader implements PluginSpecLoader {
-	id = 'localPluginSpecLoader'
+export default class LocalPluginLoader implements PluginLoader {
+	id = 'localPluginLoader'
 
-	async loadPluginSpec(uri: string): Promise<LoadPluginSpecResponse> {
+	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
 		if (!uri.startsWith('/src/app/plugins/')) {
 			return { status: 'skip' }
 		}
 
 		try {
 			const module = await import(/* @vite-ignore */ uri)
-			const plugin = module.default
+			const plugin: Plugin = module.default
 
 			if (!plugin) {
 				return { status: 'invalid', reason: 'No default export found' }
 			}
 
-			return { status: 'loaded', spec: plugin }
+			return { status: 'valid', plugin: plugin }
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				return { status: 'invalid', reason: err.message }

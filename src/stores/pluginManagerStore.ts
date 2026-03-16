@@ -1,5 +1,5 @@
-import PluginSpecLoader from '@/lib/plugin/pluginSpecLoader'
-import LocalPluginSpecLoader from '@/lib/plugin/localPluginSpecLoader'
+import PluginLoader from '@/lib/plugin/pluginSpecLoader'
+import LocalPluginLoader from '@/lib/plugin/localPluginLoader'
 import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@/sdk/types/pluginSpec'
@@ -13,9 +13,9 @@ export default class PluginManagerStore {
 	/**
 	 * key is (PluginSpecLoader.id)
 	 */
-	private static loaders: Map<string, PluginSpecLoader> = new Map<
+	private static loaders: Map<string, PluginLoader> = new Map<
 		string,
-		PluginSpecLoader
+		PluginLoader
 	>()
 	// TODO this could use some refactoring, maybe use map with uri and another map for loaded specs?
 	private static descriptors: PluginDescriptor[] = []
@@ -27,7 +27,7 @@ export default class PluginManagerStore {
 		}
 		this.initialized = true
 
-		this.registerLoader(new LocalPluginSpecLoader())
+		this.registerLoader(new LocalPluginLoader())
 		await this.loadBasePlugins()
 	}
 
@@ -41,7 +41,7 @@ export default class PluginManagerStore {
 			.map((o) => o.spec)
 	}
 
-	static registerLoader(pluginLoader: PluginSpecLoader) {
+	static registerLoader(pluginLoader: PluginLoader) {
 		this.loaders.set(pluginLoader.id, pluginLoader)
 		// ensure consistent behaviour
 		// this.loaders = new Map(
@@ -53,7 +53,7 @@ export default class PluginManagerStore {
 	 * Registers plugins, their state will be set to disabled or error once registered
 	 */
 	static async registerPlugins(...pluginDescriptors: PluginDescriptor[]) {
-		pluginDescriptors.forEach((descriptor) => {
+		for (const descriptor of pluginDescriptors) {
 			if (descriptor.status === 'error') {
 				console.log(
 					`plugin with uri ${descriptor.uri} has state ${descriptor.status}, reload will be attempted`
@@ -72,16 +72,16 @@ export default class PluginManagerStore {
 			 */
 
 			let pluginSpecLoaded = false
-			this.loaders.forEach(async (loader) => {
+			for (const [_key, loader] of this.loaders) {
 				if (pluginSpecLoaded) return
-				const result = await loader.loadPluginSpec(descriptor.uri)
+				const result = await loader.loadPlugin(descriptor.uri)
 
 				switch (result.status) {
-					case 'loaded':
+					case 'valid':
 						this.addDescriptorIfNotExists({
 							uri: descriptor.uri,
 							status: 'disabled',
-							spec: result.spec
+							plugin: result.plugin
 						})
 						pluginSpecLoaded = true
 						break
@@ -93,8 +93,8 @@ export default class PluginManagerStore {
 						)
 						break
 				}
-			})
-		})
+			}
+		}
 	}
 
 	/**
@@ -102,13 +102,13 @@ export default class PluginManagerStore {
 	 * @param pluginDescriptors plugin descriptors to be loaded
 	 */
 	static async loadPlugins(...pluginDescriptors: PluginDescriptor[]) {
-		pluginDescriptors.forEach((descriptor) => {
+		for (const descriptor of pluginDescriptors) {
 			if (
 				!this.descriptors.some((o) =>
 					this.descriptorsEqual(o, descriptor)
 				)
 			) {
-				this.registerPlugins(descriptor)
+				await this.registerPlugins(descriptor)
 
 				if (
 					!this.descriptors.some((o) =>
@@ -118,13 +118,12 @@ export default class PluginManagerStore {
 					console.error(
 						`Can't register plugin with uri ${descriptor.uri}, loading will be skipped`
 					)
-					return
 				}
 			}
-		})
+		}
 
-		for (const descriptor of pluginDescriptors.filter((o) =>
-			this.descriptors.some((t) => this.descriptorsEqual(o, t))
+		for (const descriptor of this.descriptors.filter((o) =>
+			pluginDescriptors.some((t) => this.descriptorsEqual(o, t))
 		)) {
 			if (descriptor.status === 'error') {
 				console.error(
@@ -140,17 +139,18 @@ export default class PluginManagerStore {
 				continue
 			}
 
-			if (!descriptor.spec) {
+			if (!descriptor.plugin) {
 				throw Error(
 					'Plugin which has not been registered is trying to be loaded????'
 				)
 			}
 
 			try {
-				await descriptor.spec.onLoad()
+				// Calling internal function
+				await (descriptor.plugin as any).onLoadCallback()
 			} catch (e: unknown) {
 				console.error(
-					`Failed to load plugin with uri ${descriptor.uri} id ${descriptor.spec.config.id} and name ${descriptor.spec.config.name}, ${e}`
+					`Failed to load plugin with uri ${descriptor.uri} id ${descriptor.plugin.config.id} and name ${descriptor.plugin.config.name}, ${e}`
 				)
 				continue
 			}
@@ -158,11 +158,13 @@ export default class PluginManagerStore {
 			this.descriptors = this.descriptors
 				.filter((o) => {
 					if (this.descriptorsEqual(o, descriptor)) {
-						return {
+						const descriptorResult: PluginDescriptor = {
 							uri: descriptor.uri,
 							status: 'enabled',
-							spec: descriptor.spec
+							spec: descriptor.plugin!.getSpec(),
+							plugin: descriptor.plugin!
 						}
+						return descriptorResult
 					}
 					return o
 				})
@@ -171,11 +173,17 @@ export default class PluginManagerStore {
 	}
 
 	private static addDescriptorIfNotExists(descriptor: PluginDescriptor) {
-		if (descriptor.status === 'error' || !descriptor.spec) {
+		if (descriptor.status === 'error' || !descriptor.plugin) {
 			throw Error('Invalid descriptor passed')
 		}
 
-		this.descriptors.forEach((o) => {
+		// Stupid edge case
+		if (this.descriptors.length === 0) {
+			this.descriptors.push(descriptor)
+			return
+		}
+
+		for (const o of this.descriptors) {
 			if (o.status === 'error') {
 				return
 			}
@@ -187,7 +195,7 @@ export default class PluginManagerStore {
 			}
 
 			this.descriptors.push(descriptor)
-		})
+		}
 
 		// Ensure consistent behaviour
 		this.descriptors.sort((a, b) => a.uri.localeCompare(b.uri))
@@ -196,8 +204,8 @@ export default class PluginManagerStore {
 	private static descriptorsEqual(a: PluginDescriptor, b: PluginDescriptor) {
 		if (a.uri === b.uri) return true
 		if (a.status === 'error' || b.status === 'error') return false
-		if (!a.spec || !b.spec) return false
-		return a.spec.config.id === b.spec.config.id
+		if (!a.plugin || !b.plugin) return false
+		return a.plugin.config.id === b.plugin.config.id
 	}
 
 	private static async loadBasePlugins() {

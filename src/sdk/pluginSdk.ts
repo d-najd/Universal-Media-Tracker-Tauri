@@ -6,21 +6,31 @@ import BaseHandlerTypes from '@/sdk/types/baseHandlerTypes'
 import Handler from '@/sdk/types/catalog/Handler'
 
 export default class Plugin {
-	private readonly config: PluginConfig
-
+	readonly config: PluginConfig
 	private handlers = new Map<string, Handler>()
+
 	private counter = 0
+	private loaded = false
 
 	constructor(options: PluginConfig) {
 		this.config = options
 	}
 
+	/**
+	 * Don't define handlers here, they are part of the spec
+	 */
 	onLoad(callback: () => Promise<void>) {
-		this.onLoadCallback = callback
+		this.onLoadCallback = async () => {
+			await callback()
+			this.loaded = true
+		}
 	}
 
 	onUnload(callback: () => Promise<void>) {
-		this.onUnloadCallback = callback
+		this.onUnloadCallback = async () => {
+			await callback()
+			this.loaded = false
+		}
 	}
 
 	/**
@@ -52,6 +62,10 @@ export default class Plugin {
 	}
 
 	getSpec(): PluginSpec {
+		if (!this.loaded) {
+			throw Error("The plugin must be loaded before getting it's spec")
+		}
+
 		return {
 			config: this.config,
 			handlers: this.handlers,
@@ -60,7 +74,11 @@ export default class Plugin {
 		}
 	}
 
-	private onLoadCallback: () => Promise<void> = async () => {}
+	private onLoadCallback: () => Promise<void> = async () => {
+		this.loaded = true
+	}
 
-	private onUnloadCallback: () => Promise<void> = async () => {}
+	private onUnloadCallback: () => Promise<void> = async () => {
+		this.loaded = false
+	}
 }
