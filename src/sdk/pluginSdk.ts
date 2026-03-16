@@ -51,15 +51,13 @@ export default class Plugin {
 		return id
 	}
 
-	getSpec() {
-		const spec: PluginSpec = {
+	getSpec(): PluginSpec {
+		return {
 			config: this.config,
 			handlers: this.handlers,
 			onLoad: this.onLoadCallback,
 			onUnload: this.onUnloadCallback
 		}
-
-		return spec
 	}
 
 	private onLoadCallback: () => Promise<void> = async () => {}
