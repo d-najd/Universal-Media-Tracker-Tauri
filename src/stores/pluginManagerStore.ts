@@ -4,8 +4,20 @@ import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@/sdk/types/pluginSpec'
 
+/**
+ * Class for storing and managing plugins, the way that plugins, their descriptors
+ * and everything is supposed to be loaded is: either first from the sort order
+ * and stop if needed or don't
+ */
 export default class PluginManagerStore {
-	private static loaders: PluginSpecLoader[] = []
+	/**
+	 * key is (PluginSpecLoader.id)
+	 */
+	private static loaders: Map<string, PluginSpecLoader> = new Map<
+		string,
+		PluginSpecLoader
+	>()
+	// TODO this could use some refactoring, maybe use map with uri and another map for loaded specs?
 	private static descriptors: PluginDescriptor[] = []
 	private static initialized = false
 
@@ -30,14 +42,11 @@ export default class PluginManagerStore {
 	}
 
 	static registerLoader(pluginLoader: PluginSpecLoader) {
-		const exists = this.loaders.some(
-			(loader) => loader.id === pluginLoader.id
-		)
-		if (!exists) {
-			this.loaders.push(pluginLoader)
-			// ensure consistent behaviour
-			this.loaders.sort((a, b) => a.id.localeCompare(b.id))
-		}
+		this.loaders.set(pluginLoader.id, pluginLoader)
+		// ensure consistent behaviour
+		// this.loaders = new Map(
+		// 	[...this.loaders].sort((a, b) => a[0].localeCompare(b[0]))
+		// )
 	}
 
 	/**
@@ -114,53 +123,51 @@ export default class PluginManagerStore {
 			}
 		})
 
-		pluginDescriptors
-			.filter((o) =>
-				this.descriptors.some((t) => this.descriptorsEqual(o, t))
-			)
-			.forEach((descriptor) => {
-				if (descriptor.status === 'error') {
-					console.error(
-						`Errored out plugin with uri ${descriptor.uri} will be skipped from loading`
-					)
-					return
-				}
+		for (const descriptor of pluginDescriptors.filter((o) =>
+			this.descriptors.some((t) => this.descriptorsEqual(o, t))
+		)) {
+			if (descriptor.status === 'error') {
+				console.error(
+					`Errored out plugin with uri ${descriptor.uri} will be skipped from loading`
+				)
+				continue
+			}
 
-				if (descriptor.status === 'enabled') {
-					console.log(
-						`plugin with uri ${descriptor.uri} and id ${descriptor.spec.config.id} and name ${descriptor.spec.config.name} already enabled`
-					)
-					return
-				}
+			if (descriptor.status === 'enabled') {
+				console.log(
+					`plugin with uri ${descriptor.uri} and id ${descriptor.spec.config.id} and name ${descriptor.spec.config.name} already enabled`
+				)
+				continue
+			}
 
-				if (!descriptor.spec) {
-					throw Error(
-						'Plugin which has not been registered is trying to be loaded????'
-					)
-				}
+			if (!descriptor.spec) {
+				throw Error(
+					'Plugin which has not been registered is trying to be loaded????'
+				)
+			}
 
-				try {
-					descriptor.spec.onLoad()
-				} catch (e: unknown) {
-					console.error(
-						`Failed to load plugin with uri ${descriptor.uri} id ${descriptor.spec.config.id} and name ${descriptor.spec.config.name}, ${e}`
-					)
-					return
-				}
+			try {
+				await descriptor.spec.onLoad()
+			} catch (e: unknown) {
+				console.error(
+					`Failed to load plugin with uri ${descriptor.uri} id ${descriptor.spec.config.id} and name ${descriptor.spec.config.name}, ${e}`
+				)
+				continue
+			}
 
-				this.descriptors = this.descriptors
-					.filter((o) => {
-						if (this.descriptorsEqual(o, descriptor)) {
-							return {
-								uri: descriptor.uri,
-								status: 'enabled',
-								spec: descriptor.spec
-							}
+			this.descriptors = this.descriptors
+				.filter((o) => {
+					if (this.descriptorsEqual(o, descriptor)) {
+						return {
+							uri: descriptor.uri,
+							status: 'enabled',
+							spec: descriptor.spec
 						}
-						return o
-					})
-					.sort((a, b) => a.uri.localeCompare(b.uri))
-			})
+					}
+					return o
+				})
+				.sort((a, b) => a.uri.localeCompare(b.uri))
+		}
 	}
 
 	private static addDescriptorIfNotExists(descriptor: PluginDescriptor) {
