@@ -5,9 +5,9 @@ import AppProvider from '@/app/provider'
 import PluginManagerStore from '@/stores/pluginManagerStore'
 import { useEffect, useRef } from 'react'
 import HandlerManagerStore from '@/stores/handlerManagerStore'
-import BaseHandlerArgs from '@/sdk/types/catalog/baseHandlerArgs'
-import CatalogHandlerArgs from '@/sdk/types/catalog/catalogHandlerArgs'
-import CatalogHandlerResponse from '@/sdk/types/catalog/catalogHandlerResponse'
+import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
+import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
+import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 
 export default function App() {
 	const pluginStoreInitialized = useRef(false)

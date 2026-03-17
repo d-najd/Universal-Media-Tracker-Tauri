@@ -1,5 +1,5 @@
 import PluginConfig from '@/sdk/types/pluginConfig'
-import Handler from '@/sdk/types/catalog/handler'
+import Handler from '@/sdk/types/handler/base/handler'
 
 export default interface PluginSpec {
 	readonly config: PluginConfig

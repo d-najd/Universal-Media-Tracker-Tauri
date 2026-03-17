@@ -1,4 +1,4 @@
-import BaseHandlerArgs from '@/sdk/types/catalog/baseHandlerArgs'
+import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
 
 type CatalogHandlerArgs = BaseHandlerArgs & {}
 

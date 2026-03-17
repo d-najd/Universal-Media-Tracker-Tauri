@@ -1,6 +1,6 @@
 import PluginManagerStore from '@/stores/pluginManagerStore'
-import BaseHandlerArgs from '@/sdk/types/catalog/baseHandlerArgs'
-import BaseHandlerResponse from '@/sdk/types/catalog/baseHandlerResponse'
+import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
+import BaseHandlerResponse from '@/sdk/types/handler/base/baseHandlerResponse'
 
 /**
  * Page size will be 20

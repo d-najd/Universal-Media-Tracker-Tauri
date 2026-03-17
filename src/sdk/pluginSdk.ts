@@ -1,10 +1,10 @@
 import PluginConfig from '@/sdk/types/pluginConfig'
-import CatalogHandlerArgs from '@/sdk/types/catalog/catalogHandlerArgs'
-import CatalogHandlerResponse from '@/sdk/types/catalog/catalogHandlerResponse'
+import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
+import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 import PluginSpec from '@/sdk/types/pluginSpec'
-import BaseHandlerTypes from '@/sdk/types/baseHandlerTypes'
-import Handler from '@/sdk/types/catalog/handler'
-import MediaHandler from '@/sdk/types/catalog/mediaHandler'
+import MediaHandlerTypes from '@/sdk/types/handler/media/mediaHandlerTypes'
+import Handler from '@/sdk/types/handler/base/handler'
+import MediaHandler from '@/sdk/types/handler/media/mediaHandler'
 
 export default class Plugin {
 	readonly config: PluginConfig
@@ -41,7 +41,7 @@ export default class Plugin {
 		// eslint-disable-next-line
 		callback: (args: any) => Promise<any>,
 		name: string,
-		type: BaseHandlerTypes | string,
+		type: MediaHandlerTypes | string,
 		id: string = `${this.config.id}-custom-${this.counter++}`
 	): string {
 		const handler: MediaHandler = {
@@ -56,6 +56,8 @@ export default class Plugin {
 	}
 
 	/**
+	 * Defines or overrides if a catalog handler has already been defined, if
+	 * you use multiple catalog handlers use `defineMediaHandler` instead
 	 * @see defineMediaHandler
 	 */
 	defineCatalogHandler(
