@@ -61,7 +61,9 @@ export default class Plugin {
 		return id
 	}
 
-	getSpec(): PluginSpec {
+	// Used internally, private since its internal api
+	// noinspection JSUnusedLocalSymbols
+	private getSpec(): PluginSpec {
 		if (!this.loaded) {
 			throw Error("The plugin must be loaded before getting it's spec")
 		}

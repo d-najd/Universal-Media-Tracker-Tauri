@@ -146,7 +146,7 @@ export default class PluginManagerStore {
 			}
 
 			try {
-				// Calling internal function
+				// eslint-disable-next-line
 				await (descriptor.plugin as any).onLoadCallback()
 			} catch (e: unknown) {
 				console.error(
@@ -161,7 +161,8 @@ export default class PluginManagerStore {
 						const descriptorResult: PluginDescriptor = {
 							uri: descriptor.uri,
 							status: 'enabled',
-							spec: descriptor.plugin!.getSpec(),
+							// eslint-disable-next-line
+							spec: (descriptor.plugin! as any).getSpec(),
 							plugin: descriptor.plugin!
 						}
 						return descriptorResult
