@@ -10,11 +10,11 @@
  * - `callback` callback function that is called when the handler is invoked
  */
 
-type Handler = {
+// eslint-disable-next-line
+type Handler<T = any, R = any> = {
 	id: string
 	type: string
-	// eslint-disable-next-line
-	callback: (args: any) => Promise<any>
+	callback: (args: T) => Promise<R>
 }
 
 export default Handler
