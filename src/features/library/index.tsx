@@ -4,8 +4,6 @@ import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
 import HandlerManagerStore from '@/stores/handlerManagerStore'
 import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
-import MediaHandler from '@/sdk/types/handler/media/mediaHandler'
-import BaseHandlerResponse from '@/sdk/types/handler/base/baseHandlerResponse'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -28,12 +26,18 @@ export default function LibraryContent() {
 		})()
 	}, [])
 
-	const te: MediaHandler {}
-
-
 	return (
 		<>
-			{catalog ? <>No Data</> : <></>}
+			{catalog ? (
+				catalog.data.map((item, index) => (
+					<div key={index}>
+						{/* Render fields from your MetaPreview item here */}
+						{item.name} {/* example field */}
+					</div>
+				))
+			) : (
+				<>No Data</>
+			)}
 			<div>hello</div>
 		</>
 	)
