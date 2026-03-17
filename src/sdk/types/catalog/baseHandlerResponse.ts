@@ -1,6 +1,6 @@
 type BaseHandlerResponse = {
 	// eslint-disable-next-line
-	readonly metas: any[]
+	readonly data: any[]
 }
 
 export default BaseHandlerResponse

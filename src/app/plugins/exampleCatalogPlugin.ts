@@ -31,9 +31,6 @@ plugin.defineCatalogHandler(
 			}
 		]
 
-		const te: CatalogHandlerResponse = {
-			data: metas
-		}
 		return { data: metas }
 	}
 )

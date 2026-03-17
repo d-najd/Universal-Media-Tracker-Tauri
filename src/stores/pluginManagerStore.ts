@@ -155,21 +155,19 @@ export default class PluginManagerStore {
 				continue
 			}
 
-			this.descriptors = this.descriptors
-				.filter((o) => {
-					if (this.descriptorsEqual(o, descriptor)) {
-						const descriptorResult: PluginDescriptor = {
-							uri: descriptor.uri,
-							status: 'enabled',
-							// eslint-disable-next-line
-							spec: (descriptor.plugin! as any).getSpec(),
-							plugin: descriptor.plugin!
-						}
-						return descriptorResult
+			this.descriptors = this.descriptors.map((o) => {
+				if (this.descriptorsEqual(o, descriptor)) {
+					const descriptorResult: PluginDescriptor = {
+						uri: descriptor.uri,
+						status: 'enabled',
+						// eslint-disable-next-line
+						spec: (descriptor.plugin! as any).getSpec(),
+						plugin: descriptor.plugin!
 					}
-					return o
-				})
-				.sort((a, b) => a.uri.localeCompare(b.uri))
+					return descriptorResult
+				}
+				return o
+			})
 		}
 	}
 

@@ -62,7 +62,7 @@ export default class Plugin {
 		callback: (args: CatalogHandlerArgs) => Promise<CatalogHandlerResponse>,
 		name: string = this.config.name
 	): string {
-		const id = `${this.config.id}-catalog-handler}`
+		const id = `${this.config.id}-catalog-handler`
 		this.defineMediaHandler(callback, name, 'catalog-request', id)
 		return id
 	}
