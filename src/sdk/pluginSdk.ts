@@ -3,7 +3,8 @@ import CatalogHandlerArgs from '@/sdk/types/catalog/catalogHandlerArgs'
 import CatalogHandlerResponse from '@/sdk/types/catalog/catalogHandlerResponse'
 import PluginSpec from '@/sdk/types/pluginSpec'
 import BaseHandlerTypes from '@/sdk/types/baseHandlerTypes'
-import Handler from '@/sdk/types/catalog/Handler'
+import Handler from '@/sdk/types/catalog/handler'
+import MediaHandler from '@/sdk/types/catalog/mediaHandler'
 
 export default class Plugin {
 	readonly config: PluginConfig
@@ -36,28 +37,33 @@ export default class Plugin {
 	/**
 	 * @see Handler
 	 */
-	defineHandler(
+	defineMediaHandler(
 		// eslint-disable-next-line
 		callback: (args: any) => Promise<any>,
+		name: string,
 		type: BaseHandlerTypes | string,
 		id: string = `${this.config.id}-custom-${this.counter++}`
 	): string {
-		this.handlers.set(id, {
+		const handler: MediaHandler = {
 			id: id,
 			type: type,
+			name: name,
 			callback: callback
-		})
+		}
+
+		this.handlers.set(id, handler)
 		return id
 	}
 
 	/**
-	 * @see defineHandler
+	 * @see defineMediaHandler
 	 */
 	defineCatalogHandler(
-		callback: (args: CatalogHandlerArgs) => Promise<CatalogHandlerResponse>
+		callback: (args: CatalogHandlerArgs) => Promise<CatalogHandlerResponse>,
+		name: string = this.config.name
 	): string {
 		const id = `${this.config.id}-catalog-handler}`
-		this.defineHandler(callback, 'catalog-request', id)
+		this.defineMediaHandler(callback, name, 'catalog-request', id)
 		return id
 	}
 

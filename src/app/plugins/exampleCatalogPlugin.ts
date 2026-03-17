@@ -5,9 +5,9 @@ import MetaPreview from '@/sdk/types/catalog/metaPreview'
 import PluginConfig from '@/sdk/types/pluginConfig'
 
 const options: PluginConfig = {
-	id: '',
-	name: '',
-	version: ''
+	id: 'example-plugin',
+	name: 'Example Plugin',
+	version: '0.0.1'
 }
 
 const plugin = new Plugin(options)
@@ -30,7 +30,11 @@ plugin.defineCatalogHandler(
 				poster: 'https://example.com/poster.jpg'
 			}
 		]
-		return { metas }
+
+		const te: CatalogHandlerResponse = {
+			data: metas
+		}
+		return { data: metas }
 	}
 )
 
