@@ -5,7 +5,7 @@ import BaseHandlerResponse from '@/sdk/types/handler/base/baseHandlerResponse'
 /**
  * Page size will be 20
  */
-export default class HandlerManagerStore {
+export default class HandlerStore {
 	static async getFromMediaHandler<
 		T extends BaseHandlerArgs,
 		R extends BaseHandlerResponse

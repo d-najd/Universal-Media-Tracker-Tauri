@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PluginManagerStore from '@/stores/pluginManagerStore'
 import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
-import HandlerManagerStore from '@/stores/handlerManagerStore'
+import HandlerStore from '@/stores/handlerStore'
 import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 
@@ -18,7 +18,7 @@ export default function LibraryContent() {
 				pageSize: 20
 			}
 
-			const result = await HandlerManagerStore.getFromMediaHandler<
+			const result = await HandlerStore.getFromMediaHandler<
 				CatalogHandlerArgs,
 				CatalogHandlerResponse
 			>('example-plugin-catalog-handler', args)
