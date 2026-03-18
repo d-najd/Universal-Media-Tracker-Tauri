@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
 	const [catalog, setCatalog] = useState<CatalogHandlerResponse | null>(null)
+	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 
 	useEffect(() => {
 		if (pluginStoreInitialized.current) return
@@ -51,7 +52,16 @@ export default function LibraryContent() {
 
 	const topbarSearchMaxWidthPx = 480
 	useLayoutEffect(() => {
-		const screenWidth = window.innerWidth
+		setTopbarSearchPadding(
+			Math.max(
+				0,
+				Math.min(
+					topBarIconsSize.width,
+					window.innerWidth -
+						(topbarSearchMaxWidthPx + topBarIconsSize.width)
+				)
+			)
+		)
 	})
 
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
@@ -77,11 +87,14 @@ export default function LibraryContent() {
 				<div
 					className="flex-1 flex justify-center min-w-20"
 					style={{
-						maxWidth: topbarSearchMaxWidthPx,
-						paddingLeft: Math.max(topBarIconsSize.width, 0)
+						paddingLeft: topbarSearchPadding
 					}}
 				>
-					<InputGroup>
+					<InputGroup
+						style={{
+							maxWidth: topbarSearchMaxWidthPx
+						}}
+					>
 						<InputGroupInput
 							placeholder={'Search'}
 						></InputGroupInput>
