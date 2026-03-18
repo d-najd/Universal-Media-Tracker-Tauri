@@ -5,6 +5,7 @@ import HandlerStore from '@/stores/handlerStore'
 import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 import { Card } from '@/components/ui/card'
+import { cva } from 'class-variance-authority'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -27,19 +28,32 @@ export default function LibraryContent() {
 		})()
 	}, [])
 
+	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
+		variants: {
+			hoverable: {
+				true: 'hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary border',
+				false: ''
+			}
+		},
+		defaultVariants: {
+			hoverable: true
+		}
+	})
+
 	return (
 		<>
 			{catalog ? (
-				<div className="flex relative gap-3 flex-row flex-wrap content-start">
+				<div className="flex relative gap-3 flex-row flex-wrap content-start ">
 					{catalog.data.map((item, key) => (
-						<Card
-							key={key}
-							className="w-40 h-60 gap-0 py-0 overflow-hidden hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary "
-						>
+						<Card key={key} className={cardStyle()}>
 							<img
 								className="w-full h-full object-fill"
 								alt="no content"
 								src={item.poster}
+								onError={(e) => {
+									// TODO placeholder
+									e.currentTarget.style.display = 'none'
+								}}
 							/>
 						</Card>
 					))}
