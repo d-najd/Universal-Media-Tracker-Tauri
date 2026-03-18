@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import PluginManagerStore from '@/stores/pluginManagerStore'
 import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
 import HandlerStore from '@/stores/handlerStore'
@@ -11,8 +11,16 @@ import {
 	InputGroupAddon,
 	InputGroupInput
 } from '@/components/ui/input-group'
-import { Search } from 'lucide-react'
+import {
+	Filter,
+	LayoutGrid,
+	LibraryBig,
+	MoreVertical,
+	Search,
+	Settings
+} from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
+import { Button } from '@/components/ui/button'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -38,7 +46,13 @@ export default function LibraryContent() {
 	const { ref: topbarRef, size: topbarSize } =
 		useElementSize<HTMLDivElement>()
 
-	console.log(topbarSize.height)
+	const { ref: topBarIconsRef, size: topBarIconsSize } =
+		useElementSize<HTMLDivElement>()
+
+	const topbarSearchMaxWidthPx = 480
+	useLayoutEffect(() => {
+		const screenWidth = window.innerWidth
+	})
 
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
 		variants: {
@@ -57,36 +71,69 @@ export default function LibraryContent() {
 			<div
 				ref={topbarRef}
 				className={
-					'fixed top-0 left-0 w-full grid place-items-center bg-background/80 backdrop-blur-md px-2.5 py-2 z-50'
+					'fixed top-0 left-0 w-full flex items-center bg-background/80 backdrop-blur-md px-2.5 py-2 z-50'
 				}
 			>
-				<InputGroup className={'min-w-20 max-w-120'}>
-					<InputGroupInput placeholder={'Search'}></InputGroupInput>
-					<InputGroupAddon align={'inline-end'}>
-						<Search />
-					</InputGroupAddon>
-				</InputGroup>
+				<div
+					className="flex-1 flex justify-center min-w-20"
+					style={{
+						maxWidth: topbarSearchMaxWidthPx,
+						paddingLeft: Math.max(topBarIconsSize.width, 0)
+					}}
+				>
+					<InputGroup>
+						<InputGroupInput
+							placeholder={'Search'}
+						></InputGroupInput>
+						<InputGroupAddon align={'inline-end'}>
+							<Search />
+						</InputGroupAddon>
+					</InputGroup>
+				</div>
+
+				<div
+					ref={topBarIconsRef}
+					className="flex-none flex items-center"
+				>
+					<Button variant={'ghost'}>
+						<LibraryBig />
+					</Button>
+					<Button variant={'ghost'}>
+						<Filter />
+					</Button>
+					<Button variant={'ghost'}>
+						<Settings />
+					</Button>
+					<Button variant={'ghost'}>
+						<LayoutGrid />
+					</Button>
+					<Button variant={'ghost'}>
+						<MoreVertical />
+					</Button>
+				</div>
 			</div>
 
 			{catalog ? (
-				<div
-					className={`absolute flex gap-3 flex-row flex-wrap content-start`}
-					style={{ paddingTop: topbarSize.height }}
-				>
-					{catalog.data.map((item, key) => (
-						<Card key={key} className={cardStyle()}>
-							<img
-								className="w-full h-full object-fill"
-								alt="no content"
-								src={item.poster}
-								onError={(e) => {
-									// TODO placeholder
-									e.currentTarget.style.display = 'none'
-								}}
-							/>
-						</Card>
-					))}
-				</div>
+				<>
+					<div
+						className={`absolute flex gap-3 flex-row flex-wrap content-start`}
+						style={{ paddingTop: topbarSize.height }}
+					>
+						{catalog.data.map((item, key) => (
+							<Card key={key} className={cardStyle()}>
+								<img
+									className="w-full h-full object-fill"
+									alt="no content"
+									src={item.poster}
+									onError={(e) => {
+										// TODO placeholder
+										e.currentTarget.style.display = 'none'
+									}}
+								/>
+							</Card>
+						))}
+					</div>
+				</>
 			) : (
 				<>No Data</>
 			)}
