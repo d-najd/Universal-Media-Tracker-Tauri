@@ -11,14 +11,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput
 } from '@/components/ui/input-group'
-import {
-	Filter,
-	LayoutGrid,
-	LibraryBig,
-	MoreVertical,
-	Search,
-	Settings
-} from 'lucide-react'
+import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
 
@@ -106,31 +99,32 @@ export default function LibraryContent() {
 
 				<div
 					ref={topBarIconsRef}
-					className="flex-none flex items-center"
+					className="flex-none flex items-center px-0.5"
 				>
+					<div className="px-0.5" />
 					<Button variant={'ghost'}>
 						<LibraryBig />
 					</Button>
 					<Button variant={'ghost'}>
 						<Filter />
 					</Button>
-					<Button variant={'ghost'}>
-						<Settings />
-					</Button>
+					{/*<Button variant={'ghost'}>*/}
+					{/*	<Settings />*/}
+					{/*</Button>*/}
 					<Button variant={'ghost'}>
 						<LayoutGrid />
 					</Button>
-					<Button variant={'ghost'}>
-						<MoreVertical />
-					</Button>
+					{/*<Button variant={'ghost'}>*/}
+					{/*	<MoreVertical />*/}
+					{/*</Button>*/}
 				</div>
 			</div>
 
 			{catalog ? (
 				<>
 					<div
-						className={`absolute flex gap-3 flex-row flex-wrap content-start`}
-						style={{ paddingTop: topbarSize.height }}
+						className={`absolute flex gap-2.75 flex-row flex-wrap content-start px-3`}
+						style={{ paddingTop: topbarSize.height + 10 }}
 					>
 						{catalog.data.map((item, key) => (
 							<Card key={key} className={cardStyle()}>
