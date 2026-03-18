@@ -1,6 +1,5 @@
 import Plugin from '@/sdk/pluginSdk'
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
-import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
 import MetaPreview from '@/sdk/types/handler/media/catalog/metaPreview'
 import PluginConfig from '@/sdk/types/pluginConfig'
 
@@ -34,17 +33,9 @@ const metas: MetaPreview[] = [
 const plugin = new Plugin(options)
 
 plugin.defineCatalogHandler({
-	callback(args: CatalogHandlerArgs): Promise<CatalogHandlerResponse> {
+	async callback(): Promise<CatalogHandlerResponse> {
 		return { data: metas }
 	}
 })
-
-plugin.defineCatalogHandler(
-	async (args: CatalogHandlerArgs): Promise<CatalogHandlerResponse> => {
-		const searchTerm = args.search ?? ''
-
-		return { data: metas }
-	}
-)
 
 export default plugin
