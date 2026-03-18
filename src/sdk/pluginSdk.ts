@@ -73,8 +73,6 @@ export default class Plugin {
 	 * @see defineResourceHandler
 	 */
 	defineCatalogHandler(handler: CreateCatalogHandler): string {
-		const result = handler.callback({})
-
 		const newHandler: CreateResourceHandler = {
 			id: `${this.config.id}-catalog-handler`,
 			...handler,
