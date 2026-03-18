@@ -4,6 +4,7 @@ import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
 import HandlerStore from '@/stores/handlerStore'
 import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
+import { Card } from '@/components/ui/card'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -29,12 +30,14 @@ export default function LibraryContent() {
 	return (
 		<>
 			{catalog ? (
-				catalog.data.map((item, index) => (
-					<div key={index}>
-						{/* Render fields from your MetaPreview item here */}
-						{item.name} {/* example field */}
-					</div>
-				))
+				<div className="flex relative gap-4 flex-row flex-wrap content-start">
+					{catalog.data.map((item, key) => (
+						<Card
+							key={key}
+							className="w-40 h-[calc(10rem/0.675)]"
+						></Card>
+					))}
+				</div>
 			) : (
 				<>No Data</>
 			)}

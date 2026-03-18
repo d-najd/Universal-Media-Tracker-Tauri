@@ -21,6 +21,42 @@ plugin.defineCatalogHandler(
 				id: 'tt1234567',
 				type: 'movie',
 				name: `Example Movie: ${searchTerm}`,
+				poster: 'htsstps://images.bauerhosting.com/legacy/empire-images/features/59e8d795405a5c6805947751/43%20The%20Thing.jpg?auto=format&w=992&q=80'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
+				poster: 'https://example.com/poster.jpg'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
+				poster: 'https://example.com/poster.jpg'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
+				poster: 'https://example.com/poster.jpg'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
+				poster: 'https://example.com/poster.jpg'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
+				poster: 'https://example.com/poster.jpg'
+			},
+			{
+				id: 'tt11',
+				type: 'movie',
+				name: `Example Movie2: ${searchTerm}`,
 				poster: 'https://example.com/poster.jpg'
 			},
 			{
