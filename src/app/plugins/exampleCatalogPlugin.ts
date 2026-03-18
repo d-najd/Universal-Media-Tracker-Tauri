@@ -35,7 +35,8 @@ const plugin = new Plugin(options)
 plugin.defineCatalogHandler({
 	async callback(): Promise<CatalogHandlerResponse> {
 		return { data: metas }
-	}
+	},
+	resourceType: 'movie'
 })
 
 export default plugin
