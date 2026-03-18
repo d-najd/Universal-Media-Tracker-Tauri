@@ -21,13 +21,13 @@ plugin.defineCatalogHandler(
 				id: 'tt1234567',
 				type: 'movie',
 				name: `Example Movie: ${searchTerm}`,
-				poster: 'htsstps://images.bauerhosting.com/legacy/empire-images/features/59e8d795405a5c6805947751/43%20The%20Thing.jpg?auto=format&w=992&q=80'
+				poster: 'https://images.metahub.space/poster/small/tt0084787/img'
 			},
 			{
 				id: 'tt11',
 				type: 'movie',
 				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
+				poster: 'https://m.media-amazon.com/images/M/MV5BMTQxMDMxNjMwOV5BMl5BanBnXkFtZTgwNzk1MzI1MTE@._V1_QL75_UX140_CR0,0,140,207_.jpg'
 			},
 			{
 				id: 'tt11',

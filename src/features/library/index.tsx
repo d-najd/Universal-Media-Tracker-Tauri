@@ -30,12 +30,18 @@ export default function LibraryContent() {
 	return (
 		<>
 			{catalog ? (
-				<div className="flex relative gap-4 flex-row flex-wrap content-start">
+				<div className="flex relative gap-3 flex-row flex-wrap content-start">
 					{catalog.data.map((item, key) => (
 						<Card
 							key={key}
-							className="w-40 h-[calc(10rem/0.675)]"
-						></Card>
+							className="w-40 h-60 gap-0 py-0 overflow-hidden hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary "
+						>
+							<img
+								className="w-full h-full object-fill"
+								alt="no content"
+								src={item.poster}
+							/>
+						</Card>
 					))}
 				</div>
 			) : (
