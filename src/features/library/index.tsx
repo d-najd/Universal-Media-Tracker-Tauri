@@ -6,6 +6,13 @@ import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandler
 import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 import { Card } from '@/components/ui/card'
 import { cva } from 'class-variance-authority'
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput
+} from '@/components/ui/input-group'
+import { Search } from 'lucide-react'
+import { useElementSize } from '@/hooks/useElementSize'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -28,6 +35,11 @@ export default function LibraryContent() {
 		})()
 	}, [])
 
+	const { ref: topbarRef, size: topbarSize } =
+		useElementSize<HTMLDivElement>()
+
+	console.log(topbarSize.height)
+
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
 		variants: {
 			hoverable: {
@@ -42,8 +54,25 @@ export default function LibraryContent() {
 
 	return (
 		<>
+			<div
+				ref={topbarRef}
+				className={
+					'fixed top-0 left-0 w-full grid place-items-center bg-background/80 backdrop-blur-md px-2.5 py-2 z-50'
+				}
+			>
+				<InputGroup className={'min-w-20 max-w-120'}>
+					<InputGroupInput placeholder={'Search'}></InputGroupInput>
+					<InputGroupAddon align={'inline-end'}>
+						<Search />
+					</InputGroupAddon>
+				</InputGroup>
+			</div>
+
 			{catalog ? (
-				<div className="flex relative gap-3 flex-row flex-wrap content-start ">
+				<div
+					className={`absolute flex gap-3 flex-row flex-wrap content-start`}
+					style={{ paddingTop: topbarSize.height }}
+				>
 					{catalog.data.map((item, key) => (
 						<Card key={key} className={cardStyle()}>
 							<img
@@ -61,7 +90,6 @@ export default function LibraryContent() {
 			) : (
 				<>No Data</>
 			)}
-			<div>hello</div>
 		</>
 	)
 }
