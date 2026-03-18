@@ -10,62 +10,38 @@ const options: PluginConfig = {
 	version: '0.0.1'
 }
 
+const metas: MetaPreview[] = [
+	{
+		id: 'tt1234567',
+		type: 'movie',
+		name: `Example Movie:`,
+		poster: 'https://images.metahub.space/poster/small/tt0084787/img'
+	},
+	{
+		id: 'tt11',
+		type: 'movie',
+		name: `Example Movie2:`,
+		poster: 'https://m.media-amazon.com/images/M/MV5BMTQxMDMxNjMwOV5BMl5BanBnXkFtZTgwNzk1MzI1MTE@._V1_QL75_UX140_CR0,0,140,207_.jpg'
+	},
+	{
+		id: 'tt11',
+		type: 'movie',
+		name: `Example Movie2:`,
+		poster: 'https://example.com/poster.jpg'
+	}
+]
+
 const plugin = new Plugin(options)
+
+plugin.defineCatalogHandler({
+	callback(args: CatalogHandlerArgs): Promise<CatalogHandlerResponse> {
+		return { data: metas }
+	}
+})
 
 plugin.defineCatalogHandler(
 	async (args: CatalogHandlerArgs): Promise<CatalogHandlerResponse> => {
 		const searchTerm = args.search ?? ''
-
-		const metas: MetaPreview[] = [
-			{
-				id: 'tt1234567',
-				type: 'movie',
-				name: `Example Movie: ${searchTerm}`,
-				poster: 'https://images.metahub.space/poster/small/tt0084787/img'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://m.media-amazon.com/images/M/MV5BMTQxMDMxNjMwOV5BMl5BanBnXkFtZTgwNzk1MzI1MTE@._V1_QL75_UX140_CR0,0,140,207_.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			},
-			{
-				id: 'tt11',
-				type: 'movie',
-				name: `Example Movie2: ${searchTerm}`,
-				poster: 'https://example.com/poster.jpg'
-			}
-		]
 
 		return { data: metas }
 	}
