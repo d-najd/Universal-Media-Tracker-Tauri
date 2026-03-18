@@ -4,7 +4,6 @@ import BaseHandlerResponse from '@/sdk/types/handler/base/baseHandlerResponse'
 import Handler from '@/sdk/types/handler/base/handler'
 import ResourceType from '@/sdk/types/handler/media/resourceType'
 
-// TODO add media type
 type ResourceHandler<
 	T extends BaseHandlerArgs = BaseHandlerArgs,
 	R extends BaseHandlerResponse = BaseHandlerResponse
