@@ -33,26 +33,6 @@ export default class Plugin {
 		}
 	}
 
-	/*
-	defineResourceHandler(
-		// eslint-disable-next-line
-		callback: (args: any) => Promise<any>,
-		name: string,
-		type: ResourceHandlerTypes | string,
-		id: string = `${this.config.id}-custom-${this.counter++}`
-	): string {
-		const handler: ResourceHandler = {
-			id: id,
-			type: type,
-			name: name,
-			callback: callback
-		}
-
-		this.handlers.set(id, handler)
-		return id
-	}
-	 */
-
 	/**
 	 * @see Handler
 	 */
