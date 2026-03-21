@@ -1,5 +1,5 @@
-import PluginSpec from '@/sdk/types/pluginSpec'
-import Plugin from '@/sdk/pluginSdk'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/pluginSdk'
+import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/pluginSpec'
 
 type PluginDescriptor =
 	| {

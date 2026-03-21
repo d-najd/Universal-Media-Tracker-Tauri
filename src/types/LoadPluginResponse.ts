@@ -1,4 +1,4 @@
-import PluginSpec from '@/sdk/types/pluginSpec'
+import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/pluginSpec'
 
 export type LoadPluginResponse =
 	| { readonly status: 'loaded'; readonly spec: PluginSpec }

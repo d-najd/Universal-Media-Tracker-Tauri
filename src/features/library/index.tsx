@@ -1,9 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import PluginManagerStore from '@/stores/pluginManagerStore'
-import BaseHandlerArgs from '@/sdk/types/handler/base/baseHandlerArgs'
-import HandlerStore from '@/stores/handlerStore'
-import CatalogHandlerArgs from '@/sdk/types/handler/media/catalog/catalogHandlerArgs'
-import CatalogHandlerResponse from '@/sdk/types/handler/media/catalog/catalogHandlerResponse'
 import { Card } from '@/components/ui/card'
 import { cva } from 'class-variance-authority'
 import {
@@ -14,6 +10,10 @@ import {
 import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
+import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/catalogHandlerResponse'
+import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/baseHandlerArgs'
+import HandlerStore from '@/stores/handlerStore'
+import CatalogHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/catalogHandlerArgs'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)

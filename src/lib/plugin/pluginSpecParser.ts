@@ -1,4 +1,4 @@
-import Plugin from '@/sdk/pluginSdk'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/pluginSdk'
 
 /**
  * Only responsible for loading the plugin spec and not the plugin itself
