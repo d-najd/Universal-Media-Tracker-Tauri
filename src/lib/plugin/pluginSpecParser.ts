@@ -3,12 +3,12 @@ import Plugin from '@/sdk/pluginSdk'
 /**
  * Only responsible for loading the plugin spec and not the plugin itself
  */
-export default interface PluginSpecLoader {
+export default interface PluginSpecParser {
 	readonly id: string
-	loadPlugin(uri: string): Promise<LoadPluginResponse>
+	loadPlugin(uri: string): Promise<ParsePluginResponse>
 }
 
-export type LoadPluginResponse =
+export type ParsePluginResponse =
 	| { readonly status: 'valid'; readonly plugin: Plugin }
 	| { readonly status: 'skip'; readonly reason?: string }
 	| { readonly status: 'invalid'; readonly reason: string }

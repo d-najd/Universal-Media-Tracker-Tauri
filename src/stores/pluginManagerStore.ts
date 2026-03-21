@@ -1,5 +1,5 @@
-import PluginLoader from '@/lib/plugin/pluginSpecLoader'
-import LocalPluginLoader from '@/lib/plugin/localPluginLoader'
+import PluginParser from '@/lib/plugin/pluginSpecParser'
+import LocalPluginParser from '@/lib/plugin/localPluginParser'
 import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@/sdk/types/pluginSpec'
@@ -11,11 +11,11 @@ import PluginSpec from '@/sdk/types/pluginSpec'
  */
 export default class PluginManagerStore {
 	/**
-	 * key is (PluginSpecLoader.id)
+	 * key is (PluginSpecParser.id)
 	 */
-	private static loaders: Map<string, PluginLoader> = new Map<
+	private static parsers: Map<string, PluginParser> = new Map<
 		string,
-		PluginLoader
+		PluginParser
 	>()
 	// TODO this could use some refactoring, maybe use map with uri and another map for loaded specs?
 	private static descriptors: PluginDescriptor[] = []
@@ -27,7 +27,7 @@ export default class PluginManagerStore {
 		}
 		this.initialized = true
 
-		this.registerLoader(new LocalPluginLoader())
+		this.registerParser(new LocalPluginParser())
 		await this.loadBasePlugins()
 	}
 
@@ -41,11 +41,11 @@ export default class PluginManagerStore {
 			.map((o) => o.spec)
 	}
 
-	static registerLoader(pluginLoader: PluginLoader) {
-		this.loaders.set(pluginLoader.id, pluginLoader)
+	static registerParser(pluginParser: PluginParser) {
+		this.parsers.set(pluginParser.id, pluginParser)
 		// ensure consistent behaviour
-		// this.loaders = new Map(
-		// 	[...this.loaders].sort((a, b) => a[0].localeCompare(b[0]))
+		// this.parsers = new Map(
+		// 	[...this.parsers].sort((a, b) => a[0].localeCompare(b[0]))
 		// )
 	}
 
@@ -72,9 +72,9 @@ export default class PluginManagerStore {
 			 */
 
 			let pluginSpecLoaded = false
-			for (const [_key, loader] of this.loaders) {
+			for (const [_key, parser] of this.parsers) {
 				if (pluginSpecLoaded) return
-				const result = await loader.loadPlugin(descriptor.uri)
+				const result = await parser.loadPlugin(descriptor.uri)
 
 				switch (result.status) {
 					case 'valid':
@@ -89,7 +89,7 @@ export default class PluginManagerStore {
 						break
 					case 'invalid':
 						console.error(
-							`Loading of plugin with uri ${descriptor.uri} and loader by id ${loader.id} failed with result ${result.reason}`
+							`Loading of plugin with uri ${descriptor.uri} and parser by id ${parser.id} failed with result ${result.reason}`
 						)
 						break
 				}

@@ -1,10 +1,12 @@
-import PluginLoader, { LoadPluginResponse } from '@/lib/plugin/pluginSpecLoader'
+import PluginParser, {
+	ParsePluginResponse
+} from '@/lib/plugin/pluginSpecParser'
 import Plugin from '@/sdk/pluginSdk'
 
-export default class LocalPluginLoader implements PluginLoader {
-	id = 'localPluginLoader'
+export default class LocalPluginParser implements PluginParser {
+	id = 'localPluginParser'
 
-	async loadPlugin(uri: string): Promise<LoadPluginResponse> {
+	async loadPlugin(uri: string): Promise<ParsePluginResponse> {
 		if (!uri.startsWith('/src/app/plugins/')) {
 			return { status: 'skip' }
 		}
