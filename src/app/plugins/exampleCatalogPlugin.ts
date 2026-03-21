@@ -1,7 +1,7 @@
 import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/pluginConfig'
 import MetaPreview from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/metaPreview'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/index'
 import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/catalogHandlerResponse'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/pluginSdk'
 
 const options: PluginConfig = {
 	id: 'example-plugin',

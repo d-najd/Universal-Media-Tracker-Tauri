@@ -1,4 +1,4 @@
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/pluginSdk'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/index'
 import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/pluginSpec'
 
 type PluginDescriptor =
