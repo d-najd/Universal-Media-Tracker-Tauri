@@ -19,7 +19,7 @@ export default class LocalPluginParser implements PluginParser {
 				return { status: 'invalid', reason: 'No default export found' }
 			}
 
-			return { status: 'valid', plugin: plugin }
+			return { status: 'validOld', plugin: plugin }
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				return { status: 'invalid', reason: err.message }

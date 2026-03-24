@@ -9,6 +9,7 @@ export default interface PluginSpecParser {
 }
 
 export type ParsePluginResponse =
-	| { readonly status: 'valid'; readonly plugin: Plugin }
+	| { readonly status: 'valid'; readonly code: string }
+	| { readonly status: 'validOld'; readonly plugin: Plugin }
 	| { readonly status: 'skip'; readonly reason?: string }
 	| { readonly status: 'invalid'; readonly reason: string }

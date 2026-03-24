@@ -3,6 +3,7 @@ import LocalPluginParser from '@/lib/plugin/localPluginParser'
 import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/pluginSpec'
+import localPluginSource from '@/app/plugins/localPluginSource'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -74,10 +75,15 @@ export default class PluginManagerStore {
 			let pluginSpecLoaded = false
 			for (const [_key, parser] of this.parsers) {
 				if (pluginSpecLoaded) return
+				await (localPluginSource as any).onLoadCallback()
+				const spec = (localPluginSource as any).getSpec() as PluginSpec
+				const handlerr = [...spec.handlers.values()].flat()[0]
+				const result1 = await handlerr.callback({ uri: descriptor.uri })
+
 				const result = await parser.loadPlugin(descriptor.uri)
 
 				switch (result.status) {
-					case 'valid':
+					case 'validOld':
 						this.addDescriptorIfNotExists({
 							uri: descriptor.uri,
 							status: 'disabled',
