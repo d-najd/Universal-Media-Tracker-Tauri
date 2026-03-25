@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import PluginManagerStore from '@/stores/pluginManagerStore'
+import PluginManagerStore from '@/stores/PluginManagerStore'
 import { Card } from '@/components/ui/card'
 import { cva } from 'class-variance-authority'
 import {
@@ -12,7 +12,7 @@ import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
 import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/CatalogHandlerResponse'
 import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerArgs'
-import HandlerStore from '@/stores/handlerStore'
+import HandlerStore from '@/stores/HandlerStore'
 import CatalogHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/CatalogHandlerArgs'
 
 export default function LibraryContent() {

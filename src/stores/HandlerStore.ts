@@ -1,4 +1,4 @@
-import PluginManagerStore from '@/stores/pluginManagerStore'
+import PluginManagerStore from '@/stores/PluginManagerStore'
 import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerArgs'
 import BaseHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerResponse'
 

@@ -1,9 +1,9 @@
-import PluginParser from '@/lib/plugin/pluginSpecParser'
-import LocalPluginParser from '@/lib/plugin/localPluginParser'
-import PluginDescriptor from '@/types/pluginDescriptor'
+import PluginParser from '@/lib/plugin/PluginSpecParser'
+import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
+import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
-import localPluginSource from '@/app/plugins/localPluginSource'
+import localPluginSource from '@/app/plugins/LocalPluginSource'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
