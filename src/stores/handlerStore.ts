@@ -1,6 +1,6 @@
 import PluginManagerStore from '@/stores/pluginManagerStore'
-import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/baseHandlerArgs'
-import BaseHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/baseHandlerResponse'
+import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerArgs'
+import BaseHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerResponse'
 
 /**
  * Page size will be 20

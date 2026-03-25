@@ -2,7 +2,7 @@ import PluginParser from '@/lib/plugin/pluginSpecParser'
 import LocalPluginParser from '@/lib/plugin/localPluginParser'
 import PluginDescriptor from '@/types/pluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/pluginSpec'
+import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
 import localPluginSource from '@/app/plugins/localPluginSource'
 
 /**

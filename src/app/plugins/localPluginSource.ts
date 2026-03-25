@@ -1,7 +1,7 @@
-import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/pluginConfig'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist'
-import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/pluginSourceHandlerResponse'
-import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/pluginSourceHandlerArgs'
+import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/PluginConfig'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
+import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
+import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
 
 const options: PluginConfig = {
 	id: 'local-plugin-loader',
