@@ -2,6 +2,7 @@ import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/PluginC
 import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
 import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
 import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
+import ts from 'typescript'
 
 const options: PluginConfig = {
 	id: 'local-plugin-loader',
@@ -41,9 +42,12 @@ plugin.definePluginSourceHandler({
 				}
 			}
 
-			const code = await import(/* @vite-ignore */ uri + '?raw')
-			const codeStr = code.default as string
-			return { status: 'valid', code: codeStr }
+			const tsCode = await import(/* @vite-ignore */ uri + '?raw')
+			const tsCodeStr = tsCode.default as string
+			const jsCodeStr = ts.transpileModule(tsCodeStr, {
+				compilerOptions: { module: ts.ModuleKind.ESNext }
+			}).outputText
+			return { status: 'valid', code: jsCodeStr }
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				return { status: 'invalid', reason: err.message }

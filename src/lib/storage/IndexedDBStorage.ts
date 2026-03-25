@@ -2,7 +2,7 @@ import Storage from './Storage'
 import DirEntry from '@/lib/storage/DirEntry'
 import { IDBPDatabase, openDB } from 'idb'
 
-class IndexedDBStorage implements Storage {
+export default class IndexedDBStorage implements Storage {
 	private constructor(
 		private db: IDBPDatabase,
 		private storeName: string

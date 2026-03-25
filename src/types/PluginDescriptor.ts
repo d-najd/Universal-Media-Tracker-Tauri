@@ -3,7 +3,7 @@ import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpe
 
 type PluginDescriptor =
 	| {
-			readonly uri: string
+			// readonly uri: string
 			readonly status: 'enabled'
 			readonly plugin: Plugin
 			readonly spec: PluginSpec
@@ -11,6 +11,7 @@ type PluginDescriptor =
 	| {
 			readonly uri: string
 			readonly status: 'disabled'
+			readonly pluginId?: string
 			// readonly plugin?: Plugin
 	  }
 	| { readonly uri: string; readonly status: 'error' }

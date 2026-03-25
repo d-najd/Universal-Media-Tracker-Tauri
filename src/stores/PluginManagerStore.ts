@@ -3,13 +3,19 @@ import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
-import LocalPluginSource, {
-	localPluginSourceRelativePath
-} from '@/app/plugins/LocalPluginSource'
+import LocalPluginSource from '@/app/plugins/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
 import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
 import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
 import Handler from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/Handler'
+import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
+import { getStorage } from '@/lib/storage'
+import {
+	pluginConfigName,
+	pluginFileName,
+	pluginPath
+} from '@/lib/storage/StoragePaths'
+import LocalPluginConfig from '@/types/LocalPluginConfig'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -132,7 +138,15 @@ export default class PluginManagerStore {
 		}
 	}
 
-	static async registerPlugins(...descriptors: PluginDescriptor[]) {
+	/**
+	 * @param markForLoading if true when loadPlugin is called it will load this,
+	 * plugin since it will be marked as "load"
+	 * @param descriptors
+	 */
+	static async registerPlugins(
+		markForLoading = true,
+		...descriptors: PluginDescriptor[]
+	) {
 		for (const descriptor of descriptors) {
 			if (descriptor.status === 'error') {
 				console.log(
@@ -140,6 +154,16 @@ export default class PluginManagerStore {
 				)
 			}
 
+			if (descriptor.status === 'enabled') {
+				console.log(
+					`can't re-enable plugin ${descriptor.spec.config.id}`
+				)
+				continue
+			}
+
+			// TODO this should be recursive, if any plugin failed to load and
+			// new handler is registered it should try to load the failed plugins
+			// with these handlers, both for source and factory
 			const pluginSourceHandlers = HandlerStore.getHandlersMatching(
 				([, handler]) => handler.type === 'plugin-source'
 			) as Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
@@ -154,11 +178,44 @@ export default class PluginManagerStore {
 
 				const result = await handler.callback(args)
 				switch (result.status) {
-					case 'valid':
+					case 'valid': {
 						pluginSpecLoaded = true
-						// Verify that the plugin is valid by loading it
-						// Save the plugin code to a file so it can be loaded later and add the plugin as disabled to the map on the top
+
+						// Validate plugin
+						const module = await import(
+							/* @vite-ignore */
+							`data:text/javascript,${result.code}`
+						)
+						const plugin: Plugin = module.default
+						await (plugin as any).onLoadCallback()
+						const spec = (plugin! as any).getSpec() as PluginSpec
+						const config = plugin.config
+						await spec.onUnload()
+
+						// Store plugin
+						const localConfig: LocalPluginConfig = {
+							...config,
+							status: markForLoading ? 'enabled' : 'disabled'
+						}
+						const storage = await getStorage()
+						const curPluginPath = pluginPath + spec.config.id
+						await storage.write(
+							curPluginPath + '/' + pluginFileName,
+							result.code
+						)
+						await storage.write(
+							curPluginPath + '/' + pluginConfigName,
+							JSON.stringify(localConfig)
+						)
+						await storage.list('')
+
+						const newDescriptor: PluginDescriptor = {
+							uri: descriptor.uri,
+							status: 'disabled'
+						}
+						this.plugins.set(config.id, newDescriptor)
 						break
+					}
 					case 'skip':
 						break
 					case 'invalid':
@@ -171,9 +228,46 @@ export default class PluginManagerStore {
 		}
 	}
 
-	// Should load the locally saved (in files) plugins with the inputted descriptors
-	// if plugin doesn't exist (either in descriptor or locally) it should be registered
-	static async loadPlugins(...descriptors: PluginDescriptor[]) {}
+	/**
+	 * load's locally saved plugins with the flag status enabled
+	 */
+	static async loadPlugins() {
+		// await this.registerPlugins(false, ...descriptors)
+		const storage = await getStorage()
+		const pluginFolders = await storage.list(pluginPath)
+
+		for (const folder of pluginFolders) {
+			if (folder.type === 'file') {
+				throw Error('File found in plugin folder root????')
+			}
+
+			const jsonStr = await storage.read(
+				folder.path + '/' + pluginConfigName
+			)
+			const config = JSON.parse(jsonStr) as LocalPluginConfig
+			if (config.status === 'disabled') {
+				continue
+			}
+
+			const codeStr = await storage.read(
+				folder.path + '/' + pluginFileName
+			)
+			const module = await import(
+				/* @vite-ignore */
+				`data:text/javascript,${codeStr}`
+			)
+			const plugin: Plugin = module.default
+			await (plugin as any).onLoadCallback()
+			const spec = (plugin! as any).getSpec() as PluginSpec
+
+			const descriptor: PluginDescriptor = {
+				status: 'enabled',
+				plugin: plugin,
+				spec: spec
+			}
+			this.plugins.set(config.id, descriptor)
+		}
+	}
 
 	/**
 	 * Will load (or register as well if not already) all the passed plugins
@@ -297,7 +391,7 @@ export default class PluginManagerStore {
 			await (plugin as any).onLoadCallback()
 			const spec = (plugin as any).getSpec() as PluginSpec
 			const descriptor: PluginDescriptor = {
-				uri: localPluginSourceRelativePath,
+				// uri: localPluginSourceRelativePath,
 				status: 'enabled',
 				plugin: plugin,
 				spec: spec
