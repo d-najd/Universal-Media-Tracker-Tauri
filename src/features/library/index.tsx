@@ -29,7 +29,7 @@ export default function LibraryContent() {
 				pageSize: 20
 			}
 
-			const result = await HandlerStore.getFromMediaHandler<
+			const result = await HandlerStore.invokeCallbackOnHandler<
 				CatalogHandlerArgs,
 				CatalogHandlerResponse
 			>('example-plugin-catalog-handler', args)

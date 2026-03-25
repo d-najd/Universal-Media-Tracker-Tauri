@@ -3,7 +3,13 @@ import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
-import localPluginSource from '@/app/plugins/LocalPluginSource'
+import LocalPluginSource, {
+	localPluginSourceRelativePath
+} from '@/app/plugins/LocalPluginSource'
+import HandlerStore from '@/stores/HandlerStore'
+import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
+import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
+import Handler from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/Handler'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -20,6 +26,13 @@ export default class PluginManagerStore {
 	>()
 	// TODO this could use some refactoring, maybe use map with uri and another map for loaded specs?
 	private static descriptors: PluginDescriptor[] = []
+	/**
+	 * Key is the plugin id
+	 */
+	private static plugins: Map<string, PluginDescriptor> = new Map<
+		string,
+		PluginDescriptor
+	>()
 	private static initialized = false
 
 	static async init() {
@@ -32,11 +45,25 @@ export default class PluginManagerStore {
 		await this.loadBasePlugins()
 	}
 
+	static getLoadedPluginSpecs(): PluginSpec[] {
+		const result: PluginSpec[] = []
+
+		for (const entry of this.plugins.values()) {
+			if (entry.status !== 'enabled') {
+				continue
+			}
+
+			result.push(entry.spec)
+		}
+
+		return result
+	}
+
 	static getDescriptors(): PluginDescriptor[] {
 		return this.descriptors
 	}
 
-	static getLoadedPluginSpecs(): PluginSpec[] {
+	static getLoadedPluginSpecsOld(): PluginSpec[] {
 		return this.descriptors
 			.filter((o) => o.status === 'enabled')
 			.map((o) => o.spec)
@@ -53,7 +80,7 @@ export default class PluginManagerStore {
 	/**
 	 * Registers plugins, their state will be set to disabled or error once registered
 	 */
-	static async registerPlugins(...pluginDescriptors: PluginDescriptor[]) {
+	static async registerPluginsOld(...pluginDescriptors: PluginDescriptor[]) {
 		for (const descriptor of pluginDescriptors) {
 			if (descriptor.status === 'error') {
 				console.log(
@@ -73,12 +100,14 @@ export default class PluginManagerStore {
 			 */
 
 			let pluginSpecLoaded = false
-			for (const [_key, parser] of this.parsers) {
+			for (const [, parser] of this.parsers) {
 				if (pluginSpecLoaded) return
-				await (localPluginSource as any).onLoadCallback()
+				/*
+				await localPluginSource.onLoad()
 				const spec = (localPluginSource as any).getSpec() as PluginSpec
 				const handlerr = [...spec.handlers.values()].flat()[0]
 				const result1 = await handlerr.callback({ uri: descriptor.uri })
+				 */
 
 				const result = await parser.loadPlugin(descriptor.uri)
 
@@ -103,18 +132,58 @@ export default class PluginManagerStore {
 		}
 	}
 
+	static async registerPlugins(...descriptors: PluginDescriptor[]) {
+		for (const descriptor of descriptors) {
+			if (descriptor.status === 'error') {
+				console.log(
+					`plugin with uri ${descriptor.uri} has state ${descriptor.status}, re-register will be attempted`
+				)
+			}
+
+			const pluginSourceHandlers = HandlerStore.getHandlersMatching(
+				([, handler]) => handler.type === 'plugin-source'
+			) as Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
+
+			let pluginSpecLoaded = false
+			for (const handler of pluginSourceHandlers) {
+				if (pluginSpecLoaded) return
+
+				const args: PluginSourceHandlerArgs = {
+					uri: descriptor.uri
+				}
+
+				const result = await handler.callback(args)
+				switch (result.status) {
+					case 'valid':
+						pluginSpecLoaded = true
+						// Save the plugin code to a file so it can be loaded later and add the plugin as disabled to the map  on the top
+						break
+					case 'skip':
+						break
+					case 'invalid':
+						console.error(
+							`Registering of plugin with uri ${descriptor.uri} and parser by id ${handler.id} failed with result ${result.reason}`
+						)
+						break
+				}
+			}
+		}
+	}
+
+	static async loadPlugins(...descriptors: PluginDescriptor[]) {}
+
 	/**
 	 * Will load (or register as well if not already) all the passed plugins
 	 * @param pluginDescriptors plugin descriptors to be loaded
 	 */
-	static async loadPlugins(...pluginDescriptors: PluginDescriptor[]) {
+	static async loadPluginsOld(...pluginDescriptors: PluginDescriptor[]) {
 		for (const descriptor of pluginDescriptors) {
 			if (
 				!this.descriptors.some((o) =>
 					this.descriptorsEqual(o, descriptor)
 				)
 			) {
-				await this.registerPlugins(descriptor)
+				await this.registerPluginsOld(descriptor)
 
 				if (
 					!this.descriptors.some((o) =>
@@ -189,10 +258,6 @@ export default class PluginManagerStore {
 		}
 
 		for (const o of this.descriptors) {
-			if (o.status === 'error') {
-				return
-			}
-
 			// TODO there should be another check here, a descriptors uri can be the same but it's id (or version)
 			// different if the plugin developer changed the plugin in some way, in that case the user should be prompted
 			if (this.descriptorsEqual(o, descriptor)) {
@@ -219,6 +284,26 @@ export default class PluginManagerStore {
 			status: 'disabled'
 		}))
 
-		await this.loadPlugins(...descriptors)
+		await this.loadLocalPluginSource()
+		await this.loadPluginsOld(...descriptors)
+	}
+
+	static async loadLocalPluginSource() {
+		try {
+			const plugin = LocalPluginSource
+			await (plugin as any).onLoadCallback()
+			const spec = (plugin as any).getSpec() as PluginSpec
+			const descriptor: PluginDescriptor = {
+				uri: localPluginSourceRelativePath,
+				status: 'enabled',
+				plugin: plugin,
+				spec: spec
+			}
+
+			this.plugins.set(spec.config.id, descriptor)
+		} catch (e) {
+			console.error(e)
+			throw e
+		}
 	}
 }

@@ -11,7 +11,7 @@ type PluginDescriptor =
 	| {
 			readonly uri: string
 			readonly status: 'disabled'
-			readonly plugin?: Plugin
+			// readonly plugin?: Plugin
 	  }
 	| { readonly uri: string; readonly status: 'error' }
 

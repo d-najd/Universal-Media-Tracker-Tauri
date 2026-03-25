@@ -9,6 +9,10 @@ const options: PluginConfig = {
 	version: '0.0.1'
 }
 
+export const localPluginSourceRelativePath = import.meta.url.replace(
+	'file://' + process.cwd() + '/',
+	''
+)
 const plugin = new Plugin(options)
 
 plugin.definePluginSourceHandler({

@@ -1,16 +1,30 @@
 import PluginManagerStore from '@/stores/PluginManagerStore'
-import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerArgs'
-import BaseHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/BaseHandlerResponse'
+import Handler from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/Handler'
 
 /**
  * Page size will be 20
  */
 export default class HandlerStore {
-	static async getFromMediaHandler<
-		T extends BaseHandlerArgs,
-		R extends BaseHandlerResponse
-	>(id: string, args: T) {
-		const specs = PluginManagerStore.getLoadedPluginSpecs()
+	static getHandlersMatching(
+		condition: (entry: [string, Handler]) => boolean
+	): Handler[] {
+		// Key is the id of the handler, this is to prevent duplicates
+		const result: Map<string, Handler> = new Map<string, Handler>()
+
+		for (const entry of PluginManagerStore.getLoadedPluginSpecs()) {
+			const handlers = entry.handlers
+			for (const handler of handlers) {
+				result.set(handler[0], handler[1])
+			}
+		}
+
+		// Filtering is done last to ensure consistent behavior
+		return [...result.values()].filter((o) => condition([o.id, o]))
+	}
+
+	// TODO needs rework
+	static async invokeCallbackOnHandler<T, R>(id: string, args: T) {
+		const specs = PluginManagerStore.getLoadedPluginSpecsOld()
 		const handler = specs
 			.flatMap((o) => [...o.handlers.values()].flat())
 			.find((o) => o.id === id)
