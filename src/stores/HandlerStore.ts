@@ -22,7 +22,6 @@ export default class HandlerStore {
 		return [...result.values()].filter((o) => condition([o.id, o]))
 	}
 
-	// TODO needs rework
 	static async invokeCallbackOnHandler<T, R>(id: string, args: T) {
 		const specs = PluginManagerStore.getLoadedPluginSpecsOld()
 		const handler = specs

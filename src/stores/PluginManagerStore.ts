@@ -156,7 +156,8 @@ export default class PluginManagerStore {
 				switch (result.status) {
 					case 'valid':
 						pluginSpecLoaded = true
-						// Save the plugin code to a file so it can be loaded later and add the plugin as disabled to the map  on the top
+						// Verify that the plugin is valid by loading it
+						// Save the plugin code to a file so it can be loaded later and add the plugin as disabled to the map on the top
 						break
 					case 'skip':
 						break
@@ -170,6 +171,8 @@ export default class PluginManagerStore {
 		}
 	}
 
+	// Should load the locally saved (in files) plugins with the inputted descriptors
+	// if plugin doesn't exist (either in descriptor or locally) it should be registered
 	static async loadPlugins(...descriptors: PluginDescriptor[]) {}
 
 	/**
