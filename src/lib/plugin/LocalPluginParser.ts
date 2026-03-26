@@ -1,7 +1,7 @@
 import PluginParser, {
 	ParsePluginResponse
 } from '@/lib/plugin/PluginSpecParser'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
+import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
 
 export default class LocalPluginParser implements PluginParser {
 	id = 'localPluginParser'

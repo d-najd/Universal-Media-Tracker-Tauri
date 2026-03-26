@@ -1,7 +1,7 @@
-import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/PluginConfig'
-import MetaPreview from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/MetaPreview'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
-import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/media/catalog/CatalogHandlerResponse'
+import PluginConfig from '@d-najd/universal-media-tracker-sdk/types/PluginConfig'
+import MetaPreview from '@d-najd/universal-media-tracker-sdk/types/handler/media/catalog/MetaPreview'
+import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
+import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/media/catalog/CatalogHandlerResponse'
 
 const options: PluginConfig = {
 	id: 'example-plugin',

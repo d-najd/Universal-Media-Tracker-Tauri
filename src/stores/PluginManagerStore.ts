@@ -2,13 +2,13 @@ import PluginParser from '@/lib/plugin/PluginSpecParser'
 import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
+import PluginSpec from '@d-najd/universal-media-tracker-sdk/types/PluginSpec'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
-import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
-import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
-import Handler from '@d-najd/universal-media-tracker-sdk/dist/types/handler/base/Handler'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
+import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerArgs'
+import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerResponse'
+import Handler from '@d-najd/universal-media-tracker-sdk/types/handler/base/Handler'
+import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
 import { getStorage } from '@/lib/storage'
 import {
 	pluginConfigName,
@@ -95,7 +95,7 @@ export default class PluginManagerStore {
 		for (const descriptor of descriptors) {
 			if (descriptor.status === 'error') {
 				console.log(
-					`plugin with uri ${descriptor.uri} has state ${descriptor.status}, re-register will be attempted`
+					`plugin with uri ${descriptor.url} has state ${descriptor.status}, re-register will be attempted`
 				)
 			}
 
@@ -118,7 +118,7 @@ export default class PluginManagerStore {
 				if (pluginSpecLoaded) return
 
 				const args: PluginSourceHandlerArgs = {
-					uri: descriptor.uri
+					url: descriptor.url
 				}
 
 				const result = await handler.callback(args)
@@ -140,7 +140,9 @@ export default class PluginManagerStore {
 						// Store plugin
 						const localConfig: LocalPluginConfig = {
 							...config,
-							status: markForLoading ? 'enabled' : 'disabled'
+							status: markForLoading ? 'enabled' : 'disabled',
+							url: descriptor.url,
+							handlerId: handler.id
 						}
 						const storage = await getStorage()
 						const curPluginPath = pluginPath + spec.config.id
@@ -155,7 +157,7 @@ export default class PluginManagerStore {
 						await storage.list('')
 
 						const newDescriptor: PluginDescriptor = {
-							uri: descriptor.uri,
+							url: descriptor.url,
 							status: 'disabled'
 						}
 						this.plugins.set(config.id, newDescriptor)
@@ -165,7 +167,7 @@ export default class PluginManagerStore {
 						break
 					case 'invalid':
 						console.error(
-							`Registering of plugin with uri ${descriptor.uri} and parser by id ${handler.id} failed with result ${result.reason}`
+							`Registering of plugin with uri ${descriptor.url} and parser by id ${handler.id} failed with result ${result.reason}`
 						)
 						break
 				}
@@ -216,7 +218,7 @@ export default class PluginManagerStore {
 
 	private static async loadBasePlugins() {
 		const descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
-			uri: o,
+			url: o,
 			status: 'disabled'
 		}))
 

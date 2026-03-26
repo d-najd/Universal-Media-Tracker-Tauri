@@ -1,7 +1,7 @@
-import PluginConfig from '@d-najd/universal-media-tracker-sdk/dist/types/PluginConfig'
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
-import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerResponse'
-import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/dist/types/handler/plugin/source/PluginSourceHandlerArgs'
+import PluginConfig from '@d-najd/universal-media-tracker-sdk/types/PluginConfig'
+import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
+import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerResponse'
+import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerArgs'
 import ts from 'typescript'
 
 const options: PluginConfig = {
@@ -16,13 +16,13 @@ plugin.definePluginSourceHandler({
 	async callback(
 		args: PluginSourceHandlerArgs
 	): Promise<PluginSourceHandlerResponse> {
-		const uri = args.uri
-		if (!uri.startsWith('/src/app/plugins/')) {
+		const url = args.url
+		if (!url.startsWith('/src/app/plugins/')) {
 			return { status: 'skip' }
 		}
 
 		try {
-			const module = await import(/* @vite-ignore */ uri)
+			const module = await import(/* @vite-ignore */ url)
 			const plugin: Plugin = module.default
 
 			if (!plugin) {
@@ -38,7 +38,7 @@ plugin.definePluginSourceHandler({
 				}
 			}
 
-			const tsCode = await import(/* @vite-ignore */ uri + '?raw')
+			const tsCode = await import(/* @vite-ignore */ url + '?raw')
 			const tsCodeStr = tsCode.default as string
 			const jsCodeStr = ts.transpileModule(tsCodeStr, {
 				compilerOptions: { module: ts.ModuleKind.ESNext }

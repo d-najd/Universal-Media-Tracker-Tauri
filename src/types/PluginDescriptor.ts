@@ -1,5 +1,5 @@
-import Plugin from '@d-najd/universal-media-tracker-sdk/dist/Plugin'
-import PluginSpec from '@d-najd/universal-media-tracker-sdk/dist/types/PluginSpec'
+import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
+import PluginSpec from '@d-najd/universal-media-tracker-sdk/types/PluginSpec'
 
 type PluginDescriptor =
 	| {
@@ -9,11 +9,11 @@ type PluginDescriptor =
 			readonly spec: PluginSpec
 	  }
 	| {
-			readonly uri: string
+			readonly url: string
 			readonly status: 'disabled'
 			readonly pluginId?: string
 			// readonly plugin?: Plugin
 	  }
-	| { readonly uri: string; readonly status: 'error' }
+	| { readonly url: string; readonly status: 'error' }
 
 export default PluginDescriptor
