@@ -10,10 +10,12 @@ import {
 import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
-import CatalogHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/media/catalog/CatalogHandlerResponse'
-import BaseHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/base/BaseHandlerArgs'
+import {
+	BaseHandlerArgs,
+	CatalogHandlerArgs,
+	CatalogHandlerResponse
+} from '@d-najd/universal-media-tracker-sdk'
 import HandlerStore from '@/stores/HandlerStore'
-import CatalogHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/media/catalog/CatalogHandlerArgs'
 
 export default function LibraryContent() {
 	const pluginStoreInitialized = useRef(false)
@@ -32,7 +34,7 @@ export default function LibraryContent() {
 			const result = await HandlerStore.invokeCallbackOnHandler<
 				CatalogHandlerArgs,
 				CatalogHandlerResponse
-			>('example-plugin-catalog-handler', args)
+			>('example-plugin-catalog', args)
 			setCatalog(result)
 		})()
 	}, [])

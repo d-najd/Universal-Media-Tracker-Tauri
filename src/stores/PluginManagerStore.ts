@@ -1,5 +1,3 @@
-import PluginParser from '@/lib/plugin/PluginSpecParser'
-import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import LocalPluginSource from '@/app/plugins/ts/LocalPluginSource'
@@ -26,15 +24,6 @@ import {
  */
 export default class PluginManagerStore {
 	/**
-	 * key is (PluginSpecParser.id)
-	 */
-	private static parsers: Map<string, PluginParser> = new Map<
-		string,
-		PluginParser
-	>()
-	// TODO this could use some refactoring, maybe use map with uri and another map for loaded specs?
-	private static descriptors: PluginDescriptor[] = []
-	/**
 	 * Key is the plugin id
 	 */
 	private static plugins: Map<string, PluginDescriptor> = new Map<
@@ -48,41 +37,7 @@ export default class PluginManagerStore {
 			return
 		}
 		this.initialized = true
-
-		this.registerParser(new LocalPluginParser())
 		await this.loadBasePlugins()
-	}
-
-	static getLoadedPluginSpecs(): PluginSpec[] {
-		const result: PluginSpec[] = []
-
-		for (const entry of this.plugins.values()) {
-			if (entry.status !== 'enabled') {
-				continue
-			}
-
-			result.push(entry.spec)
-		}
-
-		return result
-	}
-
-	static getDescriptors(): PluginDescriptor[] {
-		return this.descriptors
-	}
-
-	static getLoadedPluginSpecsOld(): PluginSpec[] {
-		return this.descriptors
-			.filter((o) => o.status === 'enabled')
-			.map((o) => o.spec)
-	}
-
-	static registerParser(pluginParser: PluginParser) {
-		this.parsers.set(pluginParser.id, pluginParser)
-		// ensure consistent behaviour
-		// this.parsers = new Map(
-		// 	[...this.parsers].sort((a, b) => a[0].localeCompare(b[0]))
-		// )
 	}
 
 	/**
@@ -111,67 +66,80 @@ export default class PluginManagerStore {
 			// TODO this should be recursive, if any plugin failed to load and
 			// new handler is registered it should try to load the failed plugins
 			// with these handlers, both for source and factory
-			const pluginSourceHandlers = HandlerStore.getHandlersMatching(
-				([, handler]) => handler.type === 'plugin-source'
-			) as Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
+			const pluginSourceHandlers =
+				HandlerStore.getHandlersMatchingWithPluginId(
+					([, handler]) => handler.type === 'plugin-source'
+				) as Map<
+					string,
+					Handler<
+						PluginSourceHandlerArgs,
+						PluginSourceHandlerResponse
+					>[]
+				>
 
 			let pluginSpecLoaded = false
-			for (const handler of pluginSourceHandlers) {
-				if (pluginSpecLoaded) return
+			for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
+				for (const handler of handlers) {
+					if (pluginSpecLoaded) return
 
-				const args: PluginSourceHandlerArgs = {
-					url: descriptor.url
-				}
-
-				const result = await handler.callback(args)
-				switch (result.status) {
-					case 'valid': {
-						pluginSpecLoaded = true
-
-						// Validate plugin
-						const module = await import(
-							/* @vite-ignore */
-							`data:text/javascript,${result.code}`
-						)
-						const plugin: Plugin = module.default
-						await (plugin as any).onLoadCallback()
-						const spec = (plugin! as any).getSpec() as PluginSpec
-						const config = plugin.config
-						await spec.onUnload()
-
-						// Store plugin
-						const localConfig: LocalPluginConfig = {
-							...config,
-							status: markForLoading ? 'enabled' : 'disabled',
-							url: descriptor.url,
-							handlerId: handler.id
-						}
-						const storage = await getStorage()
-						const curPluginPath = pluginPath + spec.config.id
-						await storage.write(
-							curPluginPath + '/' + pluginFileName,
-							result.code
-						)
-						await storage.write(
-							curPluginPath + '/' + pluginConfigName,
-							JSON.stringify(localConfig)
-						)
-						await storage.list('')
-
-						const newDescriptor: PluginDescriptor = {
-							url: descriptor.url,
-							status: 'disabled'
-						}
-						this.plugins.set(config.id, newDescriptor)
-						break
+					const args: PluginSourceHandlerArgs = {
+						url: descriptor.url
 					}
-					case 'skip':
-						break
-					case 'invalid':
-						console.error(
-							`Registering of plugin with uri ${descriptor.url} and parser by id ${handler.id} failed with result ${result.reason}`
-						)
-						break
+
+					const result = await handler.callback(args)
+					switch (result.status) {
+						case 'valid': {
+							pluginSpecLoaded = true
+
+							// Validate plugin
+							const module = await import(
+								/* @vite-ignore */
+								`data:text/javascript,${result.code}`
+							)
+							const plugin: Plugin = module.default
+							await (plugin as any).onLoadCallback()
+							const spec = (
+								plugin! as any
+							).getSpec() as PluginSpec
+							const config = plugin.config
+							await spec.onUnload()
+
+							// Store plugin
+							const localConfig: LocalPluginConfig = {
+								...config,
+								status: markForLoading ? 'enabled' : 'disabled',
+								url: descriptor.url,
+								handlerId: handler.id,
+								handlerPluginId: pluginId
+							}
+							const storage = await getStorage()
+							const curPluginPath =
+								pluginPath + '/' + spec.config.id
+							await storage.write(
+								curPluginPath + '/' + pluginFileName,
+								result.code
+							)
+							await storage.write(
+								curPluginPath + '/' + pluginConfigName,
+								JSON.stringify(localConfig)
+							)
+							await storage.list('')
+
+							const newDescriptor: PluginDescriptor = {
+								url: descriptor.url,
+								status: 'disabled'
+							}
+							this.plugins.set(config.id, newDescriptor)
+							break
+						}
+						case 'skip':
+							break
+						case 'invalid':
+							console.error(
+								`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${result.reason}`
+							)
+							break
+					}
 				}
 			}
 		}
@@ -186,6 +154,8 @@ export default class PluginManagerStore {
 		const pluginFolders = await storage.list(pluginPath)
 
 		for (const folder of pluginFolders) {
+			if (this.plugins.get(folder.name)?.status === 'enabled') continue
+
 			if (folder.type === 'file') {
 				throw Error('File found in plugin folder root????')
 			}
@@ -194,9 +164,8 @@ export default class PluginManagerStore {
 				folder.path + '/' + pluginConfigName
 			)
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
-			if (config.status === 'disabled') {
-				continue
-			}
+
+			if (config.status === 'disabled') continue
 
 			const codeStr = await storage.read(
 				folder.path + '/' + pluginFileName
@@ -227,10 +196,23 @@ export default class PluginManagerStore {
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
 		await this.loadPlugins()
-		// await this.loadPluginsOld(...descriptors)
 	}
 
-	static async loadLocalPluginSource() {
+	static getLoadedPluginSpecs(): PluginSpec[] {
+		const result: PluginSpec[] = []
+
+		for (const entry of this.plugins.values()) {
+			if (entry.status !== 'enabled') {
+				continue
+			}
+
+			result.push(entry.spec)
+		}
+
+		return result
+	}
+
+	private static async loadLocalPluginSource() {
 		try {
 			const plugin = LocalPluginSource
 			await (plugin as any).onLoadCallback()

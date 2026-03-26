@@ -7,6 +7,8 @@ type LocalPluginConfig = PluginConfig & {
 	 * Id of the handler this was handled with
 	 */
 	handlerId: string
+	// Id to which the current handler belongs to
+	handlerPluginId: string
 }
 
 export default LocalPluginConfig

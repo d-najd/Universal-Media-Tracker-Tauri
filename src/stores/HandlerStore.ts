@@ -22,8 +22,42 @@ export default class HandlerStore {
 		return [...result.values()].filter((o) => condition([o.id, o]))
 	}
 
+	static getHandlersMatchingWithPluginId(
+		condition: (entry: [string, Handler]) => boolean
+	): Map<string, Handler[]> {
+		// Key is the id of the handler, this is to prevent duplicates
+		const filteringMap: Map<
+			string,
+			{ handler: Handler; pluginId: string }
+		> = new Map<string, { handler: Handler; pluginId: string }>()
+
+		for (const entry of PluginManagerStore.getLoadedPluginSpecs()) {
+			const handlers = entry.handlers
+			for (const handler of handlers) {
+				filteringMap.set(handler[0], {
+					handler: handler[1],
+					pluginId: entry.config.id
+				})
+			}
+		}
+
+		const result: Map<string, Handler[]> = new Map<string, Handler[]>()
+		const filtered = [...filteringMap.values()].filter((o) =>
+			condition([o.handler.id, o.handler])
+		)
+
+		for (const entry of filtered) {
+			if (result.has(entry.pluginId)) {
+				result.get(entry.pluginId)!.push(entry.handler)
+			}
+			result.set(entry.pluginId, [entry.handler])
+		}
+
+		return result
+	}
+
 	static async invokeCallbackOnHandler<T, R>(id: string, args: T) {
-		const specs = PluginManagerStore.getLoadedPluginSpecsOld()
+		const specs = PluginManagerStore.getLoadedPluginSpecs()
 		const handler = specs
 			.flatMap((o) => [...o.handlers.values()].flat())
 			.find((o) => o.id === id)

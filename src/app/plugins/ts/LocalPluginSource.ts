@@ -1,4 +1,3 @@
-import ts from 'typescript'
 import {
 	Plugin,
 	PluginConfig,
@@ -40,12 +39,9 @@ plugin.definePluginSourceHandler({
 				}
 			}
 
-			const tsCode = await import(/* @vite-ignore */ url + '?raw')
-			const tsCodeStr = tsCode.default as string
-			const jsCodeStr = ts.transpileModule(tsCodeStr, {
-				compilerOptions: { module: ts.ModuleKind.ESNext }
-			}).outputText
-			return { status: 'valid', code: jsCodeStr }
+			const code = (await import(/* @vite-ignore */ url + '?raw'))
+				.default as string
+			return { status: 'valid', code: code }
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				return { status: 'invalid', reason: err.message }
