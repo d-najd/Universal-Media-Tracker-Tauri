@@ -1,8 +1,10 @@
-import PluginConfig from '@d-najd/universal-media-tracker-sdk/types/PluginConfig'
-import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
-import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerResponse'
-import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerArgs'
 import ts from 'typescript'
+import {
+	Plugin,
+	PluginConfig,
+	PluginSourceHandlerArgs,
+	PluginSourceHandlerResponse
+} from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
 	id: 'local-plugin-loader',

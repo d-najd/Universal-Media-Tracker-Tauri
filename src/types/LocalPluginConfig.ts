@@ -1,4 +1,4 @@
-import PluginConfig from '@d-najd/universal-media-tracker-sdk/types/PluginConfig'
+import { PluginConfig } from '@d-najd/universal-media-tracker-sdk'
 
 type LocalPluginConfig = PluginConfig & {
 	status: 'enabled' | 'disabled'

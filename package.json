@@ -17,7 +17,7 @@
 		"**/*": "prettier --write --ignore-unknown"
 	},
 	"dependencies": {
-		"@d-najd/universal-media-tracker-sdk": "^0.1.4",
+		"@d-najd/universal-media-tracker-sdk": "^0.1.6",
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@tailwindcss/vite": "^4.1.17",

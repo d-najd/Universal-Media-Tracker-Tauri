@@ -2,13 +2,8 @@ import PluginParser from '@/lib/plugin/PluginSpecParser'
 import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import PluginSpec from '@d-najd/universal-media-tracker-sdk/types/PluginSpec'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
-import PluginSourceHandlerArgs from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerArgs'
-import PluginSourceHandlerResponse from '@d-najd/universal-media-tracker-sdk/types/handler/plugin/source/PluginSourceHandlerResponse'
-import Handler from '@d-najd/universal-media-tracker-sdk/types/handler/base/Handler'
-import Plugin from '@d-najd/universal-media-tracker-sdk/Plugin'
 import { getStorage } from '@/lib/storage'
 import {
 	pluginConfigName,
@@ -16,6 +11,13 @@ import {
 	pluginPath
 } from '@/lib/storage/StoragePaths'
 import LocalPluginConfig from '@/types/LocalPluginConfig'
+import {
+	Handler,
+	Plugin,
+	PluginSourceHandlerArgs,
+	PluginSourceHandlerResponse,
+	PluginSpec
+} from '@d-najd/universal-media-tracker-sdk'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
