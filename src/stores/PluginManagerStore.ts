@@ -2,7 +2,7 @@ import PluginParser from '@/lib/plugin/PluginSpecParser'
 import LocalPluginParser from '@/lib/plugin/LocalPluginParser'
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import LocalPluginSource from '@/app/plugins/LocalPluginSource'
+import LocalPluginSource from '@/app/plugins/ts/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
 import { getStorage } from '@/lib/storage'
 import {
