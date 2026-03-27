@@ -42,7 +42,7 @@ export default class PluginManagerStore {
 	}
 
 	/**
-	 * @param markForLoading if true when loadPlugin is called it will load this,
+	 * @param markForLoading if true when loadPluginFromCode is called it will load this,
 	 * plugin since it will be marked as "load"
 	 * @param descriptors
 	 */
@@ -96,12 +96,9 @@ export default class PluginManagerStore {
 							pluginSpecLoaded = true
 
 							// Validate plugin
-							// TODO on
-							const module = await import(
-								/* @vite-ignore */
-								`data:text/javascript,${result.code}`
+							const plugin = await this.loadPluginFromCode(
+								result.code
 							)
-							const plugin: Plugin = module.default
 							await (plugin as any).onLoadCallback()
 							const spec = (
 								plugin! as any
@@ -175,11 +172,7 @@ export default class PluginManagerStore {
 			const codeStr = await storage.read(
 				folder.path + '/' + pluginFileName
 			)
-			const module = await import(
-				/* @vite-ignore */
-				`data:text/javascript,${codeStr}`
-			)
-			const plugin: Plugin = module.default
+			const plugin = await this.loadPluginFromCode(codeStr)
 			await (plugin as any).onLoadCallback()
 			const spec = (plugin! as any).getSpec() as PluginSpec
 
@@ -236,5 +229,15 @@ export default class PluginManagerStore {
 			console.error(e)
 			throw e
 		}
+	}
+
+	private static async loadPluginFromCode(code: string): Promise<Plugin> {
+		const blob = new Blob([code], {
+			type: 'text/javascript'
+		})
+		const url = URL.createObjectURL(blob)
+		const module = await import(/* @vite-ignore */ url)
+		URL.revokeObjectURL(url)
+		return module.default
 	}
 }

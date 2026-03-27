@@ -1,10 +1,10 @@
 import Storage from './Storage'
 import IndexedDBStorage from '@/lib/storage/IndexedDBStorage'
-import FileSystemStorage from '@/lib/storage/FileSystemStorage'
 
 export async function getStorage(): Promise<Storage> {
-	if ('__TAURI__' in window) {
-		return FileSystemStorage.create()
-	}
+	// TODO seems to be broken, will ignore for now
+	// if (isTauri()) {
+	// 	return await FileSystemStorage.create()
+	// }
 	return await IndexedDBStorage.create()
 }
