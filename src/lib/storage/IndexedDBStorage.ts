@@ -52,6 +52,7 @@ export default class IndexedDBStorage implements Storage {
 			throw new Error(`Unable to list from a file ${path}`)
 		}
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
+		console.log(keys)
 		const prefix = path.endsWith('/') ? path : path + '/'
 		const entriesMap: Record<string, DirEntry> = {}
 

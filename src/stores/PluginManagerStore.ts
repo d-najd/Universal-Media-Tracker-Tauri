@@ -33,6 +33,7 @@ export default class PluginManagerStore {
 	private static initialized = false
 
 	static async init() {
+		console.log('trying to init')
 		if (this.initialized) {
 			return
 		}
@@ -77,6 +78,9 @@ export default class PluginManagerStore {
 					>[]
 				>
 
+			console.log('Handlers ')
+			console.log(pluginSourceHandlers)
+
 			let pluginSpecLoaded = false
 			for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
 				for (const handler of handlers) {
@@ -92,6 +96,7 @@ export default class PluginManagerStore {
 							pluginSpecLoaded = true
 
 							// Validate plugin
+							// TODO on
 							const module = await import(
 								/* @vite-ignore */
 								`data:text/javascript,${result.code}`
@@ -195,7 +200,9 @@ export default class PluginManagerStore {
 
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
+		console.log('registered')
 		await this.loadPlugins()
+		console.log('loaded')
 	}
 
 	static getLoadedPluginSpecs(): PluginSpec[] {
