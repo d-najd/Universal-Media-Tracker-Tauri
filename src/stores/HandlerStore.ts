@@ -22,6 +22,9 @@ export default class HandlerStore {
 		return [...result.values()].filter((o) => condition([o.id, o]))
 	}
 
+	/**
+	 * key is id of the plugin
+	 */
 	static getHandlersMatchingWithPluginId(
 		condition: (entry: [string, Handler]) => boolean
 	): Map<string, Handler[]> {

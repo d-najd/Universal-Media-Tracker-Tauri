@@ -33,7 +33,6 @@ export default class PluginManagerStore {
 	private static initialized = false
 
 	static async init() {
-		console.log('trying to init')
 		if (this.initialized) {
 			return
 		}
@@ -193,9 +192,7 @@ export default class PluginManagerStore {
 
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
-		console.log('registered')
 		await this.loadPlugins()
-		console.log('loaded')
 	}
 
 	static getLoadedPluginSpecs(): PluginSpec[] {
