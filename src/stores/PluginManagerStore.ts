@@ -77,9 +77,6 @@ export default class PluginManagerStore {
 					>[]
 				>
 
-			console.log('Handlers ')
-			console.log(pluginSourceHandlers)
-
 			let pluginSpecLoaded = false
 			for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
 				for (const handler of handlers) {
@@ -99,9 +96,9 @@ export default class PluginManagerStore {
 								result.code
 							)
 							await (plugin as any).onLoadCallback()
-							const spec = (
+							const spec = (await (
 								plugin! as any
-							).getSpec() as PluginSpec
+							).getSpec()) as PluginSpec
 							const config = plugin.config
 							await spec.onUnload()
 
@@ -172,8 +169,7 @@ export default class PluginManagerStore {
 				folder.path + '/' + pluginFileName
 			)
 			const plugin = await this.loadPluginFromCode(codeStr)
-			await (plugin as any).onLoadCallback()
-			const spec = (plugin! as any).getSpec() as PluginSpec
+			const spec = (await (plugin! as any).getSpec()) as PluginSpec
 
 			const descriptor: PluginDescriptor = {
 				status: 'enabled',
@@ -212,8 +208,7 @@ export default class PluginManagerStore {
 	private static async loadLocalPluginSource() {
 		try {
 			const plugin = LocalPluginSource
-			await (plugin as any).onLoadCallback()
-			const spec = (plugin as any).getSpec() as PluginSpec
+			const spec = (await (plugin as any).getSpec()) as PluginSpec
 			const descriptor: PluginDescriptor = {
 				// uri: localPluginSourceRelativePath,
 				status: 'enabled',
