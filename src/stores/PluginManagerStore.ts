@@ -50,12 +50,6 @@ export default class PluginManagerStore {
 		...descriptors: PluginDescriptor[]
 	) {
 		for (const descriptor of descriptors) {
-			if (descriptor.status === 'error') {
-				console.log(
-					`plugin with uri ${descriptor.url} has state ${descriptor.status}, re-register will be attempted`
-				)
-			}
-
 			if (descriptor.status === 'enabled') {
 				console.log(
 					`can't re-enable plugin ${descriptor.spec.config.id}`
@@ -66,80 +60,97 @@ export default class PluginManagerStore {
 			// TODO this should be recursive, if any plugin failed to load and
 			// new handler is registered it should try to load the failed plugins
 			// with these handlers, both for source and factory
-			const pluginSourceHandlers =
-				HandlerStore.getHandlersMatchingWithPluginId(
-					([, handler]) => handler.type === 'plugin-source'
-				) as Map<
-					string,
-					Handler<
-						PluginSourceHandlerArgs,
-						PluginSourceHandlerResponse
-					>[]
-				>
+			await this.loadDescriptorFromPluginSource(
+				markForLoading,
+				descriptor
+			)
+		}
+	}
 
-			let pluginSpecLoaded = false
-			for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
-				for (const handler of handlers) {
-					if (pluginSpecLoaded) return
+	private static async loadDescriptorFromPluginSource(
+		markForLoading: boolean,
+		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
+	): Promise<boolean> {
+		const pluginSourceHandlers =
+			HandlerStore.getHandlersMatchingWithPluginId(
+				([, handler]) => handler.type === 'plugin-source'
+			) as Map<
+				string,
+				Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
+			>
 
-					const args: PluginSourceHandlerArgs = {
-						url: descriptor.url
-					}
+		for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
+			for (const handler of handlers) {
+				const args: PluginSourceHandlerArgs = {
+					url: descriptor.url
+				}
+				const response = await handler.callback(args)
 
-					const result = await handler.callback(args)
-					switch (result.status) {
-						case 'valid': {
-							pluginSpecLoaded = true
-
-							// Validate plugin
-							const plugin = await this.loadPluginFromCode(
-								result.code
-							)
-							await (plugin as any).onLoadCallback()
-							const spec = (await (
-								plugin! as any
-							).getSpec()) as PluginSpec
-							const config = plugin.config
-							await spec.onUnload()
-
-							// Store plugin
-							const localConfig: LocalPluginConfig = {
-								...config,
-								status: markForLoading ? 'enabled' : 'disabled',
-								url: descriptor.url,
-								handlerId: handler.id,
-								handlerPluginId: pluginId
-							}
-							const storage = await getStorage()
-							const curPluginPath =
-								pluginPath + '/' + spec.config.id
-							await storage.write(
-								curPluginPath + '/' + pluginFileName,
-								result.code
-							)
-							await storage.write(
-								curPluginPath + '/' + pluginConfigName,
-								JSON.stringify(localConfig)
-							)
-							await storage.list('')
-
-							const newDescriptor: PluginDescriptor = {
-								url: descriptor.url,
-								status: 'disabled'
-							}
-							this.plugins.set(config.id, newDescriptor)
-							break
-						}
-						case 'skip':
-							break
-						case 'invalid':
-							console.error(
-								`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${result.reason}`
-							)
-							break
-					}
+				if (
+					await this.handlePluginSourceResponse(
+						markForLoading,
+						descriptor,
+						response,
+						handler,
+						pluginId
+					)
+				) {
+					return true
 				}
 			}
+		}
+		return false
+	}
+
+	private static async handlePluginSourceResponse(
+		markForLoading: boolean,
+		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		response: PluginSourceHandlerResponse,
+		handler: Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>,
+		pluginId: string
+	): Promise<boolean> {
+		switch (response.status) {
+			case 'valid': {
+				// Validate plugin
+				const plugin = await this.loadPluginFromCode(response.code)
+				const spec = (await (plugin! as any).getSpec()) as PluginSpec
+				const config = plugin.config
+				await spec.onUnload()
+
+				// Store plugin
+				const localConfig: LocalPluginConfig = {
+					...config,
+					status: markForLoading ? 'enabled' : 'disabled',
+					url: descriptor.url,
+					handlerId: handler.id,
+					handlerPluginId: pluginId
+				}
+				const storage = await getStorage()
+				const curPluginPath = pluginPath + '/' + spec.config.id
+				await storage.write(
+					curPluginPath + '/' + pluginFileName,
+					response.code
+				)
+				await storage.write(
+					curPluginPath + '/' + pluginConfigName,
+					JSON.stringify(localConfig)
+				)
+				await storage.list('')
+
+				const newDescriptor: PluginDescriptor = {
+					url: descriptor.url,
+					status: 'disabled'
+				}
+				this.plugins.set(config.id, newDescriptor)
+				return true
+			}
+			case 'skip':
+				return false
+			case 'invalid':
+				console.error(
+					`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${response.reason}`
+				)
+				return false
 		}
 	}
 
