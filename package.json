@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "node src/app/plugins/esbuild.config.js && vite",
 		"desktop": "tauri dev",
-		"android": "tauri android build",
+		"android": "tauri android dev",
 		"build": "tsc && vite build",
 		"buildPlugins": "node src/app/plugins/esbuild.config.js",
 		"preview": "vite preview",
