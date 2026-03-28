@@ -55,7 +55,7 @@ plugin.definePluginFactoryHandler({
 
 		try {
 			const manifest = (await (
-				await fetch(args.url)
+				await fetch(`${args.url}`)
 			).json()) as StremioManifest
 
 			const plugin = new Plugin({
@@ -66,7 +66,7 @@ plugin.definePluginFactoryHandler({
 
 			defineCatalogs(plugin, manifest)
 
-			return { status: 'skip' }
+			return { status: 'valid', plugin: plugin }
 		} catch (e) {
 			return { status: 'invalid', reason: e!.toString() }
 		}
@@ -75,9 +75,10 @@ plugin.definePluginFactoryHandler({
 
 function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 	for (const catalog of manifest.catalogs) {
+		console.log(catalog)
 		plugin.defineCatalogHandler({
-			id: manifest.id,
-			name: manifest.name,
+			id: catalog.id,
+			name: catalog.name,
 			resourceType: catalog.type,
 			async callback(
 				args: CatalogHandlerArgs
@@ -96,7 +97,7 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 					catalog.id +
 					'.json'
 				const result = (await (
-					await fetch(newUrl)
+					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
 
 				const mappedData = result.metas.map((o) => {

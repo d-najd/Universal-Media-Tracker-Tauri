@@ -34,7 +34,7 @@ export default function LibraryContent() {
 			const result = await HandlerStore.invokeCallbackOnHandler<
 				CatalogHandlerArgs,
 				CatalogHandlerResponse
-			>('example-plugin-catalog', args)
+			>('kitsu-anime-rating', args)
 			setCatalog(result)
 		})()
 	}, [])

@@ -390,7 +390,9 @@ export default class PluginManagerStore {
 			)
 			console.error(pluginConfigs)
 		} else {
-			await this.loadPluginsUsingPluginFactoryRecursive(pluginConfigs)
+			await this.loadPluginsUsingPluginFactoryRecursive(
+				failedToLoadPluginConfigs
+			)
 		}
 	}
 
@@ -399,6 +401,12 @@ export default class PluginManagerStore {
 			url: o,
 			status: 'disabled'
 		}))
+
+		// stremio addon testing
+		descriptors.push({
+			url: 'https://anime-kitsu.strem.fun/manifest.json',
+			status: 'disabled'
+		})
 
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
