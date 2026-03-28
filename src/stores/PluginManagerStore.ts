@@ -132,6 +132,55 @@ export default class PluginManagerStore {
 		await this.loadPluginsUsingPluginFactoryRecursive(pluginFactoryConfigs)
 	}
 
+	static getLoadedPluginSpecs(): PluginSpec[] {
+		const result: PluginSpec[] = []
+
+		for (const entry of this.plugins.values()) {
+			if (entry.status !== 'enabled') {
+				continue
+			}
+
+			result.push(entry.spec)
+		}
+
+		return result
+	}
+
+	private static async registerDescriptorFromPluginSource(
+		markForLoading: boolean,
+		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
+	): Promise<boolean> {
+		const pluginSourceHandlers =
+			HandlerStore.getHandlersMatchingWithPluginId(
+				([, handler]) => handler.type === 'plugin-source'
+			) as Map<
+				string,
+				Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
+			>
+
+		for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
+			for (const handler of handlers) {
+				const args: PluginSourceHandlerArgs = {
+					url: descriptor.url
+				}
+				const response = await handler.callback(args)
+
+				if (
+					await this.handlePluginSourceResponse(
+						markForLoading,
+						descriptor,
+						pluginId,
+						response,
+						handler
+					)
+				) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
 	private static async registerDescriptorFromPluginFactory(
 		markForLoading: boolean,
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
@@ -217,41 +266,6 @@ export default class PluginManagerStore {
 		}
 	}
 
-	private static async registerDescriptorFromPluginSource(
-		markForLoading: boolean,
-		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
-	): Promise<boolean> {
-		const pluginSourceHandlers =
-			HandlerStore.getHandlersMatchingWithPluginId(
-				([, handler]) => handler.type === 'plugin-source'
-			) as Map<
-				string,
-				Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
-			>
-
-		for (const [pluginId, handlers] of pluginSourceHandlers.entries()) {
-			for (const handler of handlers) {
-				const args: PluginSourceHandlerArgs = {
-					url: descriptor.url
-				}
-				const response = await handler.callback(args)
-
-				if (
-					await this.handlePluginSourceResponse(
-						markForLoading,
-						descriptor,
-						pluginId,
-						response,
-						handler
-					)
-				) {
-					return true
-				}
-			}
-		}
-		return false
-	}
-
 	private static async handlePluginSourceResponse(
 		markForLoading: boolean,
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
@@ -302,6 +316,23 @@ export default class PluginManagerStore {
 				)
 				return false
 		}
+	}
+
+	private static async loadPluginUsingPluginSource(
+		folder: DirEntry,
+		config: LocalPluginConfig
+	) {
+		const storage = await getStorage()
+		const codeStr = await storage.read(folder.path + '/' + pluginFileName)
+		const plugin = await this.loadPluginFromCode(codeStr)
+		const spec = (await (plugin! as any).getSpec()) as PluginSpec
+
+		const descriptor: PluginDescriptor = {
+			status: 'enabled',
+			plugin: plugin,
+			spec: spec
+		}
+		this.plugins.set(config.id, descriptor)
 	}
 
 	private static async loadPluginsUsingPluginFactoryRecursive(
@@ -359,23 +390,6 @@ export default class PluginManagerStore {
 		}
 	}
 
-	private static async loadPluginUsingPluginSource(
-		folder: DirEntry,
-		config: LocalPluginConfig
-	) {
-		const storage = await getStorage()
-		const codeStr = await storage.read(folder.path + '/' + pluginFileName)
-		const plugin = await this.loadPluginFromCode(codeStr)
-		const spec = (await (plugin! as any).getSpec()) as PluginSpec
-
-		const descriptor: PluginDescriptor = {
-			status: 'enabled',
-			plugin: plugin,
-			spec: spec
-		}
-		this.plugins.set(config.id, descriptor)
-	}
-
 	private static async loadBasePlugins() {
 		const descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
 			url: o,
@@ -385,20 +399,6 @@ export default class PluginManagerStore {
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
 		await this.loadPlugins()
-	}
-
-	static getLoadedPluginSpecs(): PluginSpec[] {
-		const result: PluginSpec[] = []
-
-		for (const entry of this.plugins.values()) {
-			if (entry.status !== 'enabled') {
-				continue
-			}
-
-			result.push(entry.spec)
-		}
-
-		return result
 	}
 
 	private static async loadLocalPluginSource() {
