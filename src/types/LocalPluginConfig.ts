@@ -4,11 +4,16 @@ type LocalPluginConfig = PluginConfig & {
 	status: 'enabled' | 'disabled'
 	url: string
 	/**
-	 * Id of the handler this was handled with
+	 * ID of the handler this was handled with
 	 */
 	handlerId: string
-	// Id to which the current handler belongs to
+	/**
+	 * ID of the plugin that the handler belongs to
+	 * Planned to be used with plugin-factory to warn the user if the factory is
+	 * removed
+	 */
 	handlerPluginId: string
+	loadedFrom: 'plugin-factory' | 'plugin-source'
 }
 
 export default LocalPluginConfig

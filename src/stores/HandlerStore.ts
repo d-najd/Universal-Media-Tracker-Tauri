@@ -71,4 +71,24 @@ export default class HandlerStore {
 		const callback = handler.callback as (args: T) => Promise<R>
 		return await callback(args)
 	}
+
+	/**
+	 * All the other methods work with overriding handlerId if another plugin
+	 * of higher priority registers handler with the same id, except this one,
+	 * This method should be avoided if possible
+	 */
+	// static async getHandlerNoOverrides(handlerId: string, pluginId: string): Promise<Handler> {
+	// 	for (const entry of PluginManagerStore.getLoadedPluginSpecs()) {
+	// 		if (entry.config.id !== pluginId) continue
+	//
+	// 		const handler = entry.handlers.get(handlerId)
+	//
+	// 		if (handler !== undefined) {
+	// 			return handler
+	// 		}
+	// 	}
+	// 	throw Error(
+	// 		`Handler with id ${handlerId} and pluginId ${pluginId} doesn't exist!`
+	// 	)
+	// }
 }

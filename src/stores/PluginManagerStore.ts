@@ -12,10 +12,13 @@ import LocalPluginConfig from '@/types/LocalPluginConfig'
 import {
 	Handler,
 	Plugin,
+	PluginFactoryHandlerArgs,
+	PluginFactoryHandlerResponse,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 	PluginSpec
 } from '@d-najd/universal-media-tracker-sdk'
+import DirEntry from '@/lib/storage/DirEntry'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -49,25 +52,179 @@ export default class PluginManagerStore {
 		markForLoading = true,
 		...descriptors: PluginDescriptor[]
 	) {
+		const descriptorsFailedLoading: PluginDescriptor[] = []
 		for (const descriptor of descriptors) {
 			if (descriptor.status === 'enabled') {
 				console.log(
 					`can't re-enable plugin ${descriptor.spec.config.id}`
 				)
+				// edge case
+				descriptorsFailedLoading.push(descriptor)
 				continue
 			}
 
-			// TODO this should be recursive, if any plugin failed to load and
-			// new handler is registered it should try to load the failed plugins
-			// with these handlers, both for source and factory
-			await this.loadDescriptorFromPluginSource(
+			if (
+				await this.registerDescriptorFromPluginSource(
+					markForLoading,
+					descriptor
+				)
+			) {
+				continue
+			}
+
+			if (
+				await this.registerDescriptorFromPluginFactory(
+					markForLoading,
+					descriptor
+				)
+			) {
+				continue
+			}
+
+			descriptorsFailedLoading.push(descriptor)
+		}
+
+		// Recursively try to load plugins if atleast one plugin more managed to load
+		if (descriptorsFailedLoading.length !== descriptors.length) {
+			await this.registerPlugins(
 				markForLoading,
-				descriptor
+				...descriptorsFailedLoading
 			)
 		}
 	}
 
-	private static async loadDescriptorFromPluginSource(
+	/**
+	 * load's locally saved plugins with the flag status enabled
+	 */
+	static async loadPlugins() {
+		// await this.registerPlugins(false, ...descriptors)
+		const storage = await getStorage()
+		const pluginFolders = await storage.list(pluginPath)
+		const pluginFactoryFolders: {
+			folder: DirEntry
+			config: LocalPluginConfig
+		}[] = []
+
+		for (const folder of pluginFolders) {
+			if (this.plugins.get(folder.name)?.status === 'enabled') continue
+
+			if (folder.type === 'file') {
+				console.error('File found in plugin folder root????')
+				continue
+			}
+
+			const jsonStr = await storage.read(
+				folder.path + '/' + pluginConfigName
+			)
+			const config = JSON.parse(jsonStr) as LocalPluginConfig
+			if (config.status === 'disabled') continue
+
+			switch (config.loadedFrom) {
+				case 'plugin-source': {
+					await this.loadPluginUsingPluginSource(folder, config)
+					break
+				}
+				case 'plugin-factory': {
+					pluginFactoryFolders.push({ folder, config })
+					// TODO this should be loaded last and recursively
+					await this.loadPluginUsingPluginFactoryRecursive(
+						folder,
+						config
+					)
+					break
+				}
+				default:
+					throw Error('Unhandled')
+			}
+		}
+	}
+
+	private static async registerDescriptorFromPluginFactory(
+		markForLoading: boolean,
+		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
+	): Promise<boolean> {
+		const pluginFactoryHandlers =
+			HandlerStore.getHandlersMatchingWithPluginId(
+				([, handler]) => handler.type === 'plugin-factory'
+			) as Map<
+				string,
+				Handler<
+					PluginFactoryHandlerArgs,
+					PluginFactoryHandlerResponse
+				>[]
+			>
+
+		for (const [pluginId, handlers] of pluginFactoryHandlers.entries()) {
+			for (const handler of handlers) {
+				const args: PluginFactoryHandlerArgs = {
+					url: descriptor.url
+				}
+				const response = await handler.callback(args)
+
+				if (
+					await this.handlePluginFactoryResponse(
+						markForLoading,
+						descriptor,
+						pluginId,
+						response,
+						handler
+					)
+				) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	private static async handlePluginFactoryResponse(
+		markForLoading: boolean,
+		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		pluginId: string,
+		response: PluginFactoryHandlerResponse,
+		handler: Handler<PluginFactoryHandlerArgs, PluginFactoryHandlerResponse>
+	): Promise<boolean> {
+		switch (response.status) {
+			case 'valid': {
+				const plugin = response.plugin
+				const spec = (await (plugin! as any).getSpec()) as PluginSpec
+				const config = plugin.config
+				await spec.onUnload()
+
+				const localConfig: LocalPluginConfig = {
+					...config,
+					status: markForLoading ? 'enabled' : 'disabled',
+					url: descriptor.url,
+					handlerId: handler.id,
+					handlerPluginId: pluginId,
+					loadedFrom: 'plugin-factory'
+				}
+
+				const storage = await getStorage()
+				const curPluginPath = pluginPath + '/' + spec.config.id
+				await storage.write(
+					curPluginPath + '/' + pluginConfigName,
+					JSON.stringify(localConfig)
+				)
+
+				const newDescriptor: PluginDescriptor = {
+					url: descriptor.url,
+					status: 'disabled'
+				}
+				this.plugins.set(config.id, newDescriptor)
+				return true
+			}
+			case 'skip':
+				return false
+			case 'invalid':
+				console.error(
+					`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${response.reason}`
+				)
+				return false
+		}
+	}
+
+	private static async registerDescriptorFromPluginSource(
 		markForLoading: boolean,
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
 	): Promise<boolean> {
@@ -90,9 +247,9 @@ export default class PluginManagerStore {
 					await this.handlePluginSourceResponse(
 						markForLoading,
 						descriptor,
+						pluginId,
 						response,
-						handler,
-						pluginId
+						handler
 					)
 				) {
 					return true
@@ -105,9 +262,9 @@ export default class PluginManagerStore {
 	private static async handlePluginSourceResponse(
 		markForLoading: boolean,
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		pluginId: string,
 		response: PluginSourceHandlerResponse,
-		handler: Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>,
-		pluginId: string
+		handler: Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>
 	): Promise<boolean> {
 		switch (response.status) {
 			case 'valid': {
@@ -123,7 +280,8 @@ export default class PluginManagerStore {
 					status: markForLoading ? 'enabled' : 'disabled',
 					url: descriptor.url,
 					handlerId: handler.id,
-					handlerPluginId: pluginId
+					handlerPluginId: pluginId,
+					loadedFrom: 'plugin-source'
 				}
 				const storage = await getStorage()
 				const curPluginPath = pluginPath + '/' + spec.config.id
@@ -135,7 +293,6 @@ export default class PluginManagerStore {
 					curPluginPath + '/' + pluginConfigName,
 					JSON.stringify(localConfig)
 				)
-				await storage.list('')
 
 				const newDescriptor: PluginDescriptor = {
 					url: descriptor.url,
@@ -154,41 +311,58 @@ export default class PluginManagerStore {
 		}
 	}
 
-	/**
-	 * load's locally saved plugins with the flag status enabled
-	 */
-	static async loadPlugins() {
-		// await this.registerPlugins(false, ...descriptors)
-		const storage = await getStorage()
-		const pluginFolders = await storage.list(pluginPath)
-
-		for (const folder of pluginFolders) {
-			if (this.plugins.get(folder.name)?.status === 'enabled') continue
-
-			if (folder.type === 'file') {
-				throw Error('File found in plugin folder root????')
-			}
-
-			const jsonStr = await storage.read(
-				folder.path + '/' + pluginConfigName
-			)
-			const config = JSON.parse(jsonStr) as LocalPluginConfig
-
-			if (config.status === 'disabled') continue
-
-			const codeStr = await storage.read(
-				folder.path + '/' + pluginFileName
-			)
-			const plugin = await this.loadPluginFromCode(codeStr)
-			const spec = (await (plugin! as any).getSpec()) as PluginSpec
-
-			const descriptor: PluginDescriptor = {
-				status: 'enabled',
-				plugin: plugin,
-				spec: spec
-			}
-			this.plugins.set(config.id, descriptor)
+	private static async loadPluginUsingPluginFactoryRecursive(
+		folder: DirEntry,
+		config: LocalPluginConfig
+	) {
+		const handler = HandlerStore.getHandlersMatching(
+			(o) => o.id === config.handlerId
+		)[0]
+		if (handler.type !== 'plugin-factory') {
+			throw Error(`Handler ${handler.id} is not a factory?`)
 		}
+		const callback = (
+			handler as Handler<
+				PluginFactoryHandlerArgs,
+				PluginFactoryHandlerResponse
+			>
+		).callback
+
+		const args: PluginFactoryHandlerArgs = {
+			url: config.url
+		}
+		const response = await callback(args)
+		if (response.status !== 'valid') {
+			throw Error(
+				`Handler ${handler.id} that was used to load plugin ${config.id} failed now?`
+			)
+		}
+		const plugin = response.plugin
+		const spec = (await (plugin! as any).getSpec()) as PluginSpec
+
+		const descriptor: PluginDescriptor = {
+			status: 'enabled',
+			plugin: plugin,
+			spec: spec
+		}
+		this.plugins.set(config.id, descriptor)
+	}
+
+	private static async loadPluginUsingPluginSource(
+		folder: DirEntry,
+		config: LocalPluginConfig
+	) {
+		const storage = await getStorage()
+		const codeStr = await storage.read(folder.path + '/' + pluginFileName)
+		const plugin = await this.loadPluginFromCode(codeStr)
+		const spec = (await (plugin! as any).getSpec()) as PluginSpec
+
+		const descriptor: PluginDescriptor = {
+			status: 'enabled',
+			plugin: plugin,
+			spec: spec
+		}
+		this.plugins.set(config.id, descriptor)
 	}
 
 	private static async loadBasePlugins() {
