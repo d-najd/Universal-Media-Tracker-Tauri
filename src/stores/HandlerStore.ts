@@ -6,7 +6,7 @@ import { Handler } from '@d-najd/universal-media-tracker-sdk'
  */
 export default class HandlerStore {
 	static getHandlersMatching(
-		condition: (entry: [string, Handler]) => boolean
+		condition: (entry: Handler) => boolean
 	): Handler[] {
 		// Key is the id of the handler, this is to prevent duplicates
 		const result: Map<string, Handler> = new Map<string, Handler>()
@@ -19,11 +19,12 @@ export default class HandlerStore {
 		}
 
 		// Filtering is done last to ensure consistent behavior
-		return [...result.values()].filter((o) => condition([o.id, o]))
+		return [...result.values()].filter((o) => condition(o))
 	}
 
 	/**
 	 * key is id of the plugin
+	 * @param condition key is pluginId, value is handler
 	 */
 	static getHandlersMatchingWithPluginId(
 		condition: (entry: [string, Handler]) => boolean
@@ -46,7 +47,7 @@ export default class HandlerStore {
 
 		const result: Map<string, Handler[]> = new Map<string, Handler[]>()
 		const filtered = [...filteringMap.values()].filter((o) =>
-			condition([o.handler.id, o.handler])
+			condition([o.pluginId, o.handler])
 		)
 
 		for (const entry of filtered) {
@@ -60,10 +61,9 @@ export default class HandlerStore {
 	}
 
 	static async invokeCallbackOnHandler<T, R>(id: string, args: T) {
-		const specs = PluginManagerStore.getLoadedPluginSpecs()
-		const handler = specs
-			.flatMap((o) => [...o.handlers.values()].flat())
-			.find((o) => o.id === id)
+		const handler = this.getHandlersMatching(
+			(handler) => handler.id === id
+		)[0]
 		if (!handler) {
 			throw Error("Handler with requested id doesn't exist")
 		}
