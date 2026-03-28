@@ -97,13 +97,9 @@ export default class PluginManagerStore {
 	 * load's locally saved plugins with the flag status enabled
 	 */
 	static async loadPlugins() {
-		// await this.registerPlugins(false, ...descriptors)
 		const storage = await getStorage()
 		const pluginFolders = await storage.list(pluginPath)
-		const pluginFactoryFolders: {
-			folder: DirEntry
-			config: LocalPluginConfig
-		}[] = []
+		const pluginFactoryConfigs: LocalPluginConfig[] = []
 
 		for (const folder of pluginFolders) {
 			if (this.plugins.get(folder.name)?.status === 'enabled') continue
@@ -125,18 +121,15 @@ export default class PluginManagerStore {
 					break
 				}
 				case 'plugin-factory': {
-					pluginFactoryFolders.push({ folder, config })
-					// TODO this should be loaded last and recursively
-					await this.loadPluginUsingPluginFactoryRecursive(
-						folder,
-						config
-					)
+					pluginFactoryConfigs.push(config)
 					break
 				}
 				default:
 					throw Error('Unhandled')
 			}
 		}
+
+		await this.loadPluginsUsingPluginFactoryRecursive(pluginFactoryConfigs)
 	}
 
 	private static async registerDescriptorFromPluginFactory(
@@ -311,41 +304,59 @@ export default class PluginManagerStore {
 		}
 	}
 
-	private static async loadPluginUsingPluginFactoryRecursive(
-		folder: DirEntry,
-		config: LocalPluginConfig
+	private static async loadPluginsUsingPluginFactoryRecursive(
+		pluginConfigs: LocalPluginConfig[]
 	) {
-		const handler = HandlerStore.getHandlersMatching(
-			(o) => o.id === config.handlerId
-		)[0]
-		if (handler.type !== 'plugin-factory') {
-			throw Error(`Handler ${handler.id} is not a factory?`)
-		}
-		const callback = (
-			handler as Handler<
-				PluginFactoryHandlerArgs,
-				PluginFactoryHandlerResponse
-			>
-		).callback
-
-		const args: PluginFactoryHandlerArgs = {
-			url: config.url
-		}
-		const response = await callback(args)
-		if (response.status !== 'valid') {
-			throw Error(
-				`Handler ${handler.id} that was used to load plugin ${config.id} failed now?`
+		const failedToLoadPluginConfigs: LocalPluginConfig[] = []
+		for (const config of pluginConfigs) {
+			const handlers = HandlerStore.getHandlersMatching(
+				(o) => o.id === config.handlerId
 			)
-		}
-		const plugin = response.plugin
-		const spec = (await (plugin! as any).getSpec()) as PluginSpec
+			if (handlers.length === 0) {
+				// Can't find handler now, maybe next recursion when more factories load?
+				failedToLoadPluginConfigs.push(config)
+				continue
+			}
 
-		const descriptor: PluginDescriptor = {
-			status: 'enabled',
-			plugin: plugin,
-			spec: spec
+			const handler = handlers[0]
+			if (handler.type !== 'plugin-factory') {
+				throw Error(`Handler ${handler.id} is not a factory?`)
+			}
+			const callback = (
+				handler as Handler<
+					PluginFactoryHandlerArgs,
+					PluginFactoryHandlerResponse
+				>
+			).callback
+
+			const args: PluginFactoryHandlerArgs = {
+				url: config.url
+			}
+			const response = await callback(args)
+			if (response.status !== 'valid') {
+				throw Error(
+					`Handler ${handler.id} that was used to load plugin ${config.id} failed now?`
+				)
+			}
+			const plugin = response.plugin
+			const spec = (await (plugin! as any).getSpec()) as PluginSpec
+
+			const descriptor: PluginDescriptor = {
+				status: 'enabled',
+				plugin: plugin,
+				spec: spec
+			}
+			this.plugins.set(config.id, descriptor)
 		}
-		this.plugins.set(config.id, descriptor)
+
+		if (failedToLoadPluginConfigs.length === pluginConfigs.length) {
+			console.error(
+				`Failed to load plugins: ${pluginConfigs.length} using factory`
+			)
+			console.error(pluginConfigs)
+		} else {
+			await this.loadPluginsUsingPluginFactoryRecursive(pluginConfigs)
+		}
 	}
 
 	private static async loadPluginUsingPluginSource(
