@@ -47,6 +47,11 @@ export default class IndexedDBStorage implements Storage {
 		toDelete.forEach((o) => this.db.delete(this.storeName, o))
 	}
 
+	async deleteAll() {
+		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
+		keys.forEach((o) => this.db.delete(this.storeName, o))
+	}
+
 	async list(path: string): Promise<DirEntry[]> {
 		if (this.isFile(path)) {
 			throw new Error(`Unable to list from a file ${path}`)

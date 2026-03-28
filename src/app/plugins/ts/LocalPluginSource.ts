@@ -23,7 +23,11 @@ plugin.definePluginSourceHandler({
 		}
 
 		try {
-			const module = await import(/* @vite-ignore */ url)
+			// const module = await import(
+			// 	/* @vite-ignore */ pathToFileURL(url).href
+			// )
+			const first = import.meta.glob('@/app/plugins/js/*.js')
+			const module = (await first[url]()) as any
 			const plugin: Plugin = module.default
 
 			if (!plugin) {
@@ -50,5 +54,15 @@ plugin.definePluginSourceHandler({
 		}
 	}
 })
+
+async function loadPluginFromCode(code: string): Promise<Plugin> {
+	const blob = new Blob([code], {
+		type: 'text/javascript'
+	})
+	const url = URL.createObjectURL(blob)
+	const module = await import(/* @vite-ignore */ url)
+	URL.revokeObjectURL(url)
+	return module.default
+}
 
 export default plugin

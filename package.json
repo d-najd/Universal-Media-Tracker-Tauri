@@ -4,7 +4,7 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "node src/app/plugins/esbuild.config.js && vite",
 		"tauriDev": "tauri dev",
 		"build": "tsc && vite build",
 		"buildPlugins": "node src/app/plugins/esbuild.config.js",

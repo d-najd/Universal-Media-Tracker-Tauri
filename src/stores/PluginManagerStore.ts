@@ -69,6 +69,7 @@ export default class PluginManagerStore {
 					descriptor
 				)
 			) {
+				if (markForLoading) await this.loadPlugins()
 				continue
 			}
 
@@ -78,6 +79,7 @@ export default class PluginManagerStore {
 					descriptor
 				)
 			) {
+				if (markForLoading) await this.loadPlugins()
 				continue
 			}
 
