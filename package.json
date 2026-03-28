@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "node src/app/plugins/esbuild.config.js && vite",
-		"tauriDev": "tauri dev",
+		"desktop": "tauri dev",
+		"android": "tauri android build",
 		"build": "tsc && vite build",
 		"buildPlugins": "node src/app/plugins/esbuild.config.js",
 		"preview": "vite preview",
