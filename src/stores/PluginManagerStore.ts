@@ -380,7 +380,9 @@ export default class PluginManagerStore {
 			this.plugins.set(config.id, descriptor)
 		}
 
-		if (failedToLoadPluginConfigs.length === pluginConfigs.length) {
+		if (pluginConfigs.length === 0) {
+			return
+		} else if (failedToLoadPluginConfigs.length === pluginConfigs.length) {
 			console.error(
 				`Failed to load plugins: ${pluginConfigs.length} using factory`
 			)
