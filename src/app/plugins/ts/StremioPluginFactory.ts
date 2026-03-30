@@ -5,7 +5,8 @@ import {
 	Plugin,
 	PluginConfig,
 	PluginFactoryHandlerArgs,
-	PluginFactoryHandlerResponse
+	PluginFactoryHandlerResponse,
+	ResourceBrowseOption
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
@@ -27,7 +28,15 @@ type StremioCatalogEntry = {
 	id: string
 	name: string
 	type: string
-	poster: string
+	extra?: StremioCatalogEntryExtra[]
+	// poster: string
+}
+
+type StremioCatalogEntryExtra = {
+	name: string
+	options?: string[]
+	optionsLimit?: number
+	isRequired?: boolean
 }
 
 type StremioCatalogResponse = {
@@ -75,11 +84,26 @@ plugin.definePluginFactoryHandler({
 
 function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 	for (const catalog of manifest.catalogs) {
-		console.log(catalog)
+		const options = catalog.extra
+			?.filter(
+				(o) => resourceBrowseOptionArgToTypeConverter(o) !== 'unknown'
+			)
+			.map((o) => {
+				const result: ResourceBrowseOption = {
+					isRequired: o.isRequired,
+					name: o.name,
+					options: o.options,
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					type: resourceBrowseOptionArgToTypeConverter(o) as any
+				}
+				return result
+			})
+
 		plugin.defineCatalogHandler({
 			id: catalog.id,
 			name: catalog.name,
 			resourceType: catalog.type,
+			options: options,
 			async callback(
 				args: CatalogHandlerArgs
 			): Promise<CatalogHandlerResponse> {
@@ -89,13 +113,21 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 					-MANIFEST_STRING.length
 				)
 
-				const newUrl =
+				let newUrl =
 					urlExceptManifest +
 					'/catalog/' +
 					catalog.type +
 					'/' +
-					catalog.id +
-					'.json'
+					catalog.id
+				if (args.options) {
+					newUrl +=
+						'/' +
+						args.options
+							.map((o) => o.name + '=' + o.input)
+							.join('&')
+				}
+				newUrl += '.json'
+
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
@@ -116,6 +148,24 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 			}
 		})
 	}
+}
+
+function resourceBrowseOptionArgToTypeConverter(
+	arg: StremioCatalogEntryExtra
+): string {
+	if (arg.name === 'search') {
+		return 'string'
+	}
+	if (arg.name === 'skip') {
+		return 'number'
+	}
+	if (!arg.options) {
+		if (!arg.optionsLimit && arg.optionsLimit === 1) {
+			return 'radio'
+		}
+		return 'checkbox'
+	}
+	return 'unknown'
 }
 
 export default plugin
