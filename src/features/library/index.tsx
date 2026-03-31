@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import {
 	InputGroup,
 	InputGroupAddon,
@@ -11,12 +11,22 @@ import LibraryGrid from '@/features/library/components/libraryGrid'
 
 export default function LibraryContent() {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
+	const [search, setSearch] = useState('')
+	const [debouncedSearch, setDebouncedSearch] = useState('')
 
 	const { ref: topbarRef, size: topbarSize } =
 		useElementSize<HTMLDivElement>()
 
 	const { ref: topBarIconsRef, size: topBarIconsSize } =
 		useElementSize<HTMLDivElement>()
+
+	useEffect(() => {
+		const timeout = setTimeout(() => {
+			setDebouncedSearch(search)
+		}, 300)
+
+		return () => clearTimeout(timeout)
+	}, [search])
 
 	const topbarSearchMaxWidthPx = 480
 	useLayoutEffect(() => {
@@ -53,6 +63,8 @@ export default function LibraryContent() {
 					>
 						<InputGroupInput
 							placeholder={'Search'}
+							value={search}
+							onChange={(o) => setSearch(o.target.value)}
 						></InputGroupInput>
 						<InputGroupAddon align={'inline-end'}>
 							<Search />
@@ -82,7 +94,7 @@ export default function LibraryContent() {
 					{/*</Button>*/}
 				</div>
 			</div>
-			<LibraryGrid topbarSize={topbarSize} />
+			<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
 		</>
 	)
 }
