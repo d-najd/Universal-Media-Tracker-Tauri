@@ -1,7 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import PluginManagerStore from '@/stores/PluginManagerStore'
-import { Card } from '@/components/ui/card'
-import { cva } from 'class-variance-authority'
+import { useLayoutEffect, useState } from 'react'
 import {
 	InputGroup,
 	InputGroupAddon,
@@ -10,34 +7,10 @@ import {
 import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
-import {
-	BaseHandlerArgs,
-	CatalogHandlerArgs,
-	CatalogHandlerResponse
-} from '@d-najd/universal-media-tracker-sdk'
-import HandlerStore from '@/stores/HandlerStore'
+import LibraryGrid from '@/features/library/components/libraryGrid'
 
 export default function LibraryContent() {
-	const pluginStoreInitialized = useRef(false)
-	const [catalog, setCatalog] = useState<CatalogHandlerResponse | null>(null)
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
-
-	useEffect(() => {
-		if (pluginStoreInitialized.current) return
-		pluginStoreInitialized.current = true
-		;(async () => {
-			await PluginManagerStore.init()
-			const args: BaseHandlerArgs = {
-				pageSize: 20
-			}
-
-			const result = await HandlerStore.invokeCallbackOnHandler<
-				CatalogHandlerArgs,
-				CatalogHandlerResponse
-			>('kitsu-anime-rating', args)
-			setCatalog(result)
-		})()
-	}, [])
 
 	const { ref: topbarRef, size: topbarSize } =
 		useElementSize<HTMLDivElement>()
@@ -57,18 +30,6 @@ export default function LibraryContent() {
 				)
 			)
 		)
-	})
-
-	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
-		variants: {
-			hoverable: {
-				true: 'hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary border',
-				false: ''
-			}
-		},
-		defaultVariants: {
-			hoverable: true
-		}
 	})
 
 	return (
@@ -121,31 +82,7 @@ export default function LibraryContent() {
 					{/*</Button>*/}
 				</div>
 			</div>
-
-			{catalog ? (
-				<>
-					<div
-						className={`absolute flex gap-2.75 flex-row flex-wrap content-start px-3`}
-						style={{ paddingTop: topbarSize.height + 10 }}
-					>
-						{catalog.data.map((item, key) => (
-							<Card key={key} className={cardStyle()}>
-								<img
-									className="w-full h-full object-fill"
-									alt="no content"
-									src={item.poster}
-									onError={(e) => {
-										// TODO placeholder
-										e.currentTarget.style.display = 'none'
-									}}
-								/>
-							</Card>
-						))}
-					</div>
-				</>
-			) : (
-				<>No Data</>
-			)}
+			<LibraryGrid topbarSize={topbarSize} />
 		</>
 	)
 }
