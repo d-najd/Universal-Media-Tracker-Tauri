@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-	BaseHandlerArgs,
 	CatalogHandlerArgs,
-	CatalogHandlerResponse
+	CatalogHandlerResponse,
+	MetaPreview,
+	ResourceHandler,
+	ResourceHandlerArgs
 } from '@d-najd/universal-media-tracker-sdk'
 import { cva } from 'class-variance-authority'
 import { Card } from '@/components/ui/card'
@@ -15,24 +17,77 @@ interface LibraryGridProps {
 
 export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 	const pluginStoreInitialized = useRef(false)
-	const [catalog, setCatalog] = useState<CatalogHandlerResponse | null>(null)
+	const [catalogOld, setCatalogOld] = useState<CatalogHandlerResponse | null>(
+		null
+	)
+	const [catalog, setCatalog] = useState<MetaPreview[]>([])
+	const [previousFetchSize, setPreviousFetchSize] = useState(0)
+	const [skip, setSkip] = useState(0)
+	const [loading, setLoading] = useState(false)
+	const [reachedEnd, setReachedEnd] = useState(false)
+
+	const observer = useRef<IntersectionObserver | null>(null)
+	const lastItemRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			if (loading) return
+			if (observer.current) observer.current.disconnect()
+			observer.current = new IntersectionObserver((entries) => {
+				if (entries[0].isIntersecting) {
+					setSkip((o) => o + previousFetchSize)
+					// setPage((prev) => prev + 1)
+				}
+			})
+			if (node) observer.current.observe(node)
+		},
+		[loading]
+	)
+
+	const fetchCatalog = async (
+		catalogFetchCallback: () => Promise<CatalogHandlerResponse>
+	) => {
+		setLoading(true)
+		const result = await catalogFetchCallback()
+		if (result.data.length === 0) {
+			setReachedEnd(true)
+			return
+		}
+
+		setPreviousFetchSize(result.data.length)
+
+		setCatalog((prev) => [
+			...prev,
+			...result.data.filter((c) => !prev.some((p) => c.id === p.id))
+			// ...result.data.filter((c) => !prev.some((p) => c.id !== p.id))
+		])
+		setLoading(false)
+	}
 
 	useEffect(() => {
-		if (pluginStoreInitialized.current) return
-		pluginStoreInitialized.current = true
+		if (reachedEnd) return
 		;(async () => {
-			await PluginManagerStore.init()
-			const args: BaseHandlerArgs = {
-				pageSize: 20
+			if (!pluginStoreInitialized.current) {
+				pluginStoreInitialized.current = true
+				await PluginManagerStore.init()
 			}
 
-			const result = await HandlerStore.invokeCallbackOnHandler<
-				CatalogHandlerArgs,
-				CatalogHandlerResponse
-			>('kitsu-anime-rating', args)
-			setCatalog(result)
+			const handler = HandlerStore.getHandlersMatching(
+				(o) => o.id === 'kitsu-anime-rating'
+			)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
+
+			const hasSkipOption =
+				handler?.options?.some(
+					(o) => o.name === 'skip' && o.type === 'number'
+				) ?? false
+
+			const args: ResourceHandlerArgs = {
+				options: [
+					...(hasSkipOption ? [{ name: 'skip', input: skip }] : [])
+				]
+			}
+			const catalogFetchCallback = () => handler.callback(args)
+			await fetchCatalog(catalogFetchCallback)
 		})()
-	}, [])
+	}, [skip])
 
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
 		variants: {
@@ -54,8 +109,12 @@ export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 						className={`absolute flex gap-2.75 flex-row flex-wrap content-start px-3`}
 						style={{ paddingTop: topbarSize.height + 10 }}
 					>
-						{catalog.data.map((item, key) => (
-							<Card key={key} className={cardStyle()}>
+						{catalog.map((item, key) => (
+							<Card
+								key={key}
+								className={cardStyle()}
+								ref={lastItemRef}
+							>
 								<img
 									className="w-full h-full object-fill"
 									alt="no content"
