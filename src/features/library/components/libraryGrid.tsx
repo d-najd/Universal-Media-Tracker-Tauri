@@ -33,7 +33,6 @@ export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 			observer.current = new IntersectionObserver((entries) => {
 				if (entries[0].isIntersecting) {
 					setSkip((o) => o + previousFetchSize)
-					// setPage((prev) => prev + 1)
 				}
 			})
 			if (node) observer.current.observe(node)
