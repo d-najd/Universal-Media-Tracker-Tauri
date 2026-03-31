@@ -17,10 +17,9 @@ interface LibraryGridProps {
 
 export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 	const pluginStoreInitialized = useRef(false)
-	const [catalogOld, setCatalogOld] = useState<CatalogHandlerResponse | null>(
-		null
+	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
+		new Map<string, MetaPreview>()
 	)
-	const [catalog, setCatalog] = useState<MetaPreview[]>([])
 	const [previousFetchSize, setPreviousFetchSize] = useState(0)
 	const [skip, setSkip] = useState(0)
 	const [loading, setLoading] = useState(false)
@@ -53,12 +52,10 @@ export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 		}
 
 		setPreviousFetchSize(result.data.length)
-
-		setCatalog((prev) => [
-			...prev,
-			...result.data.filter((c) => !prev.some((p) => c.id === p.id))
-			// ...result.data.filter((c) => !prev.some((p) => c.id !== p.id))
-		])
+		setCatalog((prev) => {
+			result.data.forEach((o) => prev.set(o.id, o))
+			return prev
+		})
 		setLoading(false)
 	}
 
@@ -109,7 +106,7 @@ export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 						className={`absolute flex gap-2.75 flex-row flex-wrap content-start px-3`}
 						style={{ paddingTop: topbarSize.height + 10 }}
 					>
-						{catalog.map((item, key) => (
+						{[...catalog.values()].map((item, key) => (
 							<Card
 								key={key}
 								className={cardStyle()}
