@@ -15,7 +15,7 @@ type LibraryGridProps = {
 	topbarSize: { width: number; height: number }
 }
 
-export default function LibraryGrid({ topbarSize, ...rest }: LibraryGridProps) {
+export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 	const pluginStoreInitialized = useRef(false)
 	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
 		new Map<string, MetaPreview>()
