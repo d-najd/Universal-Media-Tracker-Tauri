@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
@@ -11,11 +11,11 @@ import { Card } from '@/components/ui/card'
 import PluginManagerStore from '@/stores/PluginManagerStore'
 import HandlerStore from '@/stores/HandlerStore'
 
-interface LibraryGridProps {
+type LibraryGridProps = {
 	topbarSize: { width: number; height: number }
 }
 
-export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
+export default function LibraryGrid({ topbarSize, ...rest }: LibraryGridProps) {
 	const pluginStoreInitialized = useRef(false)
 	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
 		new Map<string, MetaPreview>()
@@ -100,30 +100,28 @@ export default function LibraryGrid({ topbarSize }: LibraryGridProps) {
 	return (
 		<>
 			{catalog ? (
-				<>
-					<div
-						className={`absolute flex gap-2.75 flex-row flex-wrap content-start px-3`}
-						style={{ paddingTop: topbarSize.height + 10 }}
-					>
-						{[...catalog.values()].map((item, key) => (
-							<Card
-								key={key}
-								className={cardStyle()}
-								ref={lastItemRef}
-							>
-								<img
-									className="w-full h-full object-fill"
-									alt="no content"
-									src={item.poster}
-									onError={(e) => {
-										// TODO placeholder
-										e.currentTarget.style.display = 'none'
-									}}
-								/>
-							</Card>
-						))}
-					</div>
-				</>
+				<div
+					className={`flex justify-center gap-2.75 flex-row flex-wrap content-start px-3`}
+					style={{ paddingTop: topbarSize.height + 10 }}
+				>
+					{[...catalog.values()].map((item, key) => (
+						<Card
+							key={key}
+							className={cardStyle()}
+							ref={lastItemRef}
+						>
+							<img
+								className="w-full h-full object-fill"
+								alt="no content"
+								src={item.poster}
+								onError={(e) => {
+									// TODO placeholder
+									e.currentTarget.style.display = 'none'
+								}}
+							/>
+						</Card>
+					))}
+				</div>
 			) : (
 				<>No Data</>
 			)}
