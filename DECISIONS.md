@@ -3,7 +3,7 @@
 ## Why tauri?
 
 - React Native - Doesn't support way to import default exports or any other export for that matter, must use eval
-  or function which will probably break in the future
+  or function which will probably break in the future, this is done using vite currently
 - Electron - Slow, no android support still not good
 - Kotlin Multiplatform - Code injection using kotlin is not possible (at-least not on every platform), JavaScript code
   can be added but there are severe limitations and libraries are not maintained for that anymore
