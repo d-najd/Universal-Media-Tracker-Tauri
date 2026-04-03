@@ -25,19 +25,26 @@ export const useScreenStore = create<SessionScreenStackStore>()((set, get) => ({
 	load: (): void => {
 		const saved = sessionStorage.getItem(SESSION_STORAGE_KEY)
 		if (saved) {
-			set({ screens: JSON.parse(saved) })
+			const saveData: SessionScreenStackStoreData = JSON.parse(saved)
+			set({ screens: saveData.screens })
 		}
 	},
 	save: (): void => {
-		const data = get().screens
-		sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data))
+		const saveData: SessionScreenStackStoreData = {
+			screens: get().screens
+		}
+		sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(saveData))
 	}
 }))
 
-interface SessionScreenStackStore {
+export interface SessionScreenStackStore extends SessionScreenStackStoreData {
 	screens: ScreenState[]
 	push(state: ScreenState): void
 	pop(): ScreenState
 	load(): void
 	save(): void
+}
+
+interface SessionScreenStackStoreData {
+	screens: ScreenState[]
 }
