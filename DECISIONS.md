@@ -3,7 +3,7 @@
 ## Why tauri?
 
 - React Native - Native UI is inconsistent across platforms, it will look different!!!!! import of code is not supported
-  so eval must be used which adds complexity, harder to use
+  so eval must be used which adds complexity, harder to learn for beginners (plugin devs)
 - Electron - Slow, no android support still not good
 - Kotlin Multiplatform - Code injection using kotlin is not possible (at-least not on every platform), JavaScript code
   can be added but there are severe limitations and libraries are not maintained for that anymore
