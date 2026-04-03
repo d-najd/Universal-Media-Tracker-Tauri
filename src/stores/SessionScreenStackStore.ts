@@ -1,38 +1,43 @@
-import ScreenStackStore from '@/stores/ScreenStackStore'
-import { makeAutoObservable, toJS } from 'mobx'
 import ScreenState from '@/stores/ScreenState'
+import { create } from 'zustand/react'
 
-export default class SessionScreenStackStore
-	extends ScreenStackStore
-	implements UpdateableScreenStore
-{
-	SESSION_STORAGE_KEY = 'Screen-Stack-Trace'
+const SESSION_STORAGE_KEY = 'Screen-Store'
 
-	constructor() {
-		super()
-		makeAutoObservable(this)
-		this.load()
+export const useScreenStore = create<SessionScreenStackStore>()((set, get) => ({
+	screens: [],
+
+	push: (state: ScreenState): void => {
+		set((s) => ({
+			screens: [...s.screens, state]
+		}))
+		get().save()
+	},
+	pop: (): ScreenState => {
+		const lastScreen = get().screens.at(-1)!
+
+		set((s) => ({
+			screens: s.screens.slice(0, -1)
+		}))
+		get().save()
+
+		return lastScreen
+	},
+	load: (): void => {
+		const saved = sessionStorage.getItem(SESSION_STORAGE_KEY)
+		if (saved) {
+			set({ screens: JSON.parse(saved) })
+		}
+	},
+	save: (): void => {
+		const data = get().screens
+		sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data))
 	}
+}))
 
-	override push(screenState: ScreenState) {
-		super.push(screenState)
-		this.save()
-	}
-
-	override pop(): ScreenState {
-		const popped = super.pop()
-		this.save()
-		return popped
-	}
-
-	save(): void {
-		const data = this.screens.map((o) => toJS(o))
-		sessionStorage.setItem(this.SESSION_STORAGE_KEY, JSON.stringify(data))
-	}
-	load(): void {
-		const dataStr = sessionStorage.getItem(this.SESSION_STORAGE_KEY)
-		if (!dataStr) return
-
-		this.screens = JSON.parse(dataStr) as ScreenState[]
-	}
+interface SessionScreenStackStore {
+	screens: ScreenState[]
+	push(state: ScreenState): void
+	pop(): ScreenState
+	load(): void
+	save(): void
 }

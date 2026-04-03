@@ -116,7 +116,6 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 				await PluginManagerStore.init()
 			}
 
-			console.log('Fetching')
 			await fetchCatalog()
 		})()
 	}, [skip, search])
