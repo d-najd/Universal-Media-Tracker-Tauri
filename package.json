@@ -31,6 +31,8 @@
 		"clsx": "^2.1.1",
 		"idb": "^8.0.3",
 		"lucide-react": "^0.563.0",
+		"mobx": "^6.15.0",
+		"mobx-react-lite": "^4.1.1",
 		"radix-ui": "^1.4.3",
 		"react": "^19.2.1",
 		"react-dom": "^19.2.1",
