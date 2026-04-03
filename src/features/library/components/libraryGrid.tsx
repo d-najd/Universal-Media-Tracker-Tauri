@@ -47,11 +47,11 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		setFailedUniqueFetchTimes(0)
 		setReachedEnd(false)
 		setCatalog(new Map<string, MetaPreview>())
-		console.log('CALLING')
 		setSkip(0)
 	}, [search])
 
 	const fetchCatalog = async () => {
+		if (!pluginStoreInitialized.current) return
 		setLoading(true)
 
 		const handler = HandlerStore.getHandlersMatching(
