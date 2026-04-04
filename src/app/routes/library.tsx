@@ -1,9 +1,7 @@
 import LibraryContent from '@/features/library'
 
 export function Library() {
-	return (
-		<LibraryContent />
-	)
+	return <LibraryContent />
 }
 
 // Necessary for react router to lazy load.

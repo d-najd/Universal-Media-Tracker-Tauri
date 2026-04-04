@@ -3,9 +3,9 @@
  * @type {import('prettier').Config}
  */
 export default {
-    semi: false,
-    tabWidth: 4,
-    singleQuote: true,
-    trailingComma: 'none',
-    useTabs: true,
+	semi: false,
+	tabWidth: 4,
+	singleQuote: true,
+	trailingComma: 'none',
+	useTabs: true
 }
