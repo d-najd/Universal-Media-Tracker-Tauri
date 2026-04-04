@@ -23,9 +23,10 @@ export default [
 		rules: {
 			// 'react/react-in-jsx-scope': 'off',
 			'@typescript-eslint/no-unused-vars': ['warn'],
-			'@typescript-eslint/no-explicit-any': 'warn', // change from 'error' to 'warn'
+			'@typescript-eslint/no-explicit-any': 'warn',
 			'react/jsx-uses-react': 'off',
-			'react/react-in-jsx-scope': 'off'
+			'react/react-in-jsx-scope': 'off',
+			'@typescript-eslint/no-empty-object-type': 'off'
 		}
 	}
 ]
