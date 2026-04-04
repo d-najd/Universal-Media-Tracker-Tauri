@@ -8,6 +8,7 @@ import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
 import LibraryGrid from '@/features/library/components/libraryGrid'
+import { useNavigate } from 'react-router'
 
 export default function LibraryContent() {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
@@ -41,6 +42,8 @@ export default function LibraryContent() {
 			)
 		)
 	})
+
+	const navigate = useNavigate()
 
 	return (
 		<>
@@ -86,7 +89,13 @@ export default function LibraryContent() {
 					{/*<Button variant={'ghost'}>*/}
 					{/*	<Settings />*/}
 					{/*</Button>*/}
-					<Button variant={'ghost'}>
+					<Button
+						variant={'ghost'}
+						onClick={() => {
+							navigate('/hello', { replace: true })
+							// window.history.replaceState({}, '', 'hello')
+						}}
+					>
 						<LayoutGrid />
 					</Button>
 					{/*<Button variant={'ghost'}>*/}

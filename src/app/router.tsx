@@ -14,6 +14,10 @@ const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
 					lazy: () => import('@/app/routes/library')
 				},
 				{
+					path: '/hello',
+					lazy: () => import('@/app/routes/not-found')
+				},
+				{
 					path: '*',
 					lazy: () => import('@/app/routes/not-found')
 				},
