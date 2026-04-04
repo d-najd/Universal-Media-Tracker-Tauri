@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 import { createBrowserRouter, RouteObject, RouterProvider } from 'react-router'
 
+/**
+ * Dynamic routes should be passed at the start if possible
+ */
 const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
 	useMemo(
 		() =>
