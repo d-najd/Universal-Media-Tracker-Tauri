@@ -1,6 +1,6 @@
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import LocalPluginSource from '@/app/plugins/ts/LocalPluginSource'
+import LocalPluginSource from '@/lib/plugin/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
 import { getStorage } from '@/lib/storage'
 import {

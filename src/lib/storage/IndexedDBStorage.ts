@@ -16,7 +16,10 @@ export default class IndexedDBStorage implements Storage {
 				}
 			}
 		})
-		return new IndexedDBStorage(db, storeName)
+		const inst = new IndexedDBStorage(db, storeName)
+		// TODO for dev remove after done
+		await inst.deleteAll()
+		return inst
 	}
 
 	async read(path: string): Promise<string> {

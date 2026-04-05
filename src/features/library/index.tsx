@@ -13,18 +13,9 @@ import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
 import { Button } from '@/components/ui/button'
 import LibraryGrid from '@/features/library/components/libraryGrid'
-import {
-	LibraryScreenState,
-	useLibraryScreenState
-} from '@/features/library/stores/LibraryScreenState'
-import { StoreApi, UseBoundStore } from 'zustand'
 
 export default function LibraryContent(): ReactElement {
 	// const [state, setState] = useLibraryScreenState()
-	const te: UseBoundStore<StoreApi<LibraryScreenState>> =
-		useLibraryScreenState
-	const me = te()
-
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')

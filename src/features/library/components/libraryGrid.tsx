@@ -24,7 +24,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const [previousFetchSize, setPreviousFetchSize] = useState(0)
 	const [skip, setSkip] = useState(0)
 	const [loading, setLoading] = useState(false)
-	const [reachedEnd, setReachedEnd] = useState(false)
+	const [reachedCatalogEnd, setReachedCatalogEnd] = useState(false)
 	const [failedUniqueFetchTimes, setFailedUniqueFetchTimes] = useState(0)
 	const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
@@ -45,7 +45,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 	useEffect(() => {
 		setFailedUniqueFetchTimes(0)
-		setReachedEnd(false)
+		setReachedCatalogEnd(false)
 		setCatalog(new Map<string, MetaPreview>())
 		setSkip(0)
 	}, [search])
@@ -88,7 +88,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		const result = await handler.callback(args)
 		if (result.data.length === 0) {
-			setReachedEnd(true)
+			setReachedCatalogEnd(true)
 			return
 		}
 
@@ -102,22 +102,19 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		if (catalog.size === catalogSize) {
 			setFailedUniqueFetchTimes((o) => (o += 1))
 			if (failedUniqueFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES) {
-				setReachedEnd(true)
+				setReachedCatalogEnd(true)
 			}
 		}
 		setLoading(false)
 	}
 
 	useEffect(() => {
-		if (reachedEnd) return
-		;(async () => {
-			if (!pluginStoreInitialized.current) {
-				pluginStoreInitialized.current = true
-				await PluginManagerStore.init()
-			}
+		if (reachedCatalogEnd) return
 
-			await fetchCatalog()
-		})()
+		PluginManagerStore.init().then(() => {
+			pluginStoreInitialized.current = true
+			fetchCatalog().then()
+		})
 	}, [skip, search])
 
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
