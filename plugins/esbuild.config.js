@@ -13,8 +13,15 @@ for (const folder of fs.readdirSync(dir)) {
 		entryPoints: [indexPath],
 		outfile: path.join('src/app/plugins/js', `${folder}.js`),
 		bundle: true,
-		external: ['@d-najd/universal-media-tracker-sdk', 'zustand'],
+		external: [
+			'@d-najd/universal-media-tracker-sdk',
+			'zustand',
+			'react',
+			'react-dom',
+			'react/jsx-runtime'
+		],
 		platform: 'node',
+		jsx: 'automatic',
 		format: 'esm',
 		sourcemap: false,
 		minify: false
