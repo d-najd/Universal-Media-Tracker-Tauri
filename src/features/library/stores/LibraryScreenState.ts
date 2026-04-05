@@ -1,8 +1,10 @@
 import ScreenState from '@/stores/ScreenState'
-import { create } from 'zustand/react'
+import { create } from 'zustand'
 
-export const useScreenStore = create<LibraryScreenState>()((set, get) => ({
-	path: '/library'
-}))
+export const useLibraryScreenState = create<LibraryScreenState>()(
+	(set, get) => ({
+		path: '/library'
+	})
+)
 
 export interface LibraryScreenState extends ScreenState {}

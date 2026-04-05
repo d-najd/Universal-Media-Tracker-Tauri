@@ -1,5 +1,5 @@
 import ScreenState from '@/stores/ScreenState'
-import { create } from 'zustand/react'
+import { create } from 'zustand'
 
 export const useScreenStore = create<ScreenStackStore>()((set, get) => ({
 	screens: [],
@@ -39,7 +39,7 @@ interface SessionScreenStackStoreData {
 }
 
 // defineUiScreenHandler({
-// 	pathMatcher: '/library/:id',
+// 	path: '/library/:id',
 // 	callback: (args) => {
 // 		const path = args.state.path // library/1
 //      // Will be created something like navigator.create(args.state /* reference to the state */ )
