@@ -33,14 +33,25 @@ export default class PluginManagerStore {
 		string,
 		PluginDescriptor
 	>()
-	private static initialized = false
+
+	static initPromise: Promise<void> | null = null
 
 	static async init() {
-		if (this.initialized) {
+		if (this.initPromise) {
+			await this.initPromise
 			return
 		}
-		this.initialized = true
-		await this.loadBasePlugins()
+
+		this.initPromise = (async () => {
+			try {
+				await this.loadBasePlugins()
+			} catch (e) {
+				this.initPromise = null
+				throw e
+			}
+		})()
+
+		await this.initPromise
 	}
 
 	/**

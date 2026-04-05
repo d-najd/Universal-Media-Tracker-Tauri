@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import LibraryGrid from '@/features/library/components/libraryGrid'
 
 export default function LibraryContent(): ReactElement {
-	// const [state, setState] = useLibraryScreenState()
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')

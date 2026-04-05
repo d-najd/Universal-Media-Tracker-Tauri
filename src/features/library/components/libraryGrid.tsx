@@ -8,7 +8,6 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import { cva } from 'class-variance-authority'
 import { Card } from '@/components/ui/card'
-import PluginManagerStore from '@/stores/PluginManagerStore'
 import HandlerStore from '@/stores/HandlerStore'
 
 type LibraryGridProps = {
@@ -17,7 +16,6 @@ type LibraryGridProps = {
 }
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
-	const pluginStoreInitialized = useRef(false)
 	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
 		new Map<string, MetaPreview>()
 	)
@@ -51,7 +49,6 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	}, [search])
 
 	const fetchCatalog = async () => {
-		if (!pluginStoreInitialized.current) return
 		setLoading(true)
 
 		const handler = HandlerStore.getHandlersMatching(
@@ -110,11 +107,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 	useEffect(() => {
 		if (reachedCatalogEnd) return
-
-		PluginManagerStore.init().then(() => {
-			pluginStoreInitialized.current = true
-			fetchCatalog().then()
-		})
+		fetchCatalog().then()
 	}, [skip, search])
 
 	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {

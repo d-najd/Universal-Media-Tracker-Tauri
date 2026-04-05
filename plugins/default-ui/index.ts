@@ -1,7 +1,6 @@
 import {
 	Plugin,
 	PluginConfig,
-	ScreenHandlerArgs,
 	ScreenHandlerResponse
 } from '@d-najd/universal-media-tracker-sdk'
 import LibraryContent from './features/library'
@@ -16,7 +15,8 @@ const plugin = new Plugin(options)
 
 plugin.defineScreenHandler({
 	pattern: '/library',
-	async callback(args: ScreenHandlerArgs): Promise<ScreenHandlerResponse> {
+	async callback() // args: ScreenHandlerArgs<ZustandStoreWrapper<LibraryScreenState>>
+	: Promise<ScreenHandlerResponse> {
 		const result: ScreenHandlerResponse = {
 			content: LibraryContent()
 		}
