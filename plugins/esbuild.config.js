@@ -17,11 +17,10 @@ for (const folder of fs.readdirSync(dir)) {
 			'@d-najd/universal-media-tracker-sdk',
 			'zustand',
 			'react',
-			'react-dom',
-			'react/jsx-runtime'
+			'react-dom'
+			// 'react/jsx-runtime'
 		],
 		platform: 'node',
-		jsx: 'automatic',
 		format: 'esm',
 		sourcemap: false,
 		minify: false

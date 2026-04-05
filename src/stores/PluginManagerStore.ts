@@ -1,6 +1,5 @@
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import LocalPluginSource from '@/lib/plugin/LocalPluginSource'
 import HandlerStore from '@/stores/HandlerStore'
 import { getStorage } from '@/lib/storage'
 import {
@@ -19,6 +18,7 @@ import {
 	PluginSpec
 } from '@d-najd/universal-media-tracker-sdk'
 import DirEntry from '@/lib/storage/DirEntry'
+import LocalPluginSource from '@/app/plugins/LocalPluginSource'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
