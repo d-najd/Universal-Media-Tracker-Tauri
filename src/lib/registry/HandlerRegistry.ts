@@ -4,7 +4,7 @@ import { Handler } from '@d-najd/universal-media-tracker-sdk'
 /**
  * Page size will be 20
  */
-export default class HandlerStore {
+export default class HandlerRegistry {
 	static getHandlersMatching(
 		condition: (entry: Handler) => boolean
 	): Handler[] {

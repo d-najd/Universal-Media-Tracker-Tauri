@@ -8,7 +8,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import { cva } from 'class-variance-authority'
 import { Card } from '@/components/ui/card'
-import HandlerStore from '@/stores/HandlerStore'
+import HandlerRegistry from '@/lib/registry/HandlerRegistry'
 
 type LibraryGridProps = {
 	topbarSize: { width: number; height: number }
@@ -51,7 +51,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const fetchCatalog = async () => {
 		setLoading(true)
 
-		const handler = HandlerStore.getHandlersMatching(
+		const handler = HandlerRegistry.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
 			(o) => o.id === 'kitsu-anime-list'
 		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>

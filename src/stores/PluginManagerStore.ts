@@ -1,6 +1,6 @@
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import HandlerStore from '@/stores/HandlerStore'
+import HandlerRegistry from '@/lib/registry/HandlerRegistry'
 import { getStorage } from '@/lib/storage'
 import {
 	pluginConfigName,
@@ -164,7 +164,7 @@ export default class PluginManagerStore {
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
 	): Promise<boolean> {
 		const pluginSourceHandlers =
-			HandlerStore.getHandlersMatchingWithPluginId(
+			HandlerRegistry.getHandlersMatchingWithPluginId(
 				([, handler]) => handler.type === 'plugin-source'
 			) as Map<
 				string,
@@ -199,7 +199,7 @@ export default class PluginManagerStore {
 		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>
 	): Promise<boolean> {
 		const pluginFactoryHandlers =
-			HandlerStore.getHandlersMatchingWithPluginId(
+			HandlerRegistry.getHandlersMatchingWithPluginId(
 				([, handler]) => handler.type === 'plugin-factory'
 			) as Map<
 				string,
@@ -353,7 +353,7 @@ export default class PluginManagerStore {
 	) {
 		const failedToLoadPluginConfigs: LocalPluginConfig[] = []
 		for (const config of pluginConfigs) {
-			const handlers = HandlerStore.getHandlersMatching(
+			const handlers = HandlerRegistry.getHandlersMatching(
 				(o) => o.id === config.handlerId
 			)
 			if (handlers.length === 0) {
