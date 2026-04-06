@@ -6,7 +6,7 @@
 	"scripts": {
 		"setupImportMap": "node vendor/getPackages.ts",
 		"buildPlugins": "rimraf src/app/plugins/js && node plugins/esbuild.config.js",
-		"dev": " npm-run-all buildPlugins && vite",
+		"dev": "npm-run-all buildPlugins && vite",
 		"desktop": "npm-run-all buildPlugins && tauri dev",
 		"android": "npm-run-all buildPlugins tauri android dev",
 		"build": "npm-run-all buildPlugins && tsc && vite build",
