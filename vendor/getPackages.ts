@@ -1,5 +1,5 @@
 import { JSDOM } from 'jsdom'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import stripJsonComments from 'strip-json-comments'
 import { mkdirSync } from 'fs'
 
@@ -97,8 +97,8 @@ async function downloadAndSaveBundled(url: string, packageName: string) {
 	mkdirSync(`${saveFolder}${getUntilFirstSlash(packageName)}`, {
 		recursive: true
 	})
-	writeFileSync(`${saveFolder}${packageName}.mjs`, text)
-	writeFileSync(`${saveFolder}${packageName}.mjs.map`, mapText)
+	writeFileSync(`${saveFolder}${packageName}.bundle.mjs`, text)
+	writeFileSync(`${saveFolder}${packageName}.bundle.mjs.map`, mapText)
 }
 
 function getUntilFirstSlash(str: string): string {
@@ -125,4 +125,5 @@ const installedPackages = extractInstalledPackages()
 const packagesToDownload = installedPackages.filter((installed) =>
 	importMap.some((imported) => installed[0] === imported)
 )
+rmSync('vendor/packages', { recursive: true, force: true })
 downloadPackages(packagesToDownload).then()
