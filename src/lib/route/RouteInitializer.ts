@@ -1,16 +1,16 @@
 import HandlerRegistry from '../registry/HandlerRegistry'
 import { RouteObject } from 'react-router'
-import { CreateCustomScreenHandler } from '../../../../Universal-Media-Tracker-Sdk'
 import {
+	CreateCustomScreenHandler,
 	ScreenHandlerArgs,
-	ScreenHandlerResponse
+	ScreenHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
 import StubNavigator from '@/lib/navigator/StubNavigator'
 
 export default class RouteInitializer {
 	static getRoutes(): RouteObject[] {
 		const handlers = HandlerRegistry.getHandlersMatching(
-			(o) => o.type === 'ui-screen'
+			(o) => o.type === 'ui-screen',
 		) as CreateCustomScreenHandler[]
 
 		return handlers.map((handler) => {
@@ -19,7 +19,7 @@ export default class RouteInitializer {
 					navigator: new StubNavigator(),
 					path: window.location.pathname,
 					pattern: handler.pattern,
-					state: handler.initialState
+					state: handler.initialState,
 				}
 
 				const result: ScreenHandlerResponse =
@@ -29,7 +29,7 @@ export default class RouteInitializer {
 
 			const result: RouteObject = {
 				path: handler.pattern,
-				lazy: lazyContent
+				lazy: lazyContent,
 			}
 			return result
 		})
