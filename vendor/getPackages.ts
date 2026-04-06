@@ -82,16 +82,23 @@ const saveFolder = 'vendor/packages/'
 
 async function downloadAndSaveBundled(url: string, packageName: string) {
 	const request = await fetch(`${downloadSource}${url}`)
+	const requestMap = await fetch(`${downloadSource}${url}.map`)
 
 	if (!request.ok) {
 		throw Error(`failed to download and save with url ${url}`)
 	}
 
+	if (!requestMap.ok) {
+		throw Error(`failed to download and save map with url ${url}`)
+	}
+
 	const text = await request.text()
+	const mapText = await requestMap.text()
 	mkdirSync(`${saveFolder}${getUntilFirstSlash(packageName)}`, {
 		recursive: true
 	})
 	writeFileSync(`${saveFolder}${packageName}.mjs`, text)
+	writeFileSync(`${saveFolder}${packageName}.mjs.map`, mapText)
 }
 
 function getUntilFirstSlash(str: string): string {

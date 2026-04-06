@@ -15,7 +15,7 @@ const options: PluginConfig = {
 const plugin = new Plugin(options)
 
 plugin.defineScreenHandler({
-	pattern: '/library',
+	pattern: '/',
 	// initialState: createZustandStoreWrapper(''),
 	async callback(args: ScreenHandlerArgs): Promise<ScreenHandlerResponse> {
 		const result: ScreenHandlerResponse = {
