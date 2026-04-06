@@ -4,7 +4,7 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"init": "node vendor/getPackages.ts",
+		"setupImportMap": "node vendor/getPackages.ts",
 		"buildPlugins": "rimraf src/app/plugins/js && node plugins/esbuild.config.js",
 		"dev": " npm-run-all buildPlugins && vite",
 		"desktop": "npm-run-all buildPlugins && tauri dev",
