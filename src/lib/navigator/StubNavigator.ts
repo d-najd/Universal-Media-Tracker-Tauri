@@ -1,6 +1,6 @@
 import {
 	Navigator as SDKNavigator,
-	NavigatorEntry
+	NavigatorEntry,
 } from '@d-najd/universal-media-tracker-sdk'
 
 export default class StubNavigator implements SDKNavigator {

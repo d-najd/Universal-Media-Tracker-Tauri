@@ -18,7 +18,7 @@ export default class FileSystemStorage implements Storage {
 
 	static async create() {
 		return new FileSystemStorage(
-			(await homeDir()).replace(/\\/g, '/') + '/universal-media-tracker/'
+			(await homeDir()).replace(/\\/g, '/') + '/universal-media-tracker/',
 		)
 	}
 
@@ -40,7 +40,7 @@ export default class FileSystemStorage implements Storage {
 		const finalDir = finalPath.substring(0, finalPath.lastIndexOf('/'))
 
 		await fs.mkdir(finalDir, {
-			recursive: true
+			recursive: true,
 		})
 
 		await fs.writeTextFile(this.baseDir + path, data)
@@ -65,7 +65,7 @@ export default class FileSystemStorage implements Storage {
 				const res: DirEntry = {
 					type: o.isFile ? 'file' : 'directory',
 					name: o.name,
-					path: path + o.name
+					path: path + o.name,
 				}
 				return res
 			})

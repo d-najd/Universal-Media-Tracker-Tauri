@@ -1,5 +1,5 @@
 import PluginParser, {
-	ParsePluginResponse
+	ParsePluginResponse,
 } from '@/lib/plugin/PluginSpecParser'
 
 import { Plugin } from '@d-najd/universal-media-tracker-sdk'

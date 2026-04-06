@@ -3,7 +3,7 @@ import { ReactNode } from 'react'
 
 export function ErrorView({
 	children,
-	className
+	className,
 }: {
 	children: ReactNode
 	className?: string
@@ -12,7 +12,7 @@ export function ErrorView({
 		<main
 			className={cn(
 				'h-full flex flex-col items-center justify-center text-center bg-red-50 p-8',
-				className
+				className,
 			)}
 		>
 			<div className="text-center">
@@ -25,7 +25,7 @@ export function ErrorView({
 
 export function ErrorHeader({
 	children,
-	className
+	className,
 }: {
 	children: ReactNode
 	className?: string
@@ -34,7 +34,7 @@ export function ErrorHeader({
 		<h1
 			className={cn(
 				'mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl',
-				className
+				className,
 			)}
 		>
 			{children}
@@ -44,7 +44,7 @@ export function ErrorHeader({
 
 export function ErrorDescription({
 	children,
-	className
+	className,
 }: {
 	children: ReactNode
 	className?: string
@@ -58,7 +58,7 @@ export function ErrorDescription({
 
 export function ErrorActions({
 	children,
-	className
+	className,
 }: {
 	children: ReactNode
 	className?: string
@@ -67,7 +67,7 @@ export function ErrorActions({
 		<div
 			className={cn(
 				'mt-10 flex items-center justify-center gap-x-6',
-				className
+				className,
 			)}
 		>
 			{children}

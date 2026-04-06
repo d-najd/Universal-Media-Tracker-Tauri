@@ -4,7 +4,7 @@ import {
 	ErrorView,
 	ErrorHeader,
 	ErrorDescription,
-	ErrorActions
+	ErrorActions,
 } from '@/features/errors/error-base'
 
 export default function AppErrorPage() {

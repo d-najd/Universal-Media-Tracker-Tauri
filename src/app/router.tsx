@@ -11,12 +11,12 @@ const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
 		() =>
 			createBrowserRouter([
 				{
-					path: '*'
+					path: '*',
 					//lazy: () => import('@/app/routes/not-found')
 				},
-				...dynamicRoutes
+				...dynamicRoutes,
 			]),
-		[dynamicRoutes]
+		[dynamicRoutes],
 	)
 
 export default function AppRouter() {

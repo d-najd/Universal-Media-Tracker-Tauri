@@ -5,7 +5,7 @@ import { IDBPDatabase, openDB } from 'idb'
 export default class IndexedDBStorage implements Storage {
 	private constructor(
 		private db: IDBPDatabase,
-		private storeName: string
+		private storeName: string,
 	) {}
 
 	static async create(dbName = 'db', storeName = 'store') {
@@ -14,7 +14,7 @@ export default class IndexedDBStorage implements Storage {
 				if (!db.objectStoreNames.contains(storeName)) {
 					db.createObjectStore(storeName)
 				}
-			}
+			},
 		})
 		const inst = new IndexedDBStorage(db, storeName)
 		// TODO for dev remove after done
@@ -73,7 +73,7 @@ export default class IndexedDBStorage implements Storage {
 				entriesMap[name] = {
 					name,
 					path: prefix + name,
-					type: parts.length > 1 ? 'directory' : 'file'
+					type: parts.length > 1 ? 'directory' : 'file',
 				}
 			}
 		}

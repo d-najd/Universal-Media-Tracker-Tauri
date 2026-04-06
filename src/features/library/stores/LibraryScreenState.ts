@@ -3,8 +3,8 @@ import { create } from 'zustand'
 
 export const useLibraryScreenState = create<LibraryScreenState>()(
 	(set, get) => ({
-		path: '/library'
-	})
+		path: '/library',
+	}),
 )
 
 export interface LibraryScreenState extends ScreenState {}

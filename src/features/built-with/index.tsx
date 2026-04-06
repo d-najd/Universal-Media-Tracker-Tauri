@@ -6,7 +6,7 @@ import shadcnLogo from '@/features/built-with/assets/shadcn.svg'
 import {
 	Tooltip,
 	TooltipContent,
-	TooltipTrigger
+	TooltipTrigger,
 } from '@/components/ui/tooltip'
 
 export default function BuiltWith() {
@@ -27,7 +27,7 @@ export default function BuiltWith() {
 function LogoLink({
 	href,
 	src,
-	alt
+	alt,
 }: {
 	href: string
 	src: string

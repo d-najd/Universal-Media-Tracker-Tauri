@@ -6,23 +6,23 @@ export const useScreenStore = create<ScreenStackStore>()((set, get) => ({
 
 	push: (state: ScreenState): void => {
 		set((s) => ({
-			screens: [...s.screens, state]
+			screens: [...s.screens, state],
 		}))
 	},
 	pop: (): ScreenState => {
 		const lastScreen = get().screens.at(-1)!
 
 		set((s) => ({
-			screens: s.screens.slice(0, -1)
+			screens: s.screens.slice(0, -1),
 		}))
 
 		return lastScreen
 	},
 	replace(state: ScreenState): void {
 		set((s) => ({
-			screens: [...s.screens.slice(0, -1), state]
+			screens: [...s.screens.slice(0, -1), state],
 		}))
-	}
+	},
 }))
 
 export interface ScreenStackStore extends SessionScreenStackStoreData {

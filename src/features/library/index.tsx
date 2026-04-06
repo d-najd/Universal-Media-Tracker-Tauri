@@ -2,12 +2,12 @@ import React, {
 	ReactElement,
 	useEffect,
 	useLayoutEffect,
-	useState
+	useState,
 } from 'react'
 import {
 	InputGroup,
 	InputGroupAddon,
-	InputGroupInput
+	InputGroupInput,
 } from '@/components/ui/input-group'
 import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '@/hooks/useElementSize'
@@ -41,9 +41,9 @@ export default function LibraryContent(): ReactElement {
 				Math.min(
 					topBarIconsSize.width,
 					window.innerWidth -
-						(topbarSearchMaxWidthPx + topBarIconsSize.width)
-				)
-			)
+						(topbarSearchMaxWidthPx + topBarIconsSize.width),
+				),
+			),
 		)
 	})
 
@@ -58,12 +58,12 @@ export default function LibraryContent(): ReactElement {
 				<div
 					className="flex-1 flex justify-center min-w-20"
 					style={{
-						paddingLeft: topbarSearchPadding
+						paddingLeft: topbarSearchPadding,
 					}}
 				>
 					<InputGroup
 						style={{
-							maxWidth: topbarSearchMaxWidthPx
+							maxWidth: topbarSearchMaxWidthPx,
 						}}
 					>
 						<InputGroupInput

@@ -17,7 +17,7 @@ for (const folder of fs.readdirSync(dir)) {
 			'@d-najd/universal-media-tracker-sdk',
 			'zustand',
 			'react',
-			'react-dom'
+			'react-dom',
 			// 'react/jsx-runtime'
 		],
 		platform: 'node',
@@ -25,7 +25,7 @@ for (const folder of fs.readdirSync(dir)) {
 		sourcemap: false,
 		minify: false,
 		banner: {
-			js: `import * as React from 'react';`
-		}
+			js: `import * as React from 'react';`,
+		},
 	})
 }

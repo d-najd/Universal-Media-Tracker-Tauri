@@ -3,7 +3,7 @@ import {
 	ErrorView,
 	ErrorHeader,
 	ErrorDescription,
-	ErrorActions
+	ErrorActions,
 } from '@/features/errors/error-base'
 import { useNavigate } from 'react-router'
 

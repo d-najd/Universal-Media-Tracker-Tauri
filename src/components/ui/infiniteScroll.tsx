@@ -20,7 +20,7 @@ export default function InfiniteScroll({
 	root = null,
 	rootMargin = '0px',
 	reverse,
-	children
+	children,
 }: InfiniteScrollProps) {
 	const observer = React.useRef<IntersectionObserver>(null)
 	// This callback ref will be called when it is dispatched to an element or detached from an element,
@@ -30,7 +30,7 @@ export default function InfiniteScroll({
 			let safeThreshold = threshold
 			if (threshold < 0 || threshold > 1) {
 				console.warn(
-					'threshold should be between 0 and 1. You are exceed the range. will use default value: 1'
+					'threshold should be between 0 and 1. You are exceed the range. will use default value: 1',
 				)
 				safeThreshold = 1
 			}
@@ -49,16 +49,16 @@ export default function InfiniteScroll({
 						next()
 					}
 				},
-				{ threshold: safeThreshold, root, rootMargin }
+				{ threshold: safeThreshold, root, rootMargin },
 			)
 			observer.current.observe(element)
 		},
-		[hasMore, isLoading, next, threshold, root, rootMargin]
+		[hasMore, isLoading, next, threshold, root, rootMargin],
 	)
 
 	const flattenChildren = React.useMemo(
 		() => React.Children.toArray(children),
-		[children]
+		[children],
 	)
 
 	return (
@@ -67,7 +67,7 @@ export default function InfiniteScroll({
 				if (!React.isValidElement(child)) {
 					process.env.NODE_ENV === 'development' &&
 						console.warn(
-							'You should use a valid element with InfiniteScroll'
+							'You should use a valid element with InfiniteScroll',
 						)
 					return child
 				}

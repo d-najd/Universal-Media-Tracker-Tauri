@@ -6,7 +6,7 @@ import { Handler } from '@d-najd/universal-media-tracker-sdk'
  */
 export default class HandlerRegistry {
 	static getHandlersMatching(
-		condition: (entry: Handler) => boolean
+		condition: (entry: Handler) => boolean,
 	): Handler[] {
 		// Key is the id of the handler, this is to prevent duplicates
 		const result: Map<string, Handler> = new Map<string, Handler>()
@@ -27,7 +27,7 @@ export default class HandlerRegistry {
 	 * @param condition key is pluginId, value is handler
 	 */
 	static getHandlersMatchingWithPluginId(
-		condition: (entry: [string, Handler]) => boolean
+		condition: (entry: [string, Handler]) => boolean,
 	): Map<string, Handler[]> {
 		// Key is the id of the handler, this is to prevent duplicates
 		const filteringMap: Map<
@@ -40,14 +40,14 @@ export default class HandlerRegistry {
 			for (const handler of handlers) {
 				filteringMap.set(handler[0], {
 					handler: handler[1],
-					pluginId: entry.config.id
+					pluginId: entry.config.id,
 				})
 			}
 		}
 
 		const result: Map<string, Handler[]> = new Map<string, Handler[]>()
 		const filtered = [...filteringMap.values()].filter((o) =>
-			condition([o.pluginId, o.handler])
+			condition([o.pluginId, o.handler]),
 		)
 
 		for (const entry of filtered) {
@@ -62,7 +62,7 @@ export default class HandlerRegistry {
 
 	static async invokeCallbackOnHandler<T, R>(id: string, args: T) {
 		const handler = this.getHandlersMatching(
-			(handler) => handler.id === id
+			(handler) => handler.id === id,
 		)[0]
 		if (!handler) {
 			throw Error("Handler with requested id doesn't exist")

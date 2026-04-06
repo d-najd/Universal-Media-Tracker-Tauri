@@ -13,9 +13,9 @@ export default [
 	{
 		settings: {
 			react: {
-				version: 'detect'
-			}
-		}
+				version: 'detect',
+			},
+		},
 	},
 	pluginReact.configs.flat.recommended,
 	eslintConfigPrettier,
@@ -26,7 +26,7 @@ export default [
 			'@typescript-eslint/no-explicit-any': 'warn',
 			'react/jsx-uses-react': 'off',
 			'react/react-in-jsx-scope': 'off',
-			'@typescript-eslint/no-empty-object-type': 'off'
-		}
-	}
+			'@typescript-eslint/no-empty-object-type': 'off',
+		},
+	},
 ]

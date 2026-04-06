@@ -2,20 +2,20 @@ import {
 	Plugin,
 	PluginConfig,
 	PluginSourceHandlerArgs,
-	PluginSourceHandlerResponse
+	PluginSourceHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
 	id: 'local-plugin-loader',
 	name: 'Local Plugin Loader',
-	version: '0.0.1'
+	version: '0.0.1',
 }
 
 const plugin = new Plugin(options)
 
 plugin.definePluginSourceHandler({
 	async callback(
-		args: PluginSourceHandlerArgs
+		args: PluginSourceHandlerArgs,
 	): Promise<PluginSourceHandlerResponse> {
 		const url = args.url
 		if (!url.startsWith('/src/app/plugins/')) {
@@ -39,7 +39,7 @@ plugin.definePluginSourceHandler({
 			if (!config) {
 				return {
 					status: 'invalid',
-					reason: 'failed to read plugin config'
+					reason: 'failed to read plugin config',
 				}
 			}
 
@@ -52,12 +52,12 @@ plugin.definePluginSourceHandler({
 			}
 			return { status: 'invalid', reason: String(err) }
 		}
-	}
+	},
 })
 
 async function loadPluginFromCode(code: string): Promise<Plugin> {
 	const blob = new Blob([code], {
-		type: 'text/javascript'
+		type: 'text/javascript',
 	})
 	const url = URL.createObjectURL(blob)
 	const module = await import(/* @vite-ignore */ url)

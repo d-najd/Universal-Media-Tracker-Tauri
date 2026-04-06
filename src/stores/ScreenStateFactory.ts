@@ -5,8 +5,8 @@ function createScreenState<T extends ScreenState>(path: string) {
 	return create<T>()(
 		(set, get) =>
 			({
-				path: path
-			}) as T
+				path: path,
+			}) as T,
 	)
 }
 

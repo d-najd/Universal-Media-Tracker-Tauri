@@ -6,13 +6,13 @@ import {
 	PluginConfig,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
-	ResourceBrowseOption
+	ResourceBrowseOption,
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
 	id: 'stremio-plugin-factory',
 	name: 'Stremio Plugin Factory',
-	version: '0.0.1'
+	version: '0.0.1',
 }
 
 const plugin = new Plugin(options)
@@ -55,7 +55,7 @@ const MANIFEST_STRING = '/manifest.json'
 
 plugin.definePluginFactoryHandler({
 	async callback(
-		args: PluginFactoryHandlerArgs
+		args: PluginFactoryHandlerArgs,
 	): Promise<PluginFactoryHandlerResponse> {
 		inputArgs = args
 		if (!args.url.endsWith(MANIFEST_STRING)) {
@@ -70,7 +70,7 @@ plugin.definePluginFactoryHandler({
 			const plugin = new Plugin({
 				id: manifest.id,
 				name: manifest.name,
-				version: manifest.version
+				version: manifest.version,
 			})
 
 			defineCatalogs(plugin, manifest)
@@ -79,14 +79,14 @@ plugin.definePluginFactoryHandler({
 		} catch (e) {
 			return { status: 'invalid', reason: e!.toString() }
 		}
-	}
+	},
 })
 
 function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 	for (const catalog of manifest.catalogs) {
 		const options = catalog.extra
 			?.filter(
-				(o) => resourceBrowseOptionArgToTypeConverter(o) !== 'unknown'
+				(o) => resourceBrowseOptionArgToTypeConverter(o) !== 'unknown',
 			)
 			.map((o) => {
 				const result: ResourceBrowseOption = {
@@ -94,7 +94,7 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 					name: o.name,
 					options: o.options,
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					type: resourceBrowseOptionArgToTypeConverter(o) as any
+					type: resourceBrowseOptionArgToTypeConverter(o) as any,
 				}
 				return result
 			})
@@ -105,12 +105,12 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 			resourceType: catalog.type,
 			options: options,
 			async callback(
-				args: CatalogHandlerArgs
+				args: CatalogHandlerArgs,
 			): Promise<CatalogHandlerResponse> {
 				// const size = args.pageSize ?? 20
 				const urlExceptManifest = inputArgs.url.slice(
 					0,
-					-MANIFEST_STRING.length
+					-MANIFEST_STRING.length,
 				)
 
 				let newUrl =
@@ -137,21 +137,21 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 						id: o.id,
 						name: o.name,
 						poster: o.poster,
-						type: o.type
+						type: o.type,
 					}
 					return metaPreview
 				})
 
 				return {
-					data: mappedData
+					data: mappedData,
 				}
-			}
+			},
 		})
 	}
 }
 
 function resourceBrowseOptionArgToTypeConverter(
-	arg: StremioCatalogEntryExtra
+	arg: StremioCatalogEntryExtra,
 ): string {
 	if (arg.name === 'search') {
 		return 'string'

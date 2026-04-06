@@ -7,7 +7,7 @@ function extractImportMap() {
 	const htmlString = readFileSync('index.html', 'utf-8')
 	const dom = new JSDOM(htmlString)
 	const importMapScript = dom.window.document.querySelector(
-		'script[type="importmap"]'
+		'script[type="importmap"]',
 	)
 	const importMap = (
 		importMapScript ? JSON.parse(importMapScript.textContent) : null
@@ -25,7 +25,7 @@ function extractInstalledPackages() {
 
 function extractTSConfigModule() {
 	const packageJsonString = stripJsonComments(
-		readFileSync('tsconfig.json', 'utf-8')
+		readFileSync('tsconfig.json', 'utf-8'),
 	)
 
 	const packageJson = JSON.parse(packageJsonString) as TSConfigJson
@@ -38,14 +38,14 @@ let moduleVersion = ''
 async function downloadPackages(input: [string, string][]) {
 	input.forEach(([pkg, version]) => {
 		getRealLocationFromBase([pkg, version], input).then((o) =>
-			downloadAndSaveBundled(o, pkg)
+			downloadAndSaveBundled(o, pkg),
 		)
 	})
 }
 
 async function getRealLocationFromBase(
 	input: [string, string],
-	others: [string, string][]
+	others: [string, string][],
 ) {
 	if (moduleVersion === '') {
 		moduleVersion = extractTSConfigModule()
@@ -89,7 +89,7 @@ async function downloadAndSaveBundled(url: string, packageName: string) {
 	const text = await request.text()
 	const mapText = await requestMap.text()
 	mkdirSync(`${saveFolder}${getUntilFirstSlash(packageName)}`, {
-		recursive: true
+		recursive: true,
 	})
 	writeFileSync(`${saveFolder}${packageName}.bundle.mjs`, text)
 	writeFileSync(`${saveFolder}${packageName}.bundle.mjs.map`, mapText)
@@ -117,7 +117,7 @@ type TSConfigJson = {
 const importMap = extractImportMap()
 const installedPackages = extractInstalledPackages()
 const packagesToDownload = installedPackages.filter((installed) =>
-	importMap.some((imported) => installed[0] === imported)
+	importMap.some((imported) => installed[0] === imported),
 )
 rmSync('vendor/packages', { recursive: true, force: true })
 downloadPackages(packagesToDownload).then()

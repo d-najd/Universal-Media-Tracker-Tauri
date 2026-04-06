@@ -6,6 +6,6 @@ export default {
 	semi: false,
 	tabWidth: 4,
 	singleQuote: true,
-	trailingComma: 'none',
-	useTabs: true
+	trailingComma: 'all',
+	useTabs: true,
 }

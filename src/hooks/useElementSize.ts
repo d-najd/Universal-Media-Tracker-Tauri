@@ -9,7 +9,7 @@ export function useElementSize<T extends HTMLElement>() {
 			if (ref.current) {
 				setSize({
 					width: ref.current.offsetWidth,
-					height: ref.current.offsetHeight
+					height: ref.current.offsetHeight,
 				})
 			}
 		}

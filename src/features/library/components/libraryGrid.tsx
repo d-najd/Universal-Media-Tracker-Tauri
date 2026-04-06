@@ -4,7 +4,7 @@ import {
 	CatalogHandlerResponse,
 	MetaPreview,
 	ResourceHandler,
-	ResourceHandlerArgs
+	ResourceHandlerArgs,
 } from '@d-najd/universal-media-tracker-sdk'
 import { cva } from 'class-variance-authority'
 import { Card } from '@/components/ui/card'
@@ -17,7 +17,7 @@ type LibraryGridProps = {
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
-		new Map<string, MetaPreview>()
+		new Map<string, MetaPreview>(),
 	)
 	const [previousFetchSize, setPreviousFetchSize] = useState(0)
 	const [skip, setSkip] = useState(0)
@@ -38,7 +38,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			})
 			if (node) observer.current.observe(node)
 		},
-		[loading]
+		[loading],
 	)
 
 	useEffect(() => {
@@ -53,16 +53,16 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		const handler = HandlerRegistry.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
-			(o) => o.id === 'kitsu-anime-list'
+			(o) => o.id === 'kitsu-anime-list',
 		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
 
 		const hasSkipOption =
 			handler?.options?.some(
-				(o) => o.name === 'skip' && o.type === 'number'
+				(o) => o.name === 'skip' && o.type === 'number',
 			) ?? false
 
 		const hasSearchOption = handler?.options?.some(
-			(o) => o.name === 'search' && o.type === 'string'
+			(o) => o.name === 'search' && o.type === 'string',
 		)
 
 		let args: ResourceHandlerArgs = {
@@ -72,14 +72,14 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 					: []),
 				...(hasSearchOption && search !== ''
 					? [{ name: 'search', input: search }]
-					: [])
-			]
+					: []),
+			],
 		}
 
 		if (args.options?.length === 0) {
 			args = {
 				...args,
-				options: undefined
+				options: undefined,
 			}
 		}
 
@@ -114,12 +114,12 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		variants: {
 			hoverable: {
 				true: 'hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary border',
-				false: ''
-			}
+				false: '',
+			},
 		},
 		defaultVariants: {
-			hoverable: true
-		}
+			hoverable: true,
+		},
 	})
 
 	return (
