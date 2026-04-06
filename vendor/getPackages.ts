@@ -55,13 +55,7 @@ async function getRealLocationFromBase(
 		.map((o) => o[0])
 		.join(',')
 
-	const url =
-		downloadSource +
-		'/' +
-		input[0] +
-		'@' +
-		input[1] +
-		`?target=${moduleVersion}&standalone&external=${external}`
+	const url = `${downloadSource}/${input[0]}@${input[1]}?target=${moduleVersion}&standalone&external=${external}`
 
 	const fetchedData = await fetch(url)
 	if (!fetchedData.ok) {
