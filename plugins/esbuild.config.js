@@ -23,22 +23,9 @@ for (const folder of fs.readdirSync(dir)) {
 		platform: 'node',
 		format: 'esm',
 		sourcemap: false,
-		minify: false
+		minify: false,
+		banner: {
+			js: `import * as React from 'react';`
+		}
 	})
 }
-
-// const entryPoints = fs.readdirSync(dir)
-//     .filter(o => fs.statSync(path.join(dir, o)).isDirectory())
-//     .map(o => path.join(dir, o, 'index.ts'))
-//     .filter(o => fs.existsSync(o))
-//
-// await esbuild.build({
-// 	entryPoints: entryPoints,
-// 	outdir: 'src/app/plugins/js',
-// 	bundle: true,
-// 	external: ['@d-najd/universal-media-tracker-sdk'],
-// 	platform: 'node',
-// 	format: 'esm',
-// 	sourcemap: false,
-// 	minify: false
-// })
