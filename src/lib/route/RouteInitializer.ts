@@ -5,7 +5,6 @@ import {
 	ScreenHandlerArgs,
 	ScreenHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
-import StubNavigator from '@/lib/navigator/StubNavigator'
 
 export default class RouteInitializer {
 	static getRoutes(): RouteObject[] {
@@ -16,7 +15,6 @@ export default class RouteInitializer {
 		return handlers.map((handler) => {
 			const lazyContent = async () => {
 				const args: ScreenHandlerArgs = {
-					navigator: new StubNavigator(),
 					path: window.location.pathname,
 					pattern: handler.pattern,
 					state: handler.initialState,

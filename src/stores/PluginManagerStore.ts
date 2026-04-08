@@ -9,6 +9,7 @@ import {
 } from '@/lib/storage/StoragePaths'
 import LocalPluginConfig from '@/types/LocalPluginConfig'
 import {
+	AppApi,
 	Handler,
 	Plugin,
 	PluginFactoryHandlerArgs,
@@ -19,6 +20,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import DirEntry from '@/lib/storage/DirEntry'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
+import StubNavigator from '@/lib/navigator/StubNavigator'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -245,6 +247,7 @@ export default class PluginManagerStore {
 		switch (response.status) {
 			case 'valid': {
 				const plugin = response.plugin
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const spec = (await (plugin! as any).getSpec()) as PluginSpec
 				const config = plugin.config
 				await spec.onUnload()
@@ -293,6 +296,7 @@ export default class PluginManagerStore {
 			case 'valid': {
 				// Validate plugin
 				const plugin = await this.loadPluginFromCode(response.code)
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const spec = (await (plugin! as any).getSpec()) as PluginSpec
 				const config = plugin.config
 				await spec.onUnload()
@@ -341,6 +345,7 @@ export default class PluginManagerStore {
 		const storage = await getStorage()
 		const codeStr = await storage.read(folder.path + '/' + pluginFileName)
 		const plugin = await this.loadPluginFromCode(codeStr)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const spec = (await (plugin! as any).getSpec()) as PluginSpec
 
 		const descriptor: PluginDescriptor = {
@@ -386,6 +391,7 @@ export default class PluginManagerStore {
 				)
 			}
 			const plugin = response.plugin
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin! as any).getSpec()) as PluginSpec
 
 			const descriptor: PluginDescriptor = {
@@ -430,6 +436,7 @@ export default class PluginManagerStore {
 	private static async loadLocalPluginSource() {
 		try {
 			const plugin = LocalPluginSource
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin as any).getSpec()) as PluginSpec
 			const descriptor: PluginDescriptor = {
 				// uri: localPluginSourceRelativePath,
@@ -452,6 +459,39 @@ export default class PluginManagerStore {
 		const url = URL.createObjectURL(blob)
 		const module = await import(/* @vite-ignore */ url)
 		URL.revokeObjectURL(url)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const plugin = module! as any
+		const te = this.getAppApi()
+		plugin.default.app = this.getAppApi()
 		return module.default
+	}
+
+	private static appApi?: AppApi
+	private static getAppApi(): AppApi {
+		if (!this.appApi) {
+			this.appApi = {
+				plugins: {
+					getHandlersMatching: (
+						condition: (entry: Handler) => boolean,
+					): Handler[] =>
+						HandlerRegistry.getHandlersMatching(condition),
+					getHandlersMatchingWithPluginId: (
+						condition: (entry: [string, Handler]) => boolean,
+					): Map<string, Handler[]> =>
+						HandlerRegistry.getHandlersMatchingWithPluginId(
+							condition,
+						),
+					invokeCallbackOnHandler: <T, R>(
+						id: string,
+						args: T,
+					): Promise<R> =>
+						HandlerRegistry.invokeCallbackOnHandler(id, args),
+				},
+				ui: {
+					navigator: new StubNavigator(),
+				},
+			}
+		}
+		return this.appApi!
 	}
 }
