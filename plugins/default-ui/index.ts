@@ -22,6 +22,7 @@ plugin.defineScreenHandler({
 	async callback(args: ScreenHandlerArgs): Promise<ScreenHandlerResponse> {
 		throw Error('Use sync')
 	},
+	// TODO maybe override the definition of callback Promise<?> to just ? with omit and see if it works?
 	callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(LibraryContent, {
