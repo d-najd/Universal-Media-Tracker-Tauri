@@ -4,8 +4,9 @@ import {
 	ScreenHandlerArgs,
 	ScreenHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
-import ExampleContent from './features/library/example'
 import LibraryContent from './features/library'
+import TestContent from './features/test'
+import React from 'react'
 
 const options: PluginConfig = {
 	id: 'default-ui',
@@ -19,14 +20,31 @@ plugin.defineScreenHandler({
 	pattern: '/',
 	// initialState: createZustandStoreWrapper(''),
 	async callback(args: ScreenHandlerArgs): Promise<ScreenHandlerResponse> {
+		throw Error('Use sync')
+	},
+	callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
+		const ComponentWithProps = () =>
+			React.createElement(LibraryContent, {
+				navigator: plugin.app.ui.navigator,
+			})
+
 		const result: ScreenHandlerResponse = {
-			content: ExampleContent,
+			content: ComponentWithProps,
 		}
 		return result
 	},
+})
+
+plugin.defineScreenHandler({
+	pattern: '/test',
+	async callback(args) {
+		throw Error('Use sync')
+	},
 	callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
+		const ComponentWithProps = () => React.createElement(TestContent, args)
+
 		const result: ScreenHandlerResponse = {
-			content: LibraryContent,
+			content: ComponentWithProps,
 		}
 		return result
 	},

@@ -15,8 +15,13 @@ import {
 } from '../../components/input-group'
 import { useElementSize } from '../../hooks/useElementSize'
 import LibraryGrid from './components/libraryGrid'
+import { Navigator } from '@d-najd/universal-media-tracker-sdk'
 
-export default function LibraryContent() {
+type Props = {
+	navigator: Navigator
+}
+
+export default function LibraryContent(args: Props) {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -83,7 +88,13 @@ export default function LibraryContent() {
 					className="flex-none flex items-center px-0.5"
 				>
 					<div className="px-0.5" />
-					<Button variant={'ghost'}>
+					<Button
+						onClick={() => {
+							console.log('HELLO')
+							args.navigator.push('/test')
+						}}
+						variant={'ghost'}
+					>
 						<LibraryBig />
 					</Button>
 					<Button variant={'ghost'}>

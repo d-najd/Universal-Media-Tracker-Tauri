@@ -56,6 +56,8 @@ for (const folder of fs.readdirSync(dir)) {
 			'react',
 			'react-dom',
 			'lucide-react',
+			'radix-ui',
+			'@radix-ui/react-slot',
 			// 'react/jsx-runtime'
 		],
 		platform: 'node',
