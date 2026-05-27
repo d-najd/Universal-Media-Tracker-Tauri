@@ -5,7 +5,7 @@ import { IDBPDatabase, openDB } from 'idb'
 export default class IndexedDBStorage implements Storage {
 	private constructor(
 		private db: IDBPDatabase,
-		private storeName: string,
+		private storeName?: string = null,
 	) {}
 
 	static async create(dbName = 'db', storeName = 'store') {
