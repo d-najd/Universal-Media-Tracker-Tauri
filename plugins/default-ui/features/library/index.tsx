@@ -1,17 +1,22 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { Button } from '../../components/button'
 import {
+	Filter,
+	LayoutGrid,
+	LibraryBig,
+	MoreVertical,
+	Search,
+	Settings,
+} from 'lucide-react'
+import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
 } from '../../components/input-group'
-
-import { Filter, LayoutGrid, LibraryBig, Search } from 'lucide-react'
 import { useElementSize } from '../../hooks/useElementSize'
 import LibraryGrid from './components/libraryGrid'
 
 export default function LibraryContent() {
-	// plugin.app.plugins.getHandlersMatching(condition)
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -73,7 +78,6 @@ export default function LibraryContent() {
 						</InputGroupAddon>
 					</InputGroup>
 				</div>
-
 				<div
 					ref={topBarIconsRef}
 					className="flex-none flex items-center px-0.5"
@@ -85,24 +89,18 @@ export default function LibraryContent() {
 					<Button variant={'ghost'}>
 						<Filter />
 					</Button>
-					{/*<Button variant={'ghost'}>*/}
-					{/*	<Settings />*/}
-					{/*</Button>*/}
+					<Button variant={'ghost'}>
+						<Settings />
+					</Button>
 					<Button variant={'ghost'}>
 						<LayoutGrid />
 					</Button>
-					{/*<Button variant={'ghost'}>*/}
-					{/*	<MoreVertical />*/}
-					{/*</Button>*/}
+					<Button variant={'ghost'}>
+						<MoreVertical />
+					</Button>
 				</div>
 			</div>
 			<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
-		</>
-	)
-
-	return (
-		<>
-			<h1>Hello from plugin library</h1>
 		</>
 	)
 }

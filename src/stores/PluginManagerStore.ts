@@ -461,7 +461,6 @@ export default class PluginManagerStore {
 		URL.revokeObjectURL(url)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const plugin = module! as any
-		const te = this.getAppApi()
 		plugin.default.app = this.getAppApi()
 		return module.default
 	}

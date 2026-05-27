@@ -26,8 +26,10 @@ export default function AppRouter() {
 
 	useEffect(() => {
 		PluginManagerStore.init().then(() => {
-			setDynamicRoutes(RouteInitializer.getRoutes())
-			setPluginsLoaded(true)
+			RouteInitializer.getRoutes().then((routes) => {
+				setDynamicRoutes(routes)
+				setPluginsLoaded(true)
+			})
 		})
 	}, [])
 

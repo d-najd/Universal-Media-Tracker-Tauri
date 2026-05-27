@@ -5,7 +5,14 @@ import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-	plugins: [react(), tailwindcss()],
+	plugins: [
+		react({
+			babel: {
+				compact: false, // Disables 500KB error, performance impact
+			},
+		}),
+		tailwindcss(),
+	],
 
 	// Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
 	//
