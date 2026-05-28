@@ -55,7 +55,7 @@ export default function LibraryContent(args: Props) {
 	})
 
 	return (
-		<>
+		<div>
 			<div
 				ref={topbarRef}
 				className={
@@ -112,6 +112,6 @@ export default function LibraryContent(args: Props) {
 				</div>
 			</div>
 			<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
-		</>
+		</div>
 	)
 }
