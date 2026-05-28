@@ -4,8 +4,8 @@ import {
 	ScreenHandlerArgs,
 	ScreenHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
-import LibraryContent from './features/library'
 import React from 'react'
+import TestContent from './features/test'
 
 const options: PluginConfig = {
 	id: 'default-ui',
@@ -20,7 +20,7 @@ plugin.defineScreenHandler({
 	// initialState: createZustandStoreWrapper(''),
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
-			React.createElement(LibraryContent, {
+			React.createElement(TestContent, {
 				navigator: plugin.app.ui.navigator,
 			})
 
@@ -29,18 +29,6 @@ plugin.defineScreenHandler({
 		}
 		return result
 	},
-	// TODO maybe override the definition of callback Promise<?> to just ? with omit and see if it works?
-	// callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
-	// 	const ComponentWithProps = () =>
-	// 		React.createElement(LibraryContent, {
-	// 			navigator: plugin.app.ui.navigator,
-	// 		})
-	//
-	// 	const result: ScreenHandlerResponse = {
-	// 		content: ComponentWithProps,
-	// 	}
-	// 	return result
-	// },
 })
 
 plugin.defineScreenHandler({
@@ -53,14 +41,6 @@ plugin.defineScreenHandler({
 		}
 		return result
 	},
-	// callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
-	// 	const ComponentWithProps = () => React.createElement(TestContent, args)
-	//
-	// 	const result: ScreenHandlerResponse = {
-	// 		content: ComponentWithProps,
-	// 	}
-	// 	return result
-	// },
 })
 
 export default plugin

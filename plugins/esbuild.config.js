@@ -102,11 +102,28 @@ function importReplacerPlugin(replacements) {
 	}
 }
 
+function replaceTest(text, replacements) {
+	let result = text
+	for (const [from, to] of Object.entries(replacements)) {
+		const importRegex = new RegExp(
+			`import\\s+?(?:(?:(?:[\\w*\\s{},]*)\\s+from\\s+?)|)(?:(?:"${from}")|(?:'${from}'))[\\s]*?(?:;|$|)`,
+			'g',
+		)
+		console.log(importRegex)
+
+		result = result.replace(importRegex, (fullMatch) => {
+			// Replace just the package name with quotes removed
+			return fullMatch.replace(new RegExp(`["']${from}["']`), to)
+		})
+	}
+	return result
+}
+
 for (const folder of fs.readdirSync(dir)) {
 	const indexPath = path.join(dir, folder, 'index.ts')
 	if (!fs.existsSync(indexPath)) continue
 
-	await esbuild.build({
+	const buildResult = await esbuild.build({
 		// plugins: [
 		// 	importReplacerPlugin({
 		// 		// react: 'React',
@@ -116,47 +133,47 @@ for (const folder of fs.readdirSync(dir)) {
 		// 		'@d-najd/universal-media-tracker-sdk': 'MelancholySdk',
 		// 	}),
 		// ],
-		// plugins: [
-		// 	globalExternals({
-		// 		react: {
-		// 			varName: 'React',
-		// 			namedExports: [
-		// 				'useState',
-		// 				'useEffect',
-		// 				'createElement',
-		// 				'Fragment',
-		// 				'useRef',
-		// 				'useCallback',
-		// 				'useLayoutEffect',
-		// 			],
-		// 		},
-		// 		'lucide-react': {
-		// 			varName: 'LucideReact',
-		// 			namedExports: [
-		// 				'Filter',
-		// 				'LayoutGrid',
-		// 				'LibraryBig',
-		// 				'MoreVertical',
-		// 				'Search',
-		// 				'Settings',
-		// 			],
-		// 		},
-		// 		'radix-ui': {
-		// 			varName: 'RadixUi',
-		// 			namedExports: ['Slot'],
-		// 		},
-		// 		'@radix-ui/react-slot': {
-		// 			varName: 'RadixUi',
-		// 			namedExports: ['Slot'],
-		// 		},
-		// 		'@d-najd/universal-media-tracker-sdk': {
-		// 			varname: 'Reacte',
-		// 			namedExports: ['Plugin'],
-		// 		},
-		// 	}),
-		// ],
+		plugins: [
+			globalExternals({
+				react: {
+					varName: 'React',
+					namedExports: [
+						'useState',
+						'useEffect',
+						'createElement',
+						'Fragment',
+						'useRef',
+						'useCallback',
+						'useLayoutEffect',
+					],
+				},
+				'lucide-react': {
+					varName: 'LucideReact',
+					namedExports: [
+						'Filter',
+						'LayoutGrid',
+						'LibraryBig',
+						'MoreVertical',
+						'Search',
+						'Settings',
+					],
+				},
+				'radix-ui': {
+					varName: 'RadixUi',
+					namedExports: ['Slot'],
+				},
+				'@radix-ui/react-slot': {
+					varName: 'RadixUi',
+					namedExports: ['Slot'],
+				},
+				'@d-najd/universal-media-tracker-sdk': {
+					varname: 'Reacte',
+					namedExports: ['Plugin'],
+				},
+			}),
+		],
 		entryPoints: [indexPath],
-		outfile: path.join('src/app/plugins/js', `${folder}.js`),
+		// outfile: path.join('src/app/plugins/js', `${folder}.js`),
 		bundle: true,
 		external: [
 			'@d-najd/universal-media-tracker-sdk',
@@ -168,13 +185,23 @@ for (const folder of fs.readdirSync(dir)) {
 			'@radix-ui/react-slot',
 			// 'react/jsx-runtime'
 		],
-		globals: {
-			react: 'React', // Maps to window.React
-		},
 		platform: 'node',
 		format: 'esm',
 		sourcemap: false,
 		minify: false,
 		jsx: 'transform',
+		write: false,
 	})
+
+	let text = buildResult.outputFiles[0].text
+	// text = replaceTest(text, {
+	// 	react: 'React',
+	// 	'lucide-react': 'LucideReact',
+	// 	'radix-ui': 'RadixUi',
+	// 	'@radix-ui/react-slot': 'RadixUi',
+	// 	'@d-najd/universal-media-tracker-sdk': 'MelancholySdk',
+	// })
+
+	fs.mkdirSync('src/app/plugins/js', { recursive: true })
+	fs.writeFileSync(path.join('src/app/plugins/js', `${folder}.js`), text, {})
 }
