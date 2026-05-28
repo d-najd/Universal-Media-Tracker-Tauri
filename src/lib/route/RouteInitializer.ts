@@ -10,7 +10,7 @@ export default class RouteInitializer {
 	static async getRoutes(): Promise<RouteObject[]> {
 		const handlers = HandlerRegistry.getHandlersMatching(
 			(o) => o.type === 'ui-screen',
-		) as CreateCustomScreenHandler[]
+		) as unknown as CreateCustomScreenHandler[]
 
 		const routes = handlers.map((handler) => {
 			const args: ScreenHandlerArgs = {
@@ -22,7 +22,7 @@ export default class RouteInitializer {
 			const result: RouteObject = {
 				path: handler.pattern,
 				element: React.createElement(() =>
-					handler.callbackSync(args).content(),
+					handler.callback(args).content(),
 				),
 			}
 

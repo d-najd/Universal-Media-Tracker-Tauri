@@ -6,16 +6,16 @@ import { useEffect } from 'react'
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import * as UniversalMediaTrackerSdk from '@d-najd/universal-media-tracker-sdk'
 import * as LucideReact from 'lucide-react'
 import * as RadixUi from 'radix-ui'
+import * as MelancholySdk from '@d-najd/universal-media-tracker-sdk'
 
 // Expose to window for dynamic plugins
 ;(window as any).React = React
 ;(window as any).ReactDOM = ReactDOM
-;(window as any).UniversalMediaTrackerSdk = UniversalMediaTrackerSdk
 ;(window as any).LucideReact = LucideReact
 ;(window as any).RadixUi = RadixUi
+;(window as any).MelancholySdk = MelancholySdk
 
 export default function App() {
 	useEffect(() => {

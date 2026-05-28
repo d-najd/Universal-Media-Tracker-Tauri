@@ -1,3 +1,3 @@
 export default function TestContent() {
-	return <>Hello</>
+	return <div>Hello</div>
 }

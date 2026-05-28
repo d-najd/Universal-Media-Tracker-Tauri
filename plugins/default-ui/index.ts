@@ -4,9 +4,9 @@ import {
 	ScreenHandlerArgs,
 	ScreenHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
-import LibraryContent from './features/library'
-import TestContent from './features/test'
 import React from 'react'
+import TestContent from './features/test'
+import LibraryContent from './features/library'
 
 const options: PluginConfig = {
 	id: 'default-ui',
@@ -19,11 +19,7 @@ const plugin = new Plugin(options)
 plugin.defineScreenHandler({
 	pattern: '/',
 	// initialState: createZustandStoreWrapper(''),
-	async callback(args: ScreenHandlerArgs): Promise<ScreenHandlerResponse> {
-		throw Error('Use sync')
-	},
-	// TODO maybe override the definition of callback Promise<?> to just ? with omit and see if it works?
-	callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
+	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(LibraryContent, {
 				navigator: plugin.app.ui.navigator,
@@ -38,10 +34,7 @@ plugin.defineScreenHandler({
 
 plugin.defineScreenHandler({
 	pattern: '/test',
-	async callback(args) {
-		throw Error('Use sync')
-	},
-	callbackSync(args: ScreenHandlerArgs): ScreenHandlerResponse {
+	callback(args) {
 		const ComponentWithProps = () => React.createElement(TestContent, args)
 
 		const result: ScreenHandlerResponse = {
