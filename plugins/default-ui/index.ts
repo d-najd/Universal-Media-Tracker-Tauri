@@ -6,6 +6,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import React from 'react'
 import TestContent from './features/test'
+import LibraryContent from './features/library'
 
 const options: PluginConfig = {
 	id: 'default-ui',
@@ -20,7 +21,7 @@ plugin.defineScreenHandler({
 	// initialState: createZustandStoreWrapper(''),
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
-			React.createElement(TestContent, {
+			React.createElement(LibraryContent, {
 				navigator: plugin.app.ui.navigator,
 			})
 

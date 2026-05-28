@@ -5,20 +5,6 @@
 		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Tauri</title>
-		<!-- I wonder how, I wonder why, why don't node_module imports work like this blue blue sky -->
-		<!-- Attempted stuff -->
-		<!-- node_modules - random crashes -->
-		<!-- esbuild or rollup for bundling node_modules crashes -->
-		<!-- downloading from esm.sh with bundle mode and plugging in the scripts, works but needs automation since there are imports and exports and god knows what -->
-		<!-- Trying to get vite to recognize that there are imports here, doesn't work since dynamic imports -->
-		<!-- jspm to resolve import maps, possibly could work IF IT ADDED THE ACTUAL IMPORTS n-->
-		<script type="importmap">
-			{
-				"imports": {
-					"zustand": "/vendor/packages/zustand.bundle.mjs"
-				}
-			}
-		</script>
 	</head>
 	<body>
 		<div id="root"></div>
