@@ -36,6 +36,10 @@ for (const folder of fs.readdirSync(dir)) {
 					varName: 'React',
 					type: 'cjs',
 				},
+				'react-router-dom': {
+					varName: 'ReactRouterDom',
+					type: 'cjs',
+				},
 			}),
 		],
 		entryPoints: [indexPath],

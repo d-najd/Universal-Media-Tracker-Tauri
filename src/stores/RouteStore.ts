@@ -1,4 +1,4 @@
-import HandlerRegistry from '../registry/HandlerRegistry'
+import HandlerRegistry from '../lib/registry/HandlerRegistry'
 import { RouteObject } from 'react-router'
 import {
 	CreateCustomScreenHandler,
@@ -6,8 +6,10 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import React from 'react'
 
-export default class RouteInitializer {
-	static async getRoutes(): Promise<RouteObject[]> {
+export default class RouteStore {
+	static routes: RouteObject[]
+
+	static async generateRoutes(): Promise<RouteObject[]> {
 		const handlers = HandlerRegistry.getHandlersMatching(
 			(o) => o.type === 'ui-screen',
 		) as unknown as CreateCustomScreenHandler[]
@@ -29,6 +31,7 @@ export default class RouteInitializer {
 			return result
 		})
 
+		this.routes = routes
 		return routes
 	}
 }

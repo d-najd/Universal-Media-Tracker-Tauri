@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createBrowserRouter, RouteObject, RouterProvider } from 'react-router'
 import PluginManagerStore from '@/stores/PluginManagerStore'
-import RouteInitializer from '@/lib/route/RouteInitializer'
+import RouteStore from '@/stores/RouteStore'
 
 /**
  * Dynamic routes should be passed at the start if possible
@@ -26,7 +26,7 @@ export default function AppRouter() {
 
 	useEffect(() => {
 		PluginManagerStore.init().then(() => {
-			RouteInitializer.getRoutes().then((routes) => {
+			RouteStore.generateRoutes().then((routes) => {
 				setDynamicRoutes(routes)
 				setPluginsLoaded(true)
 			})

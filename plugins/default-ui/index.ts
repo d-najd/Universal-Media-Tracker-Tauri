@@ -14,7 +14,7 @@ const options: PluginConfig = {
 	version: '0.0.1',
 }
 
-const plugin = new Plugin(options)
+export const plugin = new Plugin(options)
 
 plugin.defineScreenHandler({
 	pattern: '/',

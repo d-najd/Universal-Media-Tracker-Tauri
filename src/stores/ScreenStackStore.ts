@@ -1,6 +1,7 @@
 import ScreenState from '@/stores/ScreenState'
 import { create } from 'zustand'
 
+// Depricated
 export const useScreenStore = create<ScreenStackStore>()((set, get) => ({
 	screens: [],
 
