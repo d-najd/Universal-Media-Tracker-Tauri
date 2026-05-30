@@ -20,7 +20,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import DirEntry from '@/lib/storage/DirEntry'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
-import StubNavigator from '@/lib/navigator/StubNavigator'
+import { useAppNavigatorStore } from './useAppNavigator'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -487,7 +487,7 @@ export default class PluginManagerStore {
 						HandlerRegistry.invokeCallbackOnHandler(id, args),
 				},
 				ui: {
-					navigator: new StubNavigator(),
+					navigator: useAppNavigatorStore.getState(),
 				},
 			}
 		}

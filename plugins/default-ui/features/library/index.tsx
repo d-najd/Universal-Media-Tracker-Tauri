@@ -16,12 +16,13 @@ import {
 import { useElementSize } from '../../hooks/useElementSize'
 import LibraryGrid from './components/libraryGrid'
 import { Navigator } from '@d-najd/universal-media-tracker-sdk'
+import plugin from '../..'
 
 type Props = {
 	navigator: Navigator
 }
 
-export default function LibraryContent(args: Props) {
+export default function LibraryPage(args: Props) {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -90,8 +91,7 @@ export default function LibraryContent(args: Props) {
 					<div className="px-0.5" />
 					<Button
 						onClick={() => {
-							console.log('HELLO')
-							args.navigator.push('/test')
+							plugin.app.ui.navigator.push('/test')
 						}}
 						variant={'ghost'}
 					>

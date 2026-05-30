@@ -1,1 +1,1 @@
-# Inside there are the compiled base plugins
+# Inside js folder are the compiled base plugins
