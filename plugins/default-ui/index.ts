@@ -19,7 +19,6 @@ export const plugin = new Plugin(options)
 
 plugin.defineScreenHandler({
 	pattern: '/',
-	// initialState: createZustandStoreWrapper(''),
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(LibraryPage, {

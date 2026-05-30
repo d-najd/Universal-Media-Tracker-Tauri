@@ -16,7 +16,7 @@ import {
 import { useElementSize } from '../../hooks/useElementSize'
 import LibraryGrid from './components/libraryGrid'
 import { Navigator } from '@d-najd/universal-media-tracker-sdk'
-import { useNavigate } from 'react-router-dom'
+import plugin from '../..'
 
 type Props = {
 	navigator: Navigator
@@ -26,7 +26,6 @@ export default function LibraryPage(args: Props) {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')
-	const navigate = useNavigate()
 
 	const { ref: topbarRef, size: topbarSize } =
 		useElementSize<HTMLDivElement>()
@@ -92,7 +91,7 @@ export default function LibraryPage(args: Props) {
 					<div className="px-0.5" />
 					<Button
 						onClick={() => {
-							navigate('/test')
+							plugin.app.ui.navigator.push('/test')
 						}}
 						variant={'ghost'}
 					>

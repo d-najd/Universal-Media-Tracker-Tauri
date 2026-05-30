@@ -5,6 +5,7 @@ import {
 import { create } from 'zustand'
 import { matchPath } from 'react-router'
 import { useRouteStore } from './useRouteStore'
+import { navigator } from '@/lib/init/navigator'
 
 export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 	screens: [],
@@ -22,7 +23,7 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 			pattern: matched[0].path!,
 		}
 
-		window.location.pathname = newScreen.path
+		navigator()(newScreen.path)
 
 		set((s) => ({
 			screens: [...s.screens, newScreen],
@@ -35,7 +36,7 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 			screens: s.screens.slice(0, -1),
 		}))
 
-		window.location.pathname = lastScreen.path
+		navigator()(-1)
 
 		return lastScreen
 	},
@@ -53,7 +54,7 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 			pattern: matched[0].path!,
 		}
 
-		window.location.pathname = newScreen.path
+		navigator()(newScreen.path, { replace: true })
 
 		set((s) => ({
 			screens: [...s.screens.slice(0, -1), newScreen],
