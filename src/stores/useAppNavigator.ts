@@ -3,15 +3,15 @@ import {
 	NavigatorEntry,
 } from '@d-najd/universal-media-tracker-sdk'
 import { create } from 'zustand'
-import RouteStore from './RouteStore'
 import { matchPath } from 'react-router'
+import { useRouteStore } from './useRouteStore'
 
 export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 	screens: [],
 	push: (path: string): void => {
-		const matched = RouteStore.routes.filter((o) =>
-			matchPath(o.path!, path),
-		)
+		const matched = useRouteStore
+			.getState()
+			.routes.filter((o) => matchPath(o.path!, path))
 		if (!matched) {
 			throw Error(`Can't find route matching path ${path}`)
 		}
@@ -40,9 +40,9 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 		return lastScreen
 	},
 	replace: (path: string): void => {
-		const matched = RouteStore.routes.filter((o) =>
-			matchPath(o.path!, path),
-		)
+		const matched = useRouteStore
+			.getState()
+			.routes.filter((o) => matchPath(o.path!, path))
 		if (!matched) {
 			throw Error(`Can't find route matching path ${path}`)
 		}

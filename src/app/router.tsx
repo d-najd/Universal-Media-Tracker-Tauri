@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { createBrowserRouter, RouteObject, RouterProvider } from 'react-router'
-import PluginManagerStore from '@/stores/PluginManagerStore'
-import RouteStore from '@/stores/RouteStore'
+import { useRouteStore } from '@/stores/useRouteStore'
+import { useAppInit } from '@/lib/init/useAppinit'
 
 /**
  * Dynamic routes should be passed at the start if possible
@@ -20,20 +20,12 @@ const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
 	)
 
 export default function AppRouter() {
-	const [pluginsLoaded, setPluginsLoaded] = useState<boolean>(false)
-	const [dynamicRoutes, setDynamicRoutes] = useState<RouteObject[]>([])
-	const appRouter = createAppRouter(dynamicRoutes)
+	const { initialized } = useAppInit()
+	const { routes } = useRouteStore()
 
-	useEffect(() => {
-		PluginManagerStore.init().then(() => {
-			RouteStore.generateRoutes().then((routes) => {
-				setDynamicRoutes(routes)
-				setPluginsLoaded(true)
-			})
-		})
-	}, [])
+	const appRouter = createAppRouter(initialized ? routes : [])
 
-	if (!pluginsLoaded) {
+	if (!initialized) {
 		return <h1>Loading</h1>
 	}
 

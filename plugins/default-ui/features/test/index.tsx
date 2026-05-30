@@ -1,4 +1,4 @@
-import { NavigateOptions, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useLibraryScreenState } from '../library/LibraryScreenState'
 
 export default function TestContent() {

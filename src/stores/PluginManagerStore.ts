@@ -20,7 +20,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import DirEntry from '@/lib/storage/DirEntry'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
-import { useAppNavigatorStore } from './AppNavigator'
+import { useAppNavigatorStore } from './useAppNavigator'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
