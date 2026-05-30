@@ -7,23 +7,14 @@ import { useAppInit } from '@/lib/init/useAppinit'
  * Dynamic routes should be passed at the start if possible
  */
 const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
-	useMemo(
-		() =>
-			createBrowserRouter([
-				{
-					path: '*',
-					lazy: () => import('@/app/routes/not-found'),
-				},
-				...dynamicRoutes,
-			]),
-		[dynamicRoutes],
-	)
+	useMemo(() => createBrowserRouter([...dynamicRoutes]), [dynamicRoutes])
 
 export default function AppRouter() {
 	const { initialized } = useAppInit()
 	const { routes } = useRouteStore()
 
-	const appRouter = createAppRouter(initialized ? routes : [])
+	// Must have empty route object or react will freak out
+	const appRouter = createAppRouter(initialized ? routes : [{}])
 
 	if (!initialized) {
 		return <h1>Loading</h1>

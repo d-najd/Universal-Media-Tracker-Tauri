@@ -22,7 +22,7 @@ type Props = {
 	navigator: Navigator
 }
 
-export default function LibraryContent(args: Props) {
+export default function LibraryPage(args: Props) {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')

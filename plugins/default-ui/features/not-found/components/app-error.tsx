@@ -1,11 +1,11 @@
 import { relaunch } from '@tauri-apps/plugin-process'
-import { Button } from '@/components/ui/button'
 import {
 	ErrorView,
 	ErrorHeader,
 	ErrorDescription,
 	ErrorActions,
-} from '@/features/errors/error-base'
+} from './error-base'
+import { Button } from '../../../components/button'
 
 export default function AppErrorPage() {
 	return (
