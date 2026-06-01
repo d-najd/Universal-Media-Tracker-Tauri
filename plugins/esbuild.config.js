@@ -33,7 +33,7 @@ for (const folder of fs.readdirSync(dir)) {
 					type: 'cjs',
 				},
 				'react/jsx-runtime': {
-					varName: 'React',
+					varName: 'ReactJSXRuntime',
 					type: 'cjs',
 				},
 				'react-router-dom': {
@@ -42,12 +42,16 @@ for (const folder of fs.readdirSync(dir)) {
 				},
 			}),
 		],
+		define: {
+			'process.env.NODE_ENV': '"development"', // or '"development"'
+		},
+
 		entryPoints: [indexPath],
 		bundle: true,
 		platform: 'node',
 		format: 'esm',
-		sourcemap: false,
-		minify: true,
+		sourcemap: true,
+		minify: false,
 		outfile: path.join('src/app/plugins/js', `${folder}.js`),
 		jsx: 'transform',
 	})
