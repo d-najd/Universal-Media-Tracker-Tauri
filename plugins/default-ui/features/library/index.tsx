@@ -17,7 +17,6 @@ import { useElementSize } from '../../hooks/useElementSize'
 import LibraryGrid from './components/libraryGrid'
 import { Navigator } from '@d-najd/universal-media-tracker-sdk'
 import plugin from '../..'
-import Checkbox from '@mui/material/Checkbox'
 
 type Props = {
 	navigator: Navigator
@@ -75,7 +74,6 @@ export default function LibraryPage(args: Props) {
 							maxWidth: topbarSearchMaxWidthPx,
 						}}
 					>
-						<Checkbox />
 						<InputGroupInput
 							placeholder={'Search'}
 							value={search}
