@@ -6,9 +6,8 @@ import {
 	ResourceHandler,
 	ResourceHandlerArgs,
 } from '@d-najd/universal-media-tracker-sdk'
-import { cva } from 'class-variance-authority'
-import { Card } from '../../../components/card'
 import plugin from '../../../index'
+import { Box, Paper, styled } from '@mui/material'
 
 type LibraryGridProps = {
 	topbarSize: { width: number; height: number }
@@ -110,33 +109,29 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		fetchCatalog().then()
 	}, [skip, search])
 
-	const cardStyle = cva('w-38 h-59.5 gap-0 py-0 overflow-hidden', {
-		variants: {
-			hoverable: {
-				true: 'hover:scale-105 hover:shadow-lg transition-all duration-200 hover:border-primary border',
-				false: '',
-			},
-		},
-		defaultVariants: {
-			hoverable: true,
-		},
-	})
-
 	return (
 		<>
 			{catalog ? (
-				<div
-					className={`flex justify-center gap-2.75 flex-row flex-wrap content-start px-3`}
-					style={{ paddingTop: topbarSize.height + 10 }}
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'center',
+						gap: `11px`,
+						flexDirection: 'row',
+						flexWrap: 'wrap',
+						alignContent: 'flex-start',
+						px: `12px`,
+						paddingTop: `${topbarSize.height + 10}px`,
+					}}
 				>
 					{[...catalog.values()].map((item, key) => (
-						<Card
-							key={key}
-							className={cardStyle()}
-							ref={lastItemRef}
-						>
+						<Card key={key} ref={lastItemRef}>
 							<img
-								className="w-full h-full object-fill"
+								style={{
+									width: '100%',
+									height: '100%',
+									objectFit: 'fill',
+								}}
 								alt="no content"
 								src={item.poster}
 								onError={(e) => {
@@ -146,10 +141,28 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 							/>
 						</Card>
 					))}
-				</div>
+				</Box>
 			) : (
 				<>No Data</>
 			)}
 		</>
 	)
 }
+
+const Card = styled(Paper, {
+	shouldForwardProp: (prop) => prop !== 'hoverable',
+})<{ hoverable?: boolean }>(({ theme, hoverable = true }) => ({
+	width: '152px',
+	height: '238px',
+	gap: 0,
+	paddingBlock: 0,
+	overflow: 'hidden',
+	transition: 'all 0.2s ease-in-out',
+	...(hoverable && {
+		'&:hover': {
+			transform: 'scale(1.05)',
+			boxShadow: theme.shadows[4],
+			border: `1px solid ${theme.palette.primary.main}`,
+		},
+	}),
+}))

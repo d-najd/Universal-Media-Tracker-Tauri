@@ -25,7 +25,7 @@ for (const folder of fs.readdirSync(dir)) {
 					type: 'cjs',
 				},
 				'@radix-ui/react-slot': {
-					varName: 'RadixUi',
+					varName: 'RadixUiReactSlot',
 					type: 'cjs',
 				},
 				'@d-najd/universal-media-tracker-sdk': {
@@ -36,22 +36,17 @@ for (const folder of fs.readdirSync(dir)) {
 					varName: 'ReactJSXRuntime',
 					type: 'cjs',
 				},
-				'react-router-dom': {
-					varName: 'ReactRouterDom',
-					type: 'cjs',
-				},
 			}),
 		],
 		define: {
 			'process.env.NODE_ENV': '"development"', // or '"development"'
 		},
-
 		entryPoints: [indexPath],
 		bundle: true,
 		platform: 'node',
 		format: 'esm',
-		sourcemap: true,
-		minify: false,
+		sourcemap: false,
+		minify: true,
 		outfile: path.join('src/app/plugins/js', `${folder}.js`),
 		jsx: 'transform',
 	})

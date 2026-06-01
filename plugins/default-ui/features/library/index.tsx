@@ -1,28 +1,45 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { Button } from '../../components/button'
 import {
-	Filter,
-	LayoutGrid,
-	LibraryBig,
-	MoreVertical,
+	Box,
+	createTheme,
+	IconButton,
+	InputAdornment,
+	TextField,
+	ThemeProvider,
+} from '@mui/material'
+import {
 	Search,
+	Collections,
 	Settings,
-} from 'lucide-react'
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-} from '../../components/input-group'
+	MoreVert,
+	FilterAlt,
+	Dashboard,
+} from '@mui/icons-material'
 import { useElementSize } from '../../hooks/useElementSize'
-import LibraryGrid from './components/libraryGrid'
-import { Navigator } from '@d-najd/universal-media-tracker-sdk'
 import plugin from '../..'
+import { alpha } from '@mui/material/styles'
 
-type Props = {
-	navigator: Navigator
-}
+import { green, purple } from '@mui/material/colors'
+import LibraryGrid from './components/libraryGrid'
 
-export default function LibraryPage(args: Props) {
+// Create dark theme
+const darkTheme = createTheme({
+	cssVariables: true,
+	shape: {
+		borderRadius: '12px',
+	},
+	palette: {
+		primary: {
+			main: purple[500],
+		},
+		secondary: {
+			main: green[500],
+		},
+		mode: 'dark',
+	},
+})
+
+export default function LibraryPage() {
 	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState('')
 	const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -56,62 +73,88 @@ export default function LibraryPage(args: Props) {
 	})
 
 	return (
-		<div>
-			<div
-				ref={topbarRef}
-				className={
-					'fixed top-0 left-0 w-full flex items-center bg-background/80 backdrop-blur-md px-2.5 py-2 z-50'
-				}
-			>
-				<div
-					className="flex-1 flex justify-center min-w-20"
-					style={{
-						paddingLeft: topbarSearchPadding,
+		<ThemeProvider theme={darkTheme}>
+			<Box>
+				<Box
+					ref={topbarRef}
+					sx={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						width: '100%',
+						display: 'flex',
+						alignItems: 'center',
+						bgcolor: (theme) =>
+							alpha(theme.palette.background.default, 0.8),
+						backdropFilter: 'blur(8px)',
+						px: '10px',
+						py: 0.75,
+						zIndex: 50,
 					}}
 				>
-					<InputGroup
-						style={{
-							maxWidth: topbarSearchMaxWidthPx,
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							justifyContent: 'center',
+							minWidth: 80,
+							paddingLeft: `${topbarSearchPadding}px`,
 						}}
 					>
-						<InputGroupInput
-							placeholder={'Search'}
+						<TextField
+							placeholder="Search"
 							value={search}
 							onChange={(o) => setSearch(o.target.value)}
-						></InputGroupInput>
-						<InputGroupAddon align={'inline-end'}>
-							<Search />
-						</InputGroupAddon>
-					</InputGroup>
-				</div>
-				<div
-					ref={topBarIconsRef}
-					className="flex-none flex items-center px-0.5"
-				>
-					<div className="px-0.5" />
-					<Button
-						onClick={() => {
-							plugin.app.ui.navigator.push('/test')
+							variant="outlined"
+							size="small"
+							sx={{
+								maxWidth: `${topbarSearchMaxWidthPx}px`,
+								width: '100%',
+							}}
+							slotProps={{
+								input: {
+									endAdornment: (
+										<InputAdornment position="end">
+											<Search />
+										</InputAdornment>
+									),
+								},
+							}}
+						/>
+					</Box>
+					<Box
+						ref={topBarIconsRef}
+						sx={{
+							flex: 'none',
+							display: 'flex',
+							alignItems: 'center',
+							px: 0.5,
 						}}
-						variant={'ghost'}
 					>
-						<LibraryBig />
-					</Button>
-					<Button variant={'ghost'}>
-						<Filter />
-					</Button>
-					<Button variant={'ghost'}>
-						<Settings />
-					</Button>
-					<Button variant={'ghost'}>
-						<LayoutGrid />
-					</Button>
-					<Button variant={'ghost'}>
-						<MoreVertical />
-					</Button>
-				</div>
-			</div>
-			<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
-		</div>
+						<Box sx={{ px: 0.5 }} />
+						<IconButton
+							onClick={() => {
+								plugin.app.ui.navigator.push('/test')
+							}}
+						>
+							<Collections />
+						</IconButton>
+						<IconButton>
+							<FilterAlt />
+						</IconButton>
+						<IconButton>
+							<Settings />
+						</IconButton>
+						<IconButton>
+							<Dashboard />
+						</IconButton>
+						<IconButton>
+							<MoreVert />
+						</IconButton>
+					</Box>
+				</Box>
+				<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
+			</Box>
+		</ThemeProvider>
 	)
 }

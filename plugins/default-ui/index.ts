@@ -6,9 +6,8 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import React from 'react'
 import TestPage from './features/test'
-import LibraryPage from './features/library'
 import NotFoundErrorPage from './features/not-found'
-import { LibraryNewPage } from './features/library-new'
+import LibraryPage from './features/library'
 
 const options: PluginConfig = {
 	id: 'default-ui',
@@ -20,21 +19,6 @@ export const plugin = new Plugin(options)
 
 plugin.defineScreenHandler({
 	pattern: '/',
-	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
-		const ComponentWithProps = () =>
-			React.createElement(LibraryNewPage, {
-				navigator: plugin.app.ui.navigator,
-			})
-
-		const result: ScreenHandlerResponse = {
-			content: ComponentWithProps,
-		}
-		return result
-	},
-})
-
-plugin.defineScreenHandler({
-	pattern: '/old',
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(LibraryPage, {
