@@ -8,8 +8,10 @@ import React from 'react'
 import TestPage from './features/test'
 import NotFoundErrorPage from './features/not-found'
 import LibraryPage from './features/library'
+import PluginsManagePage from './features/plugins-manage'
 
 const options: PluginConfig = {
+	logo: '',
 	id: 'default-ui',
 	name: 'Default UI',
 	version: '0.0.1',
@@ -37,6 +39,23 @@ plugin.defineScreenHandler({
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(NotFoundErrorPage, args)
+
+		const result: ScreenHandlerResponse = {
+			content: ComponentWithProps,
+		}
+
+		return result
+	},
+})
+
+// manage/plugins
+// browse/plugins
+
+plugin.defineScreenHandler({
+	pattern: '/manage/plugins',
+	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
+		const ComponentWithProps = () =>
+			React.createElement(PluginsManagePage, args)
 
 		const result: ScreenHandlerResponse = {
 			content: ComponentWithProps,

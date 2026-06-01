@@ -7,10 +7,10 @@ import {
 	pluginFileName,
 	pluginPath,
 } from '@/lib/storage/StoragePaths'
-import LocalPluginConfig from '@/types/LocalPluginConfig'
 import {
 	AppApi,
 	Handler,
+	LocalPluginConfig,
 	Plugin,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
@@ -35,8 +35,14 @@ export default class PluginManagerStore {
 		string,
 		PluginDescriptor
 	>()
+	/**
+	 * key is plugin id
+	 * List of vaid local plugin configs
+	 */
+	private static localPluginConfigs: Map<string, LocalPluginConfig> =
+		new Map()
 
-	static initPromise: Promise<void> | null = null
+	private static initPromise: Promise<void> | null = null
 
 	static async init() {
 		if (this.initPromise) {
@@ -128,6 +134,7 @@ export default class PluginManagerStore {
 				folder.path + '/' + pluginConfigName,
 			)
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
+			this.localPluginConfigs.set(config.id, config)
 			if (config.status === 'disabled') continue
 
 			switch (config.loadedFrom) {
@@ -159,6 +166,12 @@ export default class PluginManagerStore {
 		}
 
 		return result
+	}
+
+	static getLocalPluginConfigs(): LocalPluginConfig[] {
+		return [...this.localPluginConfigs.values()].sort((a, b) =>
+			a.name.localeCompare(b.name),
+		)
 	}
 
 	private static async registerDescriptorFromPluginSource(
@@ -469,7 +482,9 @@ export default class PluginManagerStore {
 	private static getAppApi(): AppApi {
 		if (!this.appApi) {
 			this.appApi = {
-				plugins: {
+				plugin: {
+					getLocalPluginConfigs: (): LocalPluginConfig[] =>
+						this.getLocalPluginConfigs(),
 					getHandlersMatching: (
 						condition: (entry: Handler) => boolean,
 					): Handler[] =>

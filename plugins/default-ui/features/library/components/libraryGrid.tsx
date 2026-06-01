@@ -50,7 +50,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const fetchCatalog = async () => {
 		setLoading(true)
 
-		const handler = plugin.app.plugins.getHandlersMatching(
+		const handler = plugin.app.plugin.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
 			(o) => o.id === 'kitsu-anime-list',
 		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>

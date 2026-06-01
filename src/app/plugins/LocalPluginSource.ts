@@ -6,6 +6,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
+	logo: '',
 	id: 'local-plugin-loader',
 	name: 'Local Plugin Loader',
 	version: '0.0.1',

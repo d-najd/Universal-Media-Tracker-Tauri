@@ -10,6 +10,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
+	logo: 'https://web.stremio.com/images/stremio_symbol.png',
 	id: 'stremio-plugin-factory',
 	name: 'Stremio Plugin Factory',
 	version: '0.0.1',
@@ -19,6 +20,7 @@ const plugin = new Plugin(options)
 
 type StremioManifest = {
 	id: string
+	logo: string
 	name: string
 	version: string
 	catalogs: StremioCatalogEntry[]
@@ -68,6 +70,7 @@ plugin.definePluginFactoryHandler({
 			).json()) as StremioManifest
 
 			const plugin = new Plugin({
+				logo: manifest.logo,
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
