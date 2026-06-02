@@ -6,6 +6,7 @@ type Props = {
 }
 
 /**
+ * Needs to be loaded from there because the routes must be "initialized" before initializing react
  * Called from [useRouteStore]
  */
 export default function ReactInit(props: Props) {

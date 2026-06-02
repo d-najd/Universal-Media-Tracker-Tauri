@@ -5,7 +5,7 @@ import {
 import { create } from 'zustand'
 import { matchPath } from 'react-router'
 import { navigator } from '@/lib/init/navigator'
-import { useRouteStore } from '@/stores/useRouteStore'
+import { useRouteStore } from './useRouteStore'
 
 export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 	screens: [],

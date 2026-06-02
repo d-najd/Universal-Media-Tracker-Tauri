@@ -4,7 +4,6 @@ import App from '@/app'
 import { ErrorBoundary } from 'react-error-boundary'
 
 import { createTheme, ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
 import { green, purple } from '@mui/material/colors'
 
 // Create dark theme

@@ -1,4 +1,4 @@
-import ReactInit from '@/app/reactInit'
+import ReactInit from '@/lib/init/reactInit'
 import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
 import { CreateScreenHandler } from '@d-najd/universal-media-tracker-sdk'
 import React, { useState } from 'react'
