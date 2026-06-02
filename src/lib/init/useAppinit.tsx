@@ -1,10 +1,10 @@
 import initAppGlobals from './initGlobals'
-import PluginManagerStore from '@/stores/PluginManagerStore'
 import { useRouteStore } from '@/stores/useRouteStore'
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { setNavigator } from './navigator'
+import PluginManagerStore from '../plugin-loader/PluginManagerStore'
 
 let coreInitialized = false
 let coreInitPromise: Promise<void> | null = null

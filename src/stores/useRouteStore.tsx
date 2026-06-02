@@ -1,5 +1,5 @@
 import ReactInit from '@/app/reactInit'
-import HandlerRegistry from '@/lib/registry/HandlerRegistry'
+import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
 import { CreateScreenHandler } from '@d-najd/universal-media-tracker-sdk'
 import React, { useState } from 'react'
 import { RouteObject } from 'react-router'

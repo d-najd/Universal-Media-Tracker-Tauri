@@ -4,8 +4,8 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import { create } from 'zustand'
 import { matchPath } from 'react-router'
-import { useRouteStore } from './useRouteStore'
 import { navigator } from '@/lib/init/navigator'
+import { useRouteStore } from '@/stores/useRouteStore'
 
 export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 	screens: [],

@@ -1,6 +1,6 @@
 import PluginDescriptor from '@/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
-import HandlerRegistry from '@/lib/registry/HandlerRegistry'
+import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
 import { getStorage } from '@/lib/storage'
 import {
 	pluginConfigName,
@@ -8,7 +8,6 @@ import {
 	pluginPath,
 } from '@/lib/storage/StoragePaths'
 import {
-	AppApi,
 	Handler,
 	LocalPluginConfig,
 	Plugin,
@@ -20,7 +19,7 @@ import {
 } from '@d-najd/universal-media-tracker-sdk'
 import DirEntry from '@/lib/storage/DirEntry'
 import LocalPluginSource from '@/app/plugins/LocalPluginSource'
-import { useAppNavigatorStore } from './useAppNavigator'
+import getAppApi from './appApiImpl'
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -474,38 +473,7 @@ export default class PluginManagerStore {
 		URL.revokeObjectURL(url)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const plugin = module! as any
-		plugin.default.app = this.getAppApi()
+		plugin.default.app = getAppApi()
 		return module.default
-	}
-
-	private static appApi?: AppApi
-	private static getAppApi(): AppApi {
-		if (!this.appApi) {
-			this.appApi = {
-				plugin: {
-					getLocalPluginConfigs: (): LocalPluginConfig[] =>
-						this.getLocalPluginConfigs(),
-					getHandlersMatching: (
-						condition: (entry: Handler) => boolean,
-					): Handler[] =>
-						HandlerRegistry.getHandlersMatching(condition),
-					getHandlersMatchingWithPluginId: (
-						condition: (entry: [string, Handler]) => boolean,
-					): Map<string, Handler[]> =>
-						HandlerRegistry.getHandlersMatchingWithPluginId(
-							condition,
-						),
-					invokeCallbackOnHandler: <T, R>(
-						id: string,
-						args: T,
-					): Promise<R> =>
-						HandlerRegistry.invokeCallbackOnHandler(id, args),
-				},
-				ui: {
-					navigator: useAppNavigatorStore.getState(),
-				},
-			}
-		}
-		return this.appApi!
 	}
 }
