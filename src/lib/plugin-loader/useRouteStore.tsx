@@ -1,4 +1,4 @@
-import ReactInit from '@/lib/init/reactInit'
+import ReactInitializing from '@/lib/init/reactInit'
 import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
 import { CreateScreenHandler } from '@d-najd/universal-media-tracker-sdk'
 import React, { useState } from 'react'
@@ -37,7 +37,7 @@ export const useRouteStore = create<RouteStore>((set) => ({
 				return reactLoaded ? (
 					<Component />
 				) : (
-					<ReactInit
+					<ReactInitializing
 						initializedCallback={() => setReactLoaded(true)}
 					/>
 				)

@@ -1,4 +1,4 @@
-import PluginDescriptor from '@/types/PluginDescriptor'
+import PluginDescriptor from '@/lib/plugin-loader/types/PluginDescriptor'
 import basePlugins from '@/app/plugins/basePlugins'
 import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
 import { getStorage } from '@/lib/storage'
