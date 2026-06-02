@@ -1,4 +1,8 @@
-import { Plugin, PluginSpec } from '@d-najd/universal-media-tracker-sdk'
+import {
+	LocalPluginConfig,
+	Plugin,
+	PluginSpec,
+} from '@d-najd/universal-media-tracker-sdk'
 
 type PluginDescriptor =
 	| {
@@ -7,6 +11,7 @@ type PluginDescriptor =
 			readonly plugin: Plugin
 			// TODO if this is LocalPluginSpec then it would be much better since I could get rid of the api for getting LocalPluginSpecs!
 			readonly spec: PluginSpec
+			readonly config: LocalPluginConfig
 	  }
 	| {
 			readonly url: string

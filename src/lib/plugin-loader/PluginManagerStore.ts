@@ -133,7 +133,6 @@ export default class PluginManagerStore {
 				folder.path + '/' + pluginConfigName,
 			)
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
-			this.localPluginConfigs.set(config.id, config)
 			if (config.status === 'disabled') continue
 
 			switch (config.loadedFrom) {
@@ -168,9 +167,10 @@ export default class PluginManagerStore {
 	}
 
 	static getLocalPluginConfigs(): LocalPluginConfig[] {
-		return [...this.localPluginConfigs.values()].sort((a, b) =>
-			a.name.localeCompare(b.name),
-		)
+		return [...this.plugins.values()]
+			.filter((o) => o.status === 'enabled')
+			.map((o) => o.config)
+			.sort((a, b) => a.name.localeCompare(b.name))
 	}
 
 	private static async registerDescriptorFromPluginSource(
@@ -359,8 +359,10 @@ export default class PluginManagerStore {
 		const plugin = await this.loadPluginFromCode(codeStr)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const spec = (await (plugin! as any).getSpec()) as PluginSpec
+		const localConfig = await this.loadLocalPluginConfig(spec)
 
 		const descriptor: PluginDescriptor = {
+			config: localConfig,
 			status: 'enabled',
 			plugin: plugin,
 			spec: spec,
@@ -405,8 +407,10 @@ export default class PluginManagerStore {
 			const plugin = response.plugin
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin! as any).getSpec()) as PluginSpec
+			const localConfig = await this.loadLocalPluginConfig(spec)
 
 			const descriptor: PluginDescriptor = {
+				config: localConfig,
 				status: 'enabled',
 				plugin: plugin,
 				spec: spec,
@@ -451,6 +455,7 @@ export default class PluginManagerStore {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin as any).getSpec()) as PluginSpec
 			const descriptor: PluginDescriptor = {
+				config: spec.config as LocalPluginConfig,
 				// uri: localPluginSourceRelativePath,
 				status: 'enabled',
 				plugin: plugin,
@@ -462,6 +467,18 @@ export default class PluginManagerStore {
 			console.error(e)
 			throw e
 		}
+	}
+
+	private static async loadLocalPluginConfig(
+		spec: PluginSpec,
+	): Promise<LocalPluginConfig> {
+		const storage = await getStorage()
+		const curPluginPath = pluginPath + '/' + spec.config.id
+		const configStr = await storage.read(
+			curPluginPath + '/' + pluginConfigName,
+		)
+		const config = JSON.parse(configStr) as LocalPluginConfig
+		return config
 	}
 
 	private static async loadPluginFromCode(code: string): Promise<Plugin> {

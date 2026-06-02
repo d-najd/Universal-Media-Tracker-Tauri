@@ -1,15 +1,20 @@
 import {
+	LocalPluginConfig,
 	Plugin,
-	PluginConfig,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 } from '@d-najd/universal-media-tracker-sdk'
 
-const options: PluginConfig = {
+const options: LocalPluginConfig = {
 	logo: '',
 	id: 'local-plugin-loader',
 	name: 'Local Plugin Loader',
 	version: '0.0.1',
+	status: 'enabled',
+	url: 'localhost',
+	handlerId: 'Nan',
+	handlerPluginId: 'Nan',
+	loadedFrom: 'plugin-source',
 }
 
 const plugin = new Plugin(options)
