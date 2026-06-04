@@ -12,6 +12,7 @@ import plugin from '../..'
 import { green, purple } from '@mui/material/colors'
 import TopBar from '../../components/topbar'
 import LibraryGrid from './components/libraryGrid'
+import NavigationBar from '../../components/navigationBar'
 
 // Create dark theme
 const darkTheme = createTheme({
@@ -48,42 +49,40 @@ export default function LibraryPage() {
 
 	return (
 		<ThemeProvider theme={darkTheme}>
-			<TopBar
-				search={search}
-				onSearchChanged={setSearch}
-				onTopbarSizeChanged={setTopbarSize}
-				iconButtons={
-					<>
-						<Box sx={{ px: 0.5 }} />
-						<IconButton
-							onClick={() => {
-								plugin.app.ui.navigator.push('/test')
-							}}
-						>
-							{/* Whether to select library? */}
-							<Collections />
-						</IconButton>
-						<IconButton>
-							{/* Sorting/filtering, by category etc  */}
-							<FilterAlt />
-						</IconButton>
-						<IconButton>
-							{/* Extensions, search by source */}
-							<Explore />
-						</IconButton>
-						<IconButton>
-							{/* How to display the current screen, view options? */}
-							<Dashboard />
-						</IconButton>
-						<IconButton>
-							{/* Settings etc  */}
-							<MoreVert />
-						</IconButton>
-					</>
-				}
-			>
-				<LibraryGrid topbarSize={topbarSize} search={debouncedSearch} />
-			</TopBar>
+			<Box sx={{ position: 'relative', minHeight: '100vh' }}>
+				<TopBar
+					search={search}
+					onSearchChanged={setSearch}
+					onTopbarSizeChanged={setTopbarSize}
+					iconButtons={
+						<>
+							<Box sx={{ px: 0.5 }} />
+							<IconButton>
+								{/* Sorting/filtering, by category etc  */}
+								<FilterAlt />
+							</IconButton>
+							<IconButton>
+								{/* How to display the current screen, view options? */}
+								<Dashboard />
+							</IconButton>
+							<IconButton
+								onClick={() => {
+									plugin.app.ui.navigator.push('/test')
+								}}
+							>
+								{/* Settings etc  */}
+								<MoreVert />
+							</IconButton>
+						</>
+					}
+				>
+					<LibraryGrid
+						topbarSize={topbarSize}
+						search={debouncedSearch}
+					/>
+				</TopBar>
+				<NavigationBar />
+			</Box>
 		</ThemeProvider>
 	)
 }
