@@ -1,10 +1,4 @@
-import {
-	Collections,
-	Dashboard,
-	Explore,
-	FilterAlt,
-	MoreVert,
-} from '@mui/icons-material'
+import { Dashboard, FilterAlt, MoreVert } from '@mui/icons-material'
 import { Box, createTheme, IconButton, ThemeProvider } from '@mui/material'
 import { useEffect, useState } from 'react'
 import plugin from '../..'

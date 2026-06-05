@@ -7,7 +7,7 @@ import { create } from 'zustand'
 
 interface RouteStore {
 	routes: RouteObject[]
-	generateRoutes: () => Promise<void>
+	generateRoutes: () => Promise<RouteObject[]>
 }
 
 /**
@@ -50,5 +50,6 @@ export const useRouteStore = create<RouteStore>((set) => ({
 		})
 
 		set({ routes })
+		return routes
 	},
 }))

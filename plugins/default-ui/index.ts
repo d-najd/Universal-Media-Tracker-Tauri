@@ -9,6 +9,7 @@ import TestPage from './features/test'
 import NotFoundErrorPage from './features/not-found'
 import LibraryPage from './features/library'
 import PluginsManagePage from './features/plugins-manage'
+import MediaViewPage from './features/media-view'
 
 const options: PluginConfig = {
 	logo: '',
@@ -22,6 +23,7 @@ export const plugin = new Plugin(options)
 plugin.defineScreenHandler({
 	pattern: '/',
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
+		// TODO this could be simplified? also not sure if I want to let the user pass args like this since it can break
 		const ComponentWithProps = () =>
 			React.createElement(LibraryPage, {
 				navigator: plugin.app.ui.navigator,
@@ -56,6 +58,20 @@ plugin.defineScreenHandler({
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		const ComponentWithProps = () =>
 			React.createElement(PluginsManagePage, args)
+
+		const result: ScreenHandlerResponse = {
+			content: ComponentWithProps,
+		}
+
+		return result
+	},
+})
+
+plugin.defineScreenHandler({
+	pattern: '/detail/:id',
+	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
+		const ComponentWithProps = () =>
+			React.createElement(MediaViewPage, args)
 
 		const result: ScreenHandlerResponse = {
 			content: ComponentWithProps,

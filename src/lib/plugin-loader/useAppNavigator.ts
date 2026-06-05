@@ -18,7 +18,6 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 		}
 
 		const newScreen: NavigatorEntry = {
-			state: undefined,
 			path: path,
 			pattern: matched[0].path!,
 		}
@@ -49,7 +48,6 @@ export const useAppNavigatorStore = create<AppNavigatorStore>()((set, get) => ({
 		}
 
 		const newScreen: NavigatorEntry = {
-			state: undefined,
 			path: path,
 			pattern: matched[0].path!,
 		}

@@ -1,10 +1,12 @@
 import initAppGlobals from './initGlobals'
 
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { matchPath, useNavigate } from 'react-router'
 import { setNavigator } from './navigator'
 import PluginManagerStore from '../plugin-loader/PluginManagerStore'
 import { useRouteStore } from '../plugin-loader/useRouteStore'
+import { useAppNavigatorStore } from '../plugin-loader/useAppNavigator'
+import path from 'path'
 
 let coreInitialized = false
 let coreInitPromise: Promise<void> | null = null
@@ -35,7 +37,25 @@ export function useAppCoreInit(): AppInitState {
 				setTheme()
 
 				await PluginManagerStore.init()
-				await generateRoutes()
+				const routes = await generateRoutes()
+				const matchedRoute = routes
+					.filter(
+						(o) =>
+							o.path &&
+							matchPath(o.path, window.location.pathname),
+					)
+					.at(0)!
+
+				useAppNavigatorStore.setState({
+					screens: [
+						{
+							pattern: matchedRoute.path!,
+							path: window.location.pathname,
+						},
+					],
+				})
+
+				console.log(useAppNavigatorStore.getState())
 
 				coreInitialized = true
 				setIsInitialized({
@@ -62,7 +82,9 @@ export function useAppReactInit(): AppInitState {
 	const [isInitialized, setIsInitialized] = useState<AppInitState>({
 		initialized: reactInitialized,
 	})
+	// const { routes } = useRouteStore()
 	const navigator = useNavigate()
+	// const { push } = useAppNavigatorStore()
 
 	useEffect(() => {
 		if (reactInitialized || !coreInitialized) return
@@ -70,6 +92,26 @@ export function useAppReactInit(): AppInitState {
 		if (!reactInitPromise) {
 			reactInitPromise = (async () => {
 				setNavigator(navigator)
+				// const result = routes
+				// 	.filter((o) => {
+				// 		try {
+				// 			return match(o.path!)()
+				// 		} catch {
+				// 			return false
+				// 		}
+				// 	})
+				// 	.at(0)!
+				//
+				// push(window.location.pathname)
+
+				// useAppNavigatorStore.setState({
+				// 	screens: [
+				// 		{
+				// 			path: window.location.pathname,
+				// 			pattern: result.path!,
+				// 		},
+				// 	],
+				// })
 
 				reactInitialized = true
 				setIsInitialized({

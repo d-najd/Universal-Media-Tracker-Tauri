@@ -1,5 +1,6 @@
 import { alpha, BottomNavigation, BottomNavigationAction } from '@mui/material'
 import { Explore, Extension, Home, Settings } from '@mui/icons-material'
+import plugin from '..'
 
 export default function NavigationBar() {
 	return (
@@ -18,7 +19,11 @@ export default function NavigationBar() {
 		>
 			<BottomNavigationAction label="Library" icon={<Home />} />
 			<BottomNavigationAction label="Discover" icon={<Explore />} />
-			<BottomNavigationAction label="Plugins" icon={<Extension />} />
+			<BottomNavigationAction
+				onClick={(o) => plugin.app.ui.navigator.push('/manage/plugins')}
+				label="Plugins"
+				icon={<Extension />}
+			/>
 			<BottomNavigationAction label="Settings" icon={<Settings />} />
 		</BottomNavigation>
 	)
