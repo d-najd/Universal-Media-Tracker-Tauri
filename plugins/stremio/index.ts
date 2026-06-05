@@ -1,12 +1,16 @@
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
+	Meta,
+	MetaHandlerArgs,
+	MetaHandlerResponse,
 	MetaPreview,
 	Plugin,
 	PluginConfig,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
 	ResourceBrowseOption,
+	ResourceType,
 } from '@d-najd/universal-media-tracker-sdk'
 
 const options: PluginConfig = {
@@ -18,12 +22,21 @@ const options: PluginConfig = {
 
 const plugin = new Plugin(options)
 
+type StremioManifestResourceType =
+	| 'catalog'
+	| 'meta'
+	| 'addon_catalog'
+	| 'subtitles'
+
 type StremioManifest = {
 	id: string
-	logo: string
 	name: string
+	description: string
 	version: string
 	catalogs: StremioCatalogEntry[]
+	resources: StremioManifestResourceType[]
+	types: ResourceType[]
+	logo?: string
 }
 
 type StremioCatalogEntry = {
@@ -32,6 +45,18 @@ type StremioCatalogEntry = {
 	type: string
 	extra?: StremioCatalogEntryExtra[]
 	// poster: string
+}
+
+type StremioMetaEntry = {
+	id: string
+	name: string
+	type: string
+	description?: string
+	released?: Date
+	year?: number
+	poster?: string
+	background?: string
+	logo?: string
 }
 
 type StremioCatalogEntryExtra = {
@@ -43,6 +68,10 @@ type StremioCatalogEntryExtra = {
 
 type StremioCatalogResponse = {
 	metas: StremioCatalogEntryResponse[]
+}
+
+type StremioMetaResponse = {
+	meta: StremioMetaEntry
 }
 
 type StremioCatalogEntryResponse = {
@@ -59,6 +88,7 @@ plugin.definePluginFactoryHandler({
 	async callback(
 		args: PluginFactoryHandlerArgs,
 	): Promise<PluginFactoryHandlerResponse> {
+		const pluginSelf = plugin
 		inputArgs = args
 		if (!args.url.endsWith(MANIFEST_STRING)) {
 			return { status: 'skip' }
@@ -69,23 +99,26 @@ plugin.definePluginFactoryHandler({
 				await fetch(`${args.url}`)
 			).json()) as StremioManifest
 
-			const plugin = new Plugin({
-				logo: manifest.logo,
+			const pluginCreated = new Plugin({
+				logo: manifest.logo ?? pluginSelf.config.logo,
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
 			})
 
-			defineCatalogs(plugin, manifest)
+			defineCatalogs(pluginCreated, manifest)
+			defineMetas(pluginCreated, manifest)
 
-			return { status: 'valid', plugin: plugin }
+			return { status: 'valid', plugin: pluginCreated }
 		} catch (e) {
 			return { status: 'invalid', reason: e!.toString() }
 		}
 	},
 })
 
-function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
+function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
+	if (!manifest.resources.some((o) => o === 'catalog')) return
+
 	for (const catalog of manifest.catalogs) {
 		const options = catalog.extra
 			?.filter(
@@ -102,7 +135,7 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 				return result
 			})
 
-		plugin.defineCatalogHandler({
+		pluginCreated.defineCatalogHandler({
 			id: catalog.id,
 			name: catalog.name,
 			resourceType: catalog.type,
@@ -147,6 +180,55 @@ function defineCatalogs(plugin: Plugin, manifest: StremioManifest) {
 
 				return {
 					data: mappedData,
+				}
+			},
+		})
+	}
+}
+
+function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
+	if (!manifest.resources.some((o) => o === 'meta')) return
+
+	for (const type of manifest.types) {
+		pluginCreated.defineMetaHandler({
+			resourceType: type,
+			async callback(
+				args: MetaHandlerArgs,
+			): Promise<MetaHandlerResponse> {
+				const urlExceptManifest = inputArgs.url.slice(
+					0,
+					-MANIFEST_STRING.length,
+				)
+
+				let newUrl =
+					urlExceptManifest + '/meta/' + type + '/' + args.metaId
+				if (args.options) {
+					newUrl +=
+						'/' +
+						args.options
+							.map((o) => o.name + '=' + o.input)
+							.join('&')
+				}
+				newUrl += '.json'
+
+				const result = (await (
+					await fetch(`${newUrl}`)
+				).json()) as StremioMetaResponse
+
+				const meta: Meta = {
+					id: result.meta.id,
+					name: result.meta.name,
+					type: result.meta.type,
+					poster: result.meta.poster,
+					description: result.meta.description,
+					released: result.meta.released,
+					year: result.meta.year,
+					background: result.meta.background,
+					logo: result.meta.logo,
+				}
+
+				return {
+					data: [meta],
 				}
 			},
 		})
