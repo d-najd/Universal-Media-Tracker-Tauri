@@ -2,7 +2,6 @@ import { LocalPluginConfig, Handler } from '@d-najd/universal-media-tracker-sdk'
 import AppApi from 'node_modules/@d-najd/universal-media-tracker-sdk/dist/AppApi'
 import HandlerRegistry from './HandlerRegistry'
 import PluginManagerStore from './PluginManagerStore'
-import { useAppNavigatorStore } from './useAppNavigator'
 
 let appApi: AppApi | null = null
 export default function getAppApi(): AppApi {
@@ -23,9 +22,6 @@ export default function getAppApi(): AppApi {
 					args: T,
 				): Promise<R> =>
 					HandlerRegistry.invokeCallbackOnHandler(id, args),
-			},
-			ui: {
-				navigator: useAppNavigatorStore.getState(),
 			},
 		}
 	}

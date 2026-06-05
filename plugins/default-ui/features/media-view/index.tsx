@@ -84,6 +84,7 @@ export default function MediaViewPage() {
 		)
 	}
 
+	// TODO maybe place the background image also in the background and blur as the background content?
 	return (
 		<Box>
 			<Box
