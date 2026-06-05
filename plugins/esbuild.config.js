@@ -36,6 +36,10 @@ for (const folder of fs.readdirSync(dir)) {
 					varName: 'ReactJSXRuntime',
 					type: 'cjs',
 				},
+				'react-router': {
+					varName: 'ReactRouter',
+					type: 'cjs',
+				},
 			}),
 		],
 		define: {

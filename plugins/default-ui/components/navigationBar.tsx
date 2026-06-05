@@ -1,8 +1,9 @@
 import { alpha, BottomNavigation, BottomNavigationAction } from '@mui/material'
 import { Explore, Extension, Home, Settings } from '@mui/icons-material'
-import plugin from '..'
+import { useNavigate } from 'react-router'
 
 export default function NavigationBar() {
+	const navigator = useNavigate()
 	return (
 		<BottomNavigation
 			showLabels
@@ -20,7 +21,7 @@ export default function NavigationBar() {
 			<BottomNavigationAction label="Library" icon={<Home />} />
 			<BottomNavigationAction label="Discover" icon={<Explore />} />
 			<BottomNavigationAction
-				onClick={(o) => plugin.app.ui.navigator.push('/manage/plugins')}
+				onClick={(o) => navigator('/manage/plugins')}
 				label="Plugins"
 				icon={<Extension />}
 			/>

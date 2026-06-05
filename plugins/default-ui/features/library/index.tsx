@@ -1,8 +1,7 @@
 import { Dashboard, FilterAlt, MoreVert } from '@mui/icons-material'
 import { Box, createTheme, IconButton, ThemeProvider } from '@mui/material'
 import { useEffect, useState } from 'react'
-import plugin from '../..'
-
+import { useNavigate } from 'react-router'
 import { green, purple } from '@mui/material/colors'
 import TopBar from '../../components/topbar'
 import LibraryGrid from './components/libraryGrid'
@@ -26,6 +25,7 @@ const darkTheme = createTheme({
 })
 
 export default function LibraryPage() {
+	const navigator = useNavigate()
 	const [search, setSearch] = useState('')
 	const [topbarSize, setTopbarSize] = useState<{
 		width: number
@@ -61,7 +61,7 @@ export default function LibraryPage() {
 							</IconButton>
 							<IconButton
 								onClick={() => {
-									plugin.app.ui.navigator.push('/test')
+									navigator('/test')
 								}}
 							>
 								{/* Settings etc  */}

@@ -1,29 +1,20 @@
 import { useState, useEffect } from 'react'
 import plugin from '../..'
-import { match } from 'path-to-regexp'
 import { ResourceHandler, Meta } from '@d-najd/universal-media-tracker-sdk'
+import { useParams } from 'react-router'
+import { Box } from '@mui/material'
 
 export default function MediaViewPage() {
 	const [meta, setMeta] = useState<Meta | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<Error | null>(null)
 
+	const { id } = useParams()
+
 	useEffect(() => {
 		async function fetchMetaData() {
 			setLoading(true)
 			setError(null)
-
-			const curScreen = plugin.app.ui.navigator.screens.at(-1)
-			if (!curScreen) {
-				throw new Error('No screen found')
-			}
-
-			const pathMatched = match(curScreen.pattern)(curScreen.path)
-			if (!pathMatched) {
-				throw new Error('Path without id?')
-			}
-
-			const id = pathMatched.params.id as string
 
 			// Initial meta object
 			// Retrieve preview object from db on init
@@ -40,7 +31,7 @@ export default function MediaViewPage() {
 			for (const handler of mediaRequestHandlers) {
 				try {
 					const result = await handler.callback({
-						metaId: id,
+						metaId: id!,
 					})
 					const data = result.data.at(0)
 					metaData = {
@@ -94,11 +85,23 @@ export default function MediaViewPage() {
 	}
 
 	return (
-		<div className="media-view">
-			<h1>{meta.name || 'Untitled'}</h1>
-			{meta.poster && <img src={meta.poster} alt={meta.name} />}
-			<p>Type: {meta.type}</p>
-			<p>ID: {meta.id}</p>
-		</div>
+		<Box>
+			<Box
+				component="img"
+				src={meta.background}
+				sx={{
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					width: '50%',
+					maskImage:
+						'linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 40%)',
+				}}
+			></Box>
+			{/* <h1>{meta.name || 'Untitled'}</h1> */}
+			{/* {meta.poster && <img src={meta.poster} alt={meta.name} />} */}
+			{/* <p>Type: {meta.type}</p> */}
+			{/* <p>ID: {meta.id}</p> */}
+		</Box>
 	)
 }
