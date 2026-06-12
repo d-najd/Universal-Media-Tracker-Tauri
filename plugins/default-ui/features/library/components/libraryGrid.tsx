@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
 	MetaPreview,
 	ResourceHandler,
 	ResourceHandlerArgs,
-} from '@d-najd/universal-media-tracker-sdk'
-import plugin from '../../../index'
-import { Box, Paper, styled } from '@mui/material'
+} from "@d-najd/universal-media-tracker-sdk"
+import plugin from "../../../index"
+import { Box, Paper, styled } from "@mui/material"
 
 type LibraryGridProps = {
 	topbarSize: { width: number; height: number }
@@ -52,25 +52,25 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		const handler = plugin.app.plugin.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
-			(o) => o.id === 'kitsu-anime-list',
+			(o) => o.id === "kitsu-anime-list",
 		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
 
 		const hasSkipOption =
 			handler?.options?.some(
-				(o) => o.name === 'skip' && o.type === 'number',
+				(o) => o.name === "skip" && o.type === "number",
 			) ?? false
 
 		const hasSearchOption = handler?.options?.some(
-			(o) => o.name === 'search' && o.type === 'string',
+			(o) => o.name === "search" && o.type === "string",
 		)
 
 		let args: ResourceHandlerArgs = {
 			options: [
 				...(hasSkipOption && skip !== 0
-					? [{ name: 'skip', input: skip }]
+					? [{ name: "skip", input: skip }]
 					: []),
-				...(hasSearchOption && search !== ''
-					? [{ name: 'search', input: search }]
+				...(hasSearchOption && search !== ""
+					? [{ name: "search", input: search }]
 					: []),
 			],
 		}
@@ -114,12 +114,12 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			{catalog ? (
 				<Box
 					sx={{
-						display: 'flex',
-						justifyContent: 'center',
+						display: "flex",
+						justifyContent: "center",
 						gap: `11px`,
-						flexDirection: 'row',
-						flexWrap: 'wrap',
-						alignContent: 'flex-start',
+						flexDirection: "row",
+						flexWrap: "wrap",
+						alignContent: "flex-start",
 						px: `12px`,
 						paddingTop: `${topbarSize.height + 10}px`,
 					}}
@@ -128,15 +128,15 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 						<Card key={key} ref={lastItemRef}>
 							<img
 								style={{
-									width: '100%',
-									height: '100%',
-									objectFit: 'fill',
+									width: "100%",
+									height: "100%",
+									objectFit: "fill",
 								}}
 								alt="no content"
 								src={item.poster}
 								onError={(e) => {
 									// TODO placeholder
-									e.currentTarget.style.display = 'none'
+									e.currentTarget.style.display = "none"
 								}}
 							/>
 						</Card>
@@ -150,17 +150,17 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 }
 
 const Card = styled(Paper, {
-	shouldForwardProp: (prop) => prop !== 'hoverable',
+	shouldForwardProp: (prop) => prop !== "hoverable",
 })<{ hoverable?: boolean }>(({ theme, hoverable = true }) => ({
-	width: '152px',
-	height: '238px',
+	width: "152px",
+	height: "238px",
 	gap: 0,
 	paddingBlock: 0,
-	overflow: 'hidden',
-	transition: 'all 0.2s ease-in-out',
+	overflow: "hidden",
+	transition: "all 0.2s ease-in-out",
 	...(hoverable && {
-		'&:hover': {
-			transform: 'scale(1.05)',
+		"&:hover": {
+			transform: "scale(1.05)",
 			boxShadow: theme.shadows[4],
 			border: `1px solid ${theme.palette.primary.main}`,
 		},

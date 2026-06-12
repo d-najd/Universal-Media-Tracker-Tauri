@@ -1,7 +1,7 @@
-import { LocalPluginConfig, Handler } from '@d-najd/universal-media-tracker-sdk'
-import AppApi from 'node_modules/@d-najd/universal-media-tracker-sdk/dist/AppApi'
-import HandlerRegistry from './HandlerRegistry'
-import PluginManagerStore from './PluginManagerStore'
+import { LocalPluginConfig, Handler } from "@d-najd/universal-media-tracker-sdk"
+import AppApi from "node_modules/@d-najd/universal-media-tracker-sdk/dist/AppApi"
+import HandlerRegistry from "./HandlerRegistry"
+import PluginManagerStore from "./PluginManagerStore"
 
 let appApi: AppApi | null = null
 export default function getAppApi(): AppApi {

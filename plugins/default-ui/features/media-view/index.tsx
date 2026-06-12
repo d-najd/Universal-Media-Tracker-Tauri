@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import plugin from '../..'
-import { ResourceHandler, Meta } from '@d-najd/universal-media-tracker-sdk'
-import { useParams } from 'react-router'
-import { Box } from '@mui/material'
+import { useState, useEffect } from "react"
+import plugin from "../.."
+import { ResourceHandler, Meta } from "@d-najd/universal-media-tracker-sdk"
+import { useParams } from "react-router"
+import { Box } from "@mui/material"
 
 export default function MediaViewPage() {
 	const [meta, setMeta] = useState<Meta | null>(null)
@@ -19,11 +19,11 @@ export default function MediaViewPage() {
 			// Initial meta object
 			// Retrieve preview object from db on init
 			let metaData: Partial<Meta> = {
-				type: 'anime',
+				type: "anime",
 			} as Meta
 
 			const mediaRequestHandlers = plugin.app.plugin
-				.getHandlersMatching((o) => o.type === 'meta-request')
+				.getHandlersMatching((o) => o.type === "meta-request")
 				.map((o) => o as ResourceHandler)
 				.reverse()
 
@@ -91,12 +91,12 @@ export default function MediaViewPage() {
 				component="img"
 				src={meta.background}
 				sx={{
-					position: 'fixed',
+					position: "fixed",
 					top: 0,
 					left: 0,
-					width: '50%',
+					width: "50%",
 					maskImage:
-						'linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 40%)',
+						"linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 40%)",
 				}}
 			></Box>
 			{/* <h1>{meta.name || 'Untitled'}</h1> */}

@@ -1,4 +1,4 @@
-import DirEntry from '@/lib/storage/DirEntry'
+import DirEntry from "@/lib/storage/DirEntry"
 
 /**
  * @remarks due to the differences between different possible implementations,

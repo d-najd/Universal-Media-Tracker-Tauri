@@ -1,5 +1,5 @@
-import Storage from './Storage'
-import IndexedDBStorage from '@/lib/storage/IndexedDBStorage'
+import Storage from "./Storage"
+import IndexedDBStorage from "@/lib/storage/IndexedDBStorage"
 
 let storage: Storage | null = null
 

@@ -1,7 +1,7 @@
-import { Search } from '@mui/icons-material'
-import { alpha, Box, InputAdornment, TextField } from '@mui/material'
-import { useEffect, useLayoutEffect, useState } from 'react'
-import { useElementSize } from '../hooks/useElementSize'
+import { Search } from "@mui/icons-material"
+import { alpha, Box, InputAdornment, TextField } from "@mui/material"
+import { useEffect, useLayoutEffect, useState } from "react"
+import { useElementSize } from "../hooks/useElementSize"
 
 type Props = {
 	search: string
@@ -56,16 +56,16 @@ export default function TopBar({
 			<Box
 				ref={topbarRef}
 				sx={{
-					position: 'fixed',
+					position: "fixed",
 					top: 0,
 					left: 0,
-					width: '100%',
-					display: 'flex',
-					alignItems: 'center',
+					width: "100%",
+					display: "flex",
+					alignItems: "center",
 					bgcolor: (theme) =>
 						alpha(theme.palette.background.default, 0.8),
-					backdropFilter: 'blur(8px)',
-					px: '10px',
+					backdropFilter: "blur(8px)",
+					px: "10px",
 					py: 0.75,
 					zIndex: 50,
 				}}
@@ -73,8 +73,8 @@ export default function TopBar({
 				<Box
 					sx={{
 						flex: 1,
-						display: 'flex',
-						justifyContent: 'center',
+						display: "flex",
+						justifyContent: "center",
 						minWidth: 80,
 						paddingLeft: `${topbarSearchPadding}px`,
 					}}
@@ -87,7 +87,7 @@ export default function TopBar({
 						size="small"
 						sx={{
 							maxWidth: `${topbarSearchMaxWidthPx}px`,
-							width: '100%',
+							width: "100%",
 						}}
 						slotProps={{
 							input: {
@@ -103,9 +103,9 @@ export default function TopBar({
 				<Box
 					ref={topBarIconsRef}
 					sx={{
-						flex: 'none',
-						display: 'flex',
-						alignItems: 'center',
+						flex: "none",
+						display: "flex",
+						alignItems: "center",
 						px: 0.5,
 					}}
 				>

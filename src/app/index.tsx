@@ -1,9 +1,9 @@
-import './global.css'
+import "./global.css"
 
-import { useMemo } from 'react'
-import { createBrowserRouter, RouteObject, RouterProvider } from 'react-router'
-import { useAppCoreInit } from '@/lib/init/useAppinit'
-import { useRouteStore } from '@/lib/plugin-loader/useRouteStore'
+import { useMemo } from "react"
+import { createBrowserRouter, RouteObject, RouterProvider } from "react-router"
+import { useAppCoreInit } from "@/lib/init/useAppinit"
+import { useRouteStore } from "@/lib/plugin-loader/useRouteStore"
 
 const createAppRouter = (dynamicRoutes: RouteObject[] = []) =>
 	useMemo(() => createBrowserRouter([...dynamicRoutes]), [dynamicRoutes])

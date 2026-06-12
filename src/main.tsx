@@ -1,10 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from '@/app'
-import { ErrorBoundary } from 'react-error-boundary'
+import React from "react"
+import ReactDOM from "react-dom/client"
+import App from "@/app"
+import { ErrorBoundary } from "react-error-boundary"
 
-import { createTheme, ThemeProvider } from '@mui/material/styles'
-import { green, purple } from '@mui/material/colors'
+import { createTheme, ThemeProvider } from "@mui/material/styles"
+import { green, purple } from "@mui/material/colors"
 
 // Create dark theme
 const darkTheme = createTheme({
@@ -16,11 +16,11 @@ const darkTheme = createTheme({
 		secondary: {
 			main: green[500],
 		},
-		mode: 'dark',
+		mode: "dark",
 	},
 })
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 	<React.StrictMode>
 		<ErrorBoundary fallback={<>Error boundary?</>}>
 			<ThemeProvider theme={darkTheme}>

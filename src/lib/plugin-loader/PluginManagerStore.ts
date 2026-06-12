@@ -1,12 +1,12 @@
-import PluginDescriptor from '@/lib/plugin-loader/types/PluginDescriptor'
-import basePlugins from '@/app/plugins/basePlugins'
-import HandlerRegistry from '@/lib/plugin-loader/HandlerRegistry'
-import { getStorage } from '@/lib/storage'
+import PluginDescriptor from "@/lib/plugin-loader/types/PluginDescriptor"
+import basePlugins from "@/app/plugins/basePlugins"
+import HandlerRegistry from "@/lib/plugin-loader/HandlerRegistry"
+import { getStorage } from "@/lib/storage"
 import {
 	pluginConfigName,
 	pluginFileName,
 	pluginPath,
-} from '@/lib/storage/StoragePaths'
+} from "@/lib/storage/StoragePaths"
 import {
 	Handler,
 	LocalPluginConfig,
@@ -16,10 +16,10 @@ import {
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 	PluginSpec,
-} from '@d-najd/universal-media-tracker-sdk'
-import DirEntry from '@/lib/storage/DirEntry'
-import LocalPluginSource from '@/app/plugins/LocalPluginSource'
-import getAppApi from './appApiImpl'
+} from "@d-najd/universal-media-tracker-sdk"
+import DirEntry from "@/lib/storage/DirEntry"
+import LocalPluginSource from "@/app/plugins/LocalPluginSource"
+import getAppApi from "./appApiImpl"
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -72,7 +72,7 @@ export default class PluginManagerStore {
 	) {
 		const descriptorsFailedLoading: PluginDescriptor[] = []
 		for (const descriptor of descriptors) {
-			if (descriptor.status === 'enabled') {
+			if (descriptor.status === "enabled") {
 				console.log(
 					`can't re-enable plugin ${descriptor.spec.config.id}`,
 				)
@@ -122,30 +122,30 @@ export default class PluginManagerStore {
 		const pluginFactoryConfigs: LocalPluginConfig[] = []
 
 		for (const folder of pluginFolders) {
-			if (this.plugins.get(folder.name)?.status === 'enabled') continue
+			if (this.plugins.get(folder.name)?.status === "enabled") continue
 
-			if (folder.type === 'file') {
-				console.error('File found in plugin folder root????')
+			if (folder.type === "file") {
+				console.error("File found in plugin folder root????")
 				continue
 			}
 
 			const jsonStr = await storage.read(
-				folder.path + '/' + pluginConfigName,
+				folder.path + "/" + pluginConfigName,
 			)
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
-			if (config.status === 'disabled') continue
+			if (config.status === "disabled") continue
 
 			switch (config.loadedFrom) {
-				case 'plugin-source': {
+				case "plugin-source": {
 					await this.loadPluginUsingPluginSource(folder, config)
 					break
 				}
-				case 'plugin-factory': {
+				case "plugin-factory": {
 					pluginFactoryConfigs.push(config)
 					break
 				}
 				default:
-					throw Error('Unhandled')
+					throw Error("Unhandled")
 			}
 		}
 
@@ -156,7 +156,7 @@ export default class PluginManagerStore {
 		const result: PluginSpec[] = []
 
 		for (const entry of this.plugins.values()) {
-			if (entry.status !== 'enabled') {
+			if (entry.status !== "enabled") {
 				continue
 			}
 
@@ -168,18 +168,18 @@ export default class PluginManagerStore {
 
 	static getLocalPluginConfigs(): LocalPluginConfig[] {
 		return [...this.plugins.values()]
-			.filter((o) => o.status === 'enabled')
+			.filter((o) => o.status === "enabled")
 			.map((o) => o.config)
 			.sort((a, b) => a.name.localeCompare(b.name))
 	}
 
 	private static async registerDescriptorFromPluginSource(
 		markForLoading: boolean,
-		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		descriptor: Extract<PluginDescriptor, { status: "disabled" | "error" }>,
 	): Promise<boolean> {
 		const pluginSourceHandlers =
 			HandlerRegistry.getHandlersMatchingWithPluginId(
-				([, handler]) => handler.type === 'plugin-source',
+				([, handler]) => handler.type === "plugin-source",
 			) as Map<
 				string,
 				Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>[]
@@ -210,11 +210,11 @@ export default class PluginManagerStore {
 
 	private static async registerDescriptorFromPluginFactory(
 		markForLoading: boolean,
-		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		descriptor: Extract<PluginDescriptor, { status: "disabled" | "error" }>,
 	): Promise<boolean> {
 		const pluginFactoryHandlers =
 			HandlerRegistry.getHandlersMatchingWithPluginId(
-				([, handler]) => handler.type === 'plugin-factory',
+				([, handler]) => handler.type === "plugin-factory",
 			) as Map<
 				string,
 				Handler<
@@ -248,7 +248,7 @@ export default class PluginManagerStore {
 
 	private static async handlePluginFactoryResponse(
 		markForLoading: boolean,
-		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		descriptor: Extract<PluginDescriptor, { status: "disabled" | "error" }>,
 		pluginId: string,
 		response: PluginFactoryHandlerResponse,
 		handler: Handler<
@@ -257,7 +257,7 @@ export default class PluginManagerStore {
 		>,
 	): Promise<boolean> {
 		switch (response.status) {
-			case 'valid': {
+			case "valid": {
 				const plugin = response.plugin
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const spec = (await (plugin! as any).getSpec()) as PluginSpec
@@ -266,30 +266,30 @@ export default class PluginManagerStore {
 
 				const localConfig: LocalPluginConfig = {
 					...config,
-					status: markForLoading ? 'enabled' : 'disabled',
+					status: markForLoading ? "enabled" : "disabled",
 					url: descriptor.url,
 					handlerId: handler.id,
 					handlerPluginId: pluginId,
-					loadedFrom: 'plugin-factory',
+					loadedFrom: "plugin-factory",
 				}
 
 				const storage = await getStorage()
-				const curPluginPath = pluginPath + '/' + spec.config.id
+				const curPluginPath = pluginPath + "/" + spec.config.id
 				await storage.write(
-					curPluginPath + '/' + pluginConfigName,
+					curPluginPath + "/" + pluginConfigName,
 					JSON.stringify(localConfig),
 				)
 
 				const newDescriptor: PluginDescriptor = {
 					url: descriptor.url,
-					status: 'disabled',
+					status: "disabled",
 				}
 				this.plugins.set(config.id, newDescriptor)
 				return true
 			}
-			case 'skip':
+			case "skip":
 				return false
-			case 'invalid':
+			case "invalid":
 				console.error(
 					`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${response.reason}`,
 				)
@@ -299,13 +299,13 @@ export default class PluginManagerStore {
 
 	private static async handlePluginSourceResponse(
 		markForLoading: boolean,
-		descriptor: Extract<PluginDescriptor, { status: 'disabled' | 'error' }>,
+		descriptor: Extract<PluginDescriptor, { status: "disabled" | "error" }>,
 		pluginId: string,
 		response: PluginSourceHandlerResponse,
 		handler: Handler<PluginSourceHandlerArgs, PluginSourceHandlerResponse>,
 	): Promise<boolean> {
 		switch (response.status) {
-			case 'valid': {
+			case "valid": {
 				// Validate plugin
 				const plugin = await this.loadPluginFromCode(response.code)
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,33 +316,33 @@ export default class PluginManagerStore {
 				// Store plugin
 				const localConfig: LocalPluginConfig = {
 					...config,
-					status: markForLoading ? 'enabled' : 'disabled',
+					status: markForLoading ? "enabled" : "disabled",
 					url: descriptor.url,
 					handlerId: handler.id,
 					handlerPluginId: pluginId,
-					loadedFrom: 'plugin-source',
+					loadedFrom: "plugin-source",
 				}
 				const storage = await getStorage()
-				const curPluginPath = pluginPath + '/' + spec.config.id
+				const curPluginPath = pluginPath + "/" + spec.config.id
 				await storage.write(
-					curPluginPath + '/' + pluginFileName,
+					curPluginPath + "/" + pluginFileName,
 					response.code,
 				)
 				await storage.write(
-					curPluginPath + '/' + pluginConfigName,
+					curPluginPath + "/" + pluginConfigName,
 					JSON.stringify(localConfig),
 				)
 
 				const newDescriptor: PluginDescriptor = {
 					url: descriptor.url,
-					status: 'disabled',
+					status: "disabled",
 				}
 				this.plugins.set(config.id, newDescriptor)
 				return true
 			}
-			case 'skip':
+			case "skip":
 				return false
-			case 'invalid':
+			case "invalid":
 				console.error(
 					`Registering of plugin with uri ${descriptor.url} and handler by id ${handler.id} failed with result ${response.reason}`,
 				)
@@ -355,7 +355,7 @@ export default class PluginManagerStore {
 		config: LocalPluginConfig,
 	) {
 		const storage = await getStorage()
-		const codeStr = await storage.read(folder.path + '/' + pluginFileName)
+		const codeStr = await storage.read(folder.path + "/" + pluginFileName)
 		const plugin = await this.loadPluginFromCode(codeStr)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const spec = (await (plugin! as any).getSpec()) as PluginSpec
@@ -363,7 +363,7 @@ export default class PluginManagerStore {
 
 		const descriptor: PluginDescriptor = {
 			config: localConfig,
-			status: 'enabled',
+			status: "enabled",
 			plugin: plugin,
 			spec: spec,
 		}
@@ -385,7 +385,7 @@ export default class PluginManagerStore {
 			}
 
 			const handler = handlers[0]
-			if (handler.type !== 'plugin-factory') {
+			if (handler.type !== "plugin-factory") {
 				throw Error(`Handler ${handler.id} is not a factory?`)
 			}
 			const callback = (
@@ -399,7 +399,7 @@ export default class PluginManagerStore {
 				url: config.url,
 			}
 			const response = await callback(args)
-			if (response.status !== 'valid') {
+			if (response.status !== "valid") {
 				throw Error(
 					`Handler ${handler.id} that was used to load plugin ${config.id} failed now?`,
 				)
@@ -411,7 +411,7 @@ export default class PluginManagerStore {
 
 			const descriptor: PluginDescriptor = {
 				config: localConfig,
-				status: 'enabled',
+				status: "enabled",
 				plugin: plugin,
 				spec: spec,
 			}
@@ -435,13 +435,13 @@ export default class PluginManagerStore {
 	private static async loadBasePlugins() {
 		const descriptors: PluginDescriptor[] = basePlugins.map((o) => ({
 			url: o,
-			status: 'disabled',
+			status: "disabled",
 		}))
 
 		// stremio addon testing
 		descriptors.push({
-			url: 'https://anime-kitsu.strem.fun/manifest.json',
-			status: 'disabled',
+			url: "https://anime-kitsu.strem.fun/manifest.json",
+			status: "disabled",
 		})
 
 		await this.loadLocalPluginSource()
@@ -457,7 +457,7 @@ export default class PluginManagerStore {
 			const descriptor: PluginDescriptor = {
 				config: spec.config as LocalPluginConfig,
 				// uri: localPluginSourceRelativePath,
-				status: 'enabled',
+				status: "enabled",
 				plugin: plugin,
 				spec: spec,
 			}
@@ -473,9 +473,9 @@ export default class PluginManagerStore {
 		spec: PluginSpec,
 	): Promise<LocalPluginConfig> {
 		const storage = await getStorage()
-		const curPluginPath = pluginPath + '/' + spec.config.id
+		const curPluginPath = pluginPath + "/" + spec.config.id
 		const configStr = await storage.read(
-			curPluginPath + '/' + pluginConfigName,
+			curPluginPath + "/" + pluginConfigName,
 		)
 		const config = JSON.parse(configStr) as LocalPluginConfig
 		return config
@@ -483,7 +483,7 @@ export default class PluginManagerStore {
 
 	private static async loadPluginFromCode(code: string): Promise<Plugin> {
 		const blob = new Blob([code], {
-			type: 'text/javascript',
+			type: "text/javascript",
 		})
 		const url = URL.createObjectURL(blob)
 		const module = await import(/* @vite-ignore */ url)

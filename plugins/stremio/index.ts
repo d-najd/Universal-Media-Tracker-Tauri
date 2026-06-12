@@ -11,22 +11,22 @@ import {
 	PluginFactoryHandlerResponse,
 	ResourceBrowseOption,
 	ResourceType,
-} from '@d-najd/universal-media-tracker-sdk'
+} from "@d-najd/universal-media-tracker-sdk"
 
 const options: PluginConfig = {
-	logo: 'https://web.stremio.com/images/stremio_symbol.png',
-	id: 'stremio-plugin-factory',
-	name: 'Stremio Plugin Factory',
-	version: '0.0.1',
+	logo: "https://web.stremio.com/images/stremio_symbol.png",
+	id: "stremio-plugin-factory",
+	name: "Stremio Plugin Factory",
+	version: "0.0.1",
 }
 
 const plugin = new Plugin(options)
 
 type StremioManifestResourceType =
-	| 'catalog'
-	| 'meta'
-	| 'addon_catalog'
-	| 'subtitles'
+	| "catalog"
+	| "meta"
+	| "addon_catalog"
+	| "subtitles"
 
 type StremioManifest = {
 	id: string
@@ -82,7 +82,7 @@ type StremioCatalogEntryResponse = {
 }
 
 let inputArgs: PluginFactoryHandlerArgs
-const MANIFEST_STRING = '/manifest.json'
+const MANIFEST_STRING = "/manifest.json"
 
 plugin.definePluginFactoryHandler({
 	async callback(
@@ -91,7 +91,7 @@ plugin.definePluginFactoryHandler({
 		const pluginSelf = plugin
 		inputArgs = args
 		if (!args.url.endsWith(MANIFEST_STRING)) {
-			return { status: 'skip' }
+			return { status: "skip" }
 		}
 
 		try {
@@ -109,20 +109,20 @@ plugin.definePluginFactoryHandler({
 			defineCatalogs(pluginCreated, manifest)
 			defineMetas(pluginCreated, manifest)
 
-			return { status: 'valid', plugin: pluginCreated }
+			return { status: "valid", plugin: pluginCreated }
 		} catch (e) {
-			return { status: 'invalid', reason: e!.toString() }
+			return { status: "invalid", reason: e!.toString() }
 		}
 	},
 })
 
 function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
-	if (!manifest.resources.some((o) => o === 'catalog')) return
+	if (!manifest.resources.some((o) => o === "catalog")) return
 
 	for (const catalog of manifest.catalogs) {
 		const options = catalog.extra
 			?.filter(
-				(o) => resourceBrowseOptionArgToTypeConverter(o) !== 'unknown',
+				(o) => resourceBrowseOptionArgToTypeConverter(o) !== "unknown",
 			)
 			.map((o) => {
 				const result: ResourceBrowseOption = {
@@ -151,18 +151,18 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 
 				let newUrl =
 					urlExceptManifest +
-					'/catalog/' +
+					"/catalog/" +
 					catalog.type +
-					'/' +
+					"/" +
 					catalog.id
 				if (args.options) {
 					newUrl +=
-						'/' +
+						"/" +
 						args.options
-							.map((o) => o.name + '=' + o.input)
-							.join('&')
+							.map((o) => o.name + "=" + o.input)
+							.join("&")
 				}
-				newUrl += '.json'
+				newUrl += ".json"
 
 				const result = (await (
 					await fetch(`${newUrl}`)
@@ -187,7 +187,7 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 }
 
 function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
-	if (!manifest.resources.some((o) => o === 'meta')) return
+	if (!manifest.resources.some((o) => o === "meta")) return
 
 	for (const type of manifest.types) {
 		pluginCreated.defineMetaHandler({
@@ -201,15 +201,15 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 				)
 
 				let newUrl =
-					urlExceptManifest + '/meta/' + type + '/' + args.metaId
+					urlExceptManifest + "/meta/" + type + "/" + args.metaId
 				if (args.options) {
 					newUrl +=
-						'/' +
+						"/" +
 						args.options
-							.map((o) => o.name + '=' + o.input)
-							.join('&')
+							.map((o) => o.name + "=" + o.input)
+							.join("&")
 				}
-				newUrl += '.json'
+				newUrl += ".json"
 
 				const result = (await (
 					await fetch(`${newUrl}`)
@@ -238,19 +238,19 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 function resourceBrowseOptionArgToTypeConverter(
 	arg: StremioCatalogEntryExtra,
 ): string {
-	if (arg.name === 'search') {
-		return 'string'
+	if (arg.name === "search") {
+		return "string"
 	}
-	if (arg.name === 'skip') {
-		return 'number'
+	if (arg.name === "skip") {
+		return "number"
 	}
 	if (!arg.options) {
 		if (!arg.optionsLimit && arg.optionsLimit === 1) {
-			return 'radio'
+			return "radio"
 		}
-		return 'checkbox'
+		return "checkbox"
 	}
-	return 'unknown'
+	return "unknown"
 }
 
 export default plugin

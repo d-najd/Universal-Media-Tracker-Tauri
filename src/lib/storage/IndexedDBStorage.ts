@@ -1,6 +1,6 @@
-import Storage from './Storage'
-import DirEntry from '@/lib/storage/DirEntry'
-import { IDBPDatabase, openDB } from 'idb'
+import Storage from "./Storage"
+import DirEntry from "@/lib/storage/DirEntry"
+import { IDBPDatabase, openDB } from "idb"
 
 export default class IndexedDBStorage implements Storage {
 	private constructor(
@@ -8,7 +8,7 @@ export default class IndexedDBStorage implements Storage {
 		private storeName: string,
 	) {}
 
-	static async create(dbName = 'db', storeName = 'store') {
+	static async create(dbName = "db", storeName = "store") {
 		const db = await openDB(dbName, 1, {
 			upgrade(db) {
 				if (!db.objectStoreNames.contains(storeName)) {
@@ -45,7 +45,7 @@ export default class IndexedDBStorage implements Storage {
 		}
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = path.endsWith('/') ? path : path + '/'
+		const prefix = path.endsWith("/") ? path : path + "/"
 		const toDelete = keys.filter((k) => k.startsWith(prefix))
 		toDelete.forEach((o) => this.db.delete(this.storeName, o))
 	}
@@ -60,20 +60,20 @@ export default class IndexedDBStorage implements Storage {
 			throw new Error(`Unable to list from a file ${path}`)
 		}
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = path.endsWith('/') ? path : path + '/'
+		const prefix = path.endsWith("/") ? path : path + "/"
 		const entriesMap: Record<string, DirEntry> = {}
 
 		for (const key of keys) {
 			if (!key.startsWith(prefix)) continue
 			const remainder = key.slice(prefix.length)
-			const parts = remainder.split('/')
+			const parts = remainder.split("/")
 			const name = parts[0]
 
 			if (!entriesMap[name]) {
 				entriesMap[name] = {
 					name,
 					path: prefix + name,
-					type: parts.length > 1 ? 'directory' : 'file',
+					type: parts.length > 1 ? "directory" : "file",
 				}
 			}
 		}
@@ -82,7 +82,7 @@ export default class IndexedDBStorage implements Storage {
 	}
 
 	private isFile(path: string) {
-		const last = path.split('/').pop()!
-		return last.includes('.')
+		const last = path.split("/").pop()!
+		return last.includes(".")
 	}
 }

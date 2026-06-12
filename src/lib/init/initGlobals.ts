@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as React from 'react'
-import * as ReactDOM from 'react-dom'
-import * as ReactRouter from 'react-router'
-import * as LucideReact from 'lucide-react'
-import * as RadixUi from 'radix-ui'
-import * as MelancholySdk from '@d-najd/universal-media-tracker-sdk'
-import * as ReactJSXRuntime from 'react/jsx-runtime'
-import * as RadixUiReactSlot from '@radix-ui/react-slot'
+import * as React from "react"
+import * as ReactDOM from "react-dom"
+import * as ReactRouter from "react-router"
+import * as LucideReact from "lucide-react"
+import * as RadixUi from "radix-ui"
+import * as MelancholySdk from "@d-najd/universal-media-tracker-sdk"
+import * as ReactJSXRuntime from "react/jsx-runtime"
+import * as RadixUiReactSlot from "@radix-ui/react-slot"
 
 // Expose to window for dynamic plugins
 export default async function initAppGlobals() {

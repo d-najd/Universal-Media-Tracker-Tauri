@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from "react"
 
 export function useElementSize<T extends HTMLElement>() {
 	const ref = useRef<T>(null)
@@ -16,8 +16,8 @@ export function useElementSize<T extends HTMLElement>() {
 
 		measure() // initial measurement
 
-		window.addEventListener('resize', measure)
-		return () => window.removeEventListener('resize', measure)
+		window.addEventListener("resize", measure)
+		return () => window.removeEventListener("resize", measure)
 	}, [])
 
 	return { ref, size }

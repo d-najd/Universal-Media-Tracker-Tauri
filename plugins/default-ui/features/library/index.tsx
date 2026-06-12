@@ -1,17 +1,17 @@
-import { Dashboard, FilterAlt, MoreVert } from '@mui/icons-material'
-import { Box, createTheme, IconButton, ThemeProvider } from '@mui/material'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
-import { green, purple } from '@mui/material/colors'
-import TopBar from '../../components/topbar'
-import LibraryGrid from './components/libraryGrid'
-import NavigationBar from '../../components/navigationBar'
+import { Dashboard, FilterAlt, MoreVert } from "@mui/icons-material"
+import { Box, createTheme, IconButton, ThemeProvider } from "@mui/material"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
+import { green, purple } from "@mui/material/colors"
+import TopBar from "../../components/topbar"
+import LibraryGrid from "./components/libraryGrid"
+import NavigationBar from "../../components/navigationBar"
 
 // Create dark theme
 const darkTheme = createTheme({
 	cssVariables: true,
 	shape: {
-		borderRadius: '12px',
+		borderRadius: "12px",
 	},
 	palette: {
 		primary: {
@@ -20,18 +20,18 @@ const darkTheme = createTheme({
 		secondary: {
 			main: green[500],
 		},
-		mode: 'dark',
+		mode: "dark",
 	},
 })
 
 export default function LibraryPage() {
 	const navigator = useNavigate()
-	const [search, setSearch] = useState('')
+	const [search, setSearch] = useState("")
 	const [topbarSize, setTopbarSize] = useState<{
 		width: number
 		height: number
 	}>({ width: 0, height: 0 })
-	const [debouncedSearch, setDebouncedSearch] = useState('')
+	const [debouncedSearch, setDebouncedSearch] = useState("")
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
@@ -43,7 +43,7 @@ export default function LibraryPage() {
 
 	return (
 		<ThemeProvider theme={darkTheme}>
-			<Box sx={{ position: 'relative', minHeight: '100vh' }}>
+			<Box sx={{ position: "relative", minHeight: "100vh" }}>
 				<TopBar
 					search={search}
 					onSearchChanged={setSearch}
@@ -61,7 +61,7 @@ export default function LibraryPage() {
 							</IconButton>
 							<IconButton
 								onClick={() => {
-									navigator('/test')
+									navigator("/test")
 								}}
 							>
 								{/* Settings etc  */}

@@ -3,18 +3,18 @@ import {
 	Plugin,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
-} from '@d-najd/universal-media-tracker-sdk'
+} from "@d-najd/universal-media-tracker-sdk"
 
 const options: LocalPluginConfig = {
-	logo: '',
-	id: 'local-plugin-loader',
-	name: 'Local Plugin Loader',
-	version: '0.0.1',
-	status: 'enabled',
-	url: 'localhost',
-	handlerId: 'Nan',
-	handlerPluginId: 'Nan',
-	loadedFrom: 'plugin-source',
+	logo: "",
+	id: "local-plugin-loader",
+	name: "Local Plugin Loader",
+	version: "0.0.1",
+	status: "enabled",
+	url: "localhost",
+	handlerId: "Nan",
+	handlerPluginId: "Nan",
+	loadedFrom: "plugin-source",
 }
 
 const plugin = new Plugin(options)
@@ -24,37 +24,37 @@ plugin.definePluginSourceHandler({
 		args: PluginSourceHandlerArgs,
 	): Promise<PluginSourceHandlerResponse> {
 		const url = args.url
-		if (!url.startsWith('/src/app/plugins/')) {
-			return { status: 'skip' }
+		if (!url.startsWith("/src/app/plugins/")) {
+			return { status: "skip" }
 		}
 
 		try {
-			const first = import.meta.glob('@/app/plugins/js/*.js')
+			const first = import.meta.glob("@/app/plugins/js/*.js")
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const module = (await first[url]()) as any
 			const plugin: Plugin = module.default
 
 			if (!plugin) {
-				return { status: 'invalid', reason: 'No default export found' }
+				return { status: "invalid", reason: "No default export found" }
 			}
 
 			const config = plugin.config
 
 			if (!config) {
 				return {
-					status: 'invalid',
-					reason: 'failed to read plugin config',
+					status: "invalid",
+					reason: "failed to read plugin config",
 				}
 			}
 
-			const code = (await import(/* @vite-ignore */ url + '?raw'))
+			const code = (await import(/* @vite-ignore */ url + "?raw"))
 				.default as string
-			return { status: 'valid', code: code }
+			return { status: "valid", code: code }
 		} catch (err: unknown) {
 			if (err instanceof Error) {
-				return { status: 'invalid', reason: err.message }
+				return { status: "invalid", reason: err.message }
 			}
-			return { status: 'invalid', reason: String(err) }
+			return { status: "invalid", reason: String(err) }
 		}
 	},
 })

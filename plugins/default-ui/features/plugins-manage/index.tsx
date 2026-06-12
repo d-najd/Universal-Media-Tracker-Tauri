@@ -8,17 +8,17 @@ import {
 	Stack,
 	ThemeProvider,
 	Typography,
-} from '@mui/material'
-import plugin from '../..'
-import { Settings } from '@mui/icons-material'
+} from "@mui/material"
+import plugin from "../.."
+import { Settings } from "@mui/icons-material"
 
 const darkTheme = createTheme({
 	cssVariables: true,
 	shape: {
-		borderRadius: '12px',
+		borderRadius: "12px",
 	},
 	palette: {
-		mode: 'dark',
+		mode: "dark",
 	},
 })
 
@@ -43,7 +43,7 @@ export default function PluginsManagePage() {
 						<CardContent>
 							<Typography
 								variant="body2"
-								sx={{ color: 'text.secondary' }}
+								sx={{ color: "text.secondary" }}
 							>
 								This impressive paella is a perfect party dish
 								and a fun meal to cook together with your

@@ -1,5 +1,5 @@
-import { Handler } from '@d-najd/universal-media-tracker-sdk'
-import PluginManagerStore from './PluginManagerStore'
+import { Handler } from "@d-najd/universal-media-tracker-sdk"
+import PluginManagerStore from "./PluginManagerStore"
 
 /**
  * Page size will be 20

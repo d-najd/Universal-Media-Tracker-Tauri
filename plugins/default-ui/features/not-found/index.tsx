@@ -3,9 +3,9 @@ import {
 	ErrorHeader,
 	ErrorDescription,
 	ErrorActions,
-} from './components/error-base'
-import { Button } from '../../components/button'
-import { useNavigate } from 'react-router'
+} from "./components/error-base"
+import { Button } from "../../components/button"
+import { useNavigate } from "react-router"
 
 export default function NotFoundErrorPage() {
 	const navigator = useNavigate()
@@ -22,7 +22,7 @@ export default function NotFoundErrorPage() {
 						Go back
 					</Button>
 					<Button size="lg" variant="ghost">
-						Contact support{' '}
+						Contact support{" "}
 						<span aria-hidden="true" className="ml-1">
 							&rarr;
 						</span>

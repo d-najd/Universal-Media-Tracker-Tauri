@@ -1,5 +1,5 @@
-import Storage from '@/lib/storage/Storage'
-import DirEntry from './DirEntry'
+import Storage from "@/lib/storage/Storage"
+import DirEntry from "./DirEntry"
 /*
 import {
 	BaseDirectory,
@@ -8,8 +8,8 @@ import {
 	exists
 } from '@tauri-apps/plugin-fs'
  */
-import * as fs from '@tauri-apps/plugin-fs'
-import { homeDir } from '@tauri-apps/api/path'
+import * as fs from "@tauri-apps/plugin-fs"
+import { homeDir } from "@tauri-apps/api/path"
 
 export default class FileSystemStorage implements Storage {
 	// private baseDir = BaseDirectory.Home + '/universal-media-tracker/'
@@ -18,7 +18,7 @@ export default class FileSystemStorage implements Storage {
 
 	static async create() {
 		return new FileSystemStorage(
-			(await homeDir()).replace(/\\/g, '/') + '/universal-media-tracker/',
+			(await homeDir()).replace(/\\/g, "/") + "/universal-media-tracker/",
 		)
 	}
 
@@ -35,9 +35,9 @@ export default class FileSystemStorage implements Storage {
 		}
 
 		const finalPath = this.baseDir + path
-		console.log('finalll')
+		console.log("finalll")
 		console.log(finalPath)
-		const finalDir = finalPath.substring(0, finalPath.lastIndexOf('/'))
+		const finalDir = finalPath.substring(0, finalPath.lastIndexOf("/"))
 
 		await fs.mkdir(finalDir, {
 			recursive: true,
@@ -49,7 +49,7 @@ export default class FileSystemStorage implements Storage {
 		const finalPath = this.baseDir + path
 		await fs.remove(finalPath, { recursive: true })
 
-		const finalDir = finalPath.substring(0, finalPath.lastIndexOf('/'))
+		const finalDir = finalPath.substring(0, finalPath.lastIndexOf("/"))
 		const relative = finalDir.substring(this.baseDir.length)
 		if (!relative) return
 
@@ -63,7 +63,7 @@ export default class FileSystemStorage implements Storage {
 			.filter((o) => !o.isSymlink)
 			.map((o) => {
 				const res: DirEntry = {
-					type: o.isFile ? 'file' : 'directory',
+					type: o.isFile ? "file" : "directory",
 					name: o.name,
 					path: path + o.name,
 				}
@@ -72,7 +72,7 @@ export default class FileSystemStorage implements Storage {
 	}
 
 	private isFile(path: string) {
-		const last = path.split('/').pop()!
-		return last.includes('.')
+		const last = path.split("/").pop()!
+		return last.includes(".")
 	}
 }
