@@ -35,3 +35,17 @@
 
 - To avoid complexity and reduce app size, the plugins will have to be bundled any way or another anyway since it will
   be far too much complexity
+
+# SDK
+
+## Why is type Meta and MetaPreview type not reliable Mime-Type is preferred
+
+- The user of a plugin may incorrectly tag the media so if Mime-Type and the type match then you can use that to get more data in ui
+
+## Why is Meta and MetaPreview separate type
+
+- Meta has lots of fields which exist in MetaPreview but are null since if the data is not defined in the handler, the data can be retrieved from the MetaPreview
+
+## Why multiple id fields in Meta and MetaPreview
+
+- Better flexibility, instead of matching fields which end in \_id or some other odd pattern this seems easier to track
