@@ -1,8 +1,8 @@
-import Storage from "./Storage"
-import DirEntry from "@/lib/storage/DirEntry"
+import DirStorage from "./DirStorage"
+import DirEntry from "@/lib/storage/directory-storage/DirEntry"
 import { IDBPDatabase, openDB } from "idb"
 
-export default class IndexedDBStorage implements Storage {
+export default class IndexedDbDirStorage implements DirStorage {
 	private constructor(
 		private db: IDBPDatabase,
 		private storeName: string,
@@ -16,7 +16,7 @@ export default class IndexedDBStorage implements Storage {
 				}
 			},
 		})
-		const inst = new IndexedDBStorage(db, storeName)
+		const inst = new IndexedDbDirStorage(db, storeName)
 		// TODO for dev remove after done
 		await inst.deleteAll()
 		return inst

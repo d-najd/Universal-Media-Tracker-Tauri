@@ -1,11 +1,11 @@
-import DirEntry from "@/lib/storage/DirEntry"
+import DirEntry from "@/lib/storage/directory-storage/DirEntry"
 
 /**
  * @remarks due to the differences between different possible implementations,
  * explicit creation of folders (empty) is not possible, the folder creation and
  * deletion if empty folder will be done internally
  */
-export default interface Storage {
+export default interface DirStorage {
 	/**
 	 * Read file
 	 * @remarks must include extension

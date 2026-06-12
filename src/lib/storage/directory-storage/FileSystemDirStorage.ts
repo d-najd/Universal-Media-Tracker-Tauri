@@ -1,4 +1,3 @@
-import Storage from "@/lib/storage/Storage"
 import DirEntry from "./DirEntry"
 /*
 import {
@@ -10,14 +9,18 @@ import {
  */
 import * as fs from "@tauri-apps/plugin-fs"
 import { homeDir } from "@tauri-apps/api/path"
+import DirStorage from "./DirStorage"
 
-export default class FileSystemStorage implements Storage {
+/**
+ * TODO unfinished
+ */
+export default class FileSystemDirStorage implements DirStorage {
 	// private baseDir = BaseDirectory.Home + '/universal-media-tracker/'
 
 	private constructor(private baseDir: string) {}
 
 	static async create() {
-		return new FileSystemStorage(
+		return new FileSystemDirStorage(
 			(await homeDir()).replace(/\\/g, "/") + "/universal-media-tracker/",
 		)
 	}

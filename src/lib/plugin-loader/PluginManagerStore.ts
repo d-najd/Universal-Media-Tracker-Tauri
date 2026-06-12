@@ -6,7 +6,7 @@ import {
 	pluginConfigName,
 	pluginFileName,
 	pluginPath,
-} from "@/lib/storage/StoragePaths"
+} from "@/lib/storage/directory-storage/StoragePaths"
 import {
 	Handler,
 	LocalPluginConfig,
@@ -17,7 +17,7 @@ import {
 	PluginSourceHandlerResponse,
 	PluginSpec,
 } from "@d-najd/universal-media-tracker-sdk"
-import DirEntry from "@/lib/storage/DirEntry"
+import DirEntry from "@/lib/storage/directory-storage/DirEntry"
 import LocalPluginSource from "@/app/plugins/LocalPluginSource"
 import getAppApi from "./appApiImpl"
 
