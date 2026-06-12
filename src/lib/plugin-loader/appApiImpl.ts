@@ -23,6 +23,7 @@ export default function getAppApi(): AppApi {
 				): Promise<R> =>
 					HandlerRegistry.invokeCallbackOnHandler(id, args),
 			},
+			ui: {},
 		}
 	}
 	return appApi!

@@ -169,8 +169,14 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 				).json()) as StremioCatalogResponse
 
 				const mappedData = result.metas.map((o) => {
+					const ids = Object.fromEntries(
+						Object.entries(o).filter(([key]) =>
+							key.toLowerCase().endsWith("id"),
+						),
+					) as Record<string, string>
+
 					const metaPreview: MetaPreview = {
-						id: o.id,
+						ids: ids,
 						name: o.name,
 						poster: o.poster,
 						type: o.type,
