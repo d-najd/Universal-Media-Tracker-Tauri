@@ -38,8 +38,6 @@ export default class FileSystemDirStorage implements DirStorage {
 		}
 
 		const finalPath = this.baseDir + path
-		console.log("finalll")
-		console.log(finalPath)
 		const finalDir = finalPath.substring(0, finalPath.lastIndexOf("/"))
 
 		await fs.mkdir(finalDir, {
