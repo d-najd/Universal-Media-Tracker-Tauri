@@ -124,7 +124,7 @@ export default class IDBDirStorage implements DirStorage {
 		policy: StoragePolicy,
 		profile: string,
 	): string {
-		return `${profile}/${policy}/.meta/entries/${path}`
+		return `${profile}/${policy}/.meta/dir-storage/entries/${path}`
 	}
 
 	/**
@@ -208,10 +208,17 @@ export default class IDBDirStorage implements DirStorage {
 	 * @param options if defined [options.policy] will search only in that policy
 	 * Lists all files and directories in directory, similar to the command ls
 	 */
-	listd(
+	async listd(
 		path: string,
 		options?: Partial<DirStorageOptions>,
 	): Promise<DirEntry[]> {
+		if (this.isFile(path)) {
+			throw new Error(`Unable to list from a file ${path}`)
+		}
+		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
+		const prefix = path.endsWith("/") ? path : path + "/"
+		const entriesMap: Record<string, DirEntry> = {}
+
 		throw new Error()
 	}
 
