@@ -206,7 +206,7 @@ export default class IDBDirStorage implements DirStorage {
 
 	/**
 	 * @param options if defined [options.policy] will search only in that policy
-	 * Lists all files and directories in directory, similar to the command ls
+	 * Lists all files and directories in directory, similar to the command ls, if undefined searches in all policies
 	 */
 	async listd(
 		path: string,
