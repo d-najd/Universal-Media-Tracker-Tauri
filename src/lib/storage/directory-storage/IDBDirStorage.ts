@@ -7,7 +7,6 @@ import DirStorageOptions, {
 import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
 import assert from "assert"
-import IndexedDbDirStorage from "./IndexedDbDirStorage"
 
 export default class IDBDirStorage implements DirStorage {
 	private constructor(
@@ -111,7 +110,8 @@ export default class IDBDirStorage implements DirStorage {
 		policy: StoragePolicy,
 		profile: string,
 	): string {
-		return `${profile}/${policy}/.meta/dir-storage/entries/${path}`
+		const jsonPath = `${path.split(".")[0]}.json`
+		return `${profile}/${policy}/.meta/dir-storage/entries/${jsonPath}`
 	}
 
 	/**
@@ -137,7 +137,7 @@ export default class IDBDirStorage implements DirStorage {
 				optionsResolved.profile!,
 			)
 			const val = await this.db.get(this.storeName, key)
-			if (val) return val
+			if (val) return JSON.parse(val)
 		}
 		throw new Error(`Metadata not found: ${path} with options ${options}`)
 	}
@@ -159,6 +159,33 @@ export default class IDBDirStorage implements DirStorage {
 		if (!this.isFile(path)) {
 			throw new Error(`Path must include file extension: ${path}`)
 		}
+
+		// Delete old file
+		await this.deleteFile(path, options)
+
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		if (!optionsResolved.policy) {
+			optionsResolved.policy = "cache"
+		}
+		const key = IDBDirStorage.toKey(
+			path,
+			optionsResolved.policy,
+			optionsResolved.profile!,
+		)
+		const metaKey = IDBDirStorage.toMetaEntryKey(
+			path,
+			optionsResolved.policy,
+			optionsResolved.profile!,
+		)
+
+		await Promise.all([
+			await this.db.put(this.storeName, data, key),
+			await this.db.put(
+				this.storeName,
+				JSON.stringify(optionsResolved),
+				metaKey,
+			),
+		])
 	}
 
 	async write(path: string, data: string): Promise<void> {
