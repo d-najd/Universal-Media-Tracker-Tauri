@@ -247,10 +247,11 @@ export default class IDBDirStorage implements DirStorageNew {
 	private static resolveOptions(
 		options?: Partial<DirStorageOptions>,
 	): Partial<DirStorageOptions> {
-		assert(
-			!options?.backend || options.backend === "indexeddb",
-			`Backend mismatch: ${IDBDirStorage.name} is not "${options?.backend}"`,
-		)
+		if (options?.backend && options.backend !== "indexeddb") {
+			throw new Error(
+				`Backend mismatch: ${IDBDirStorage.name} is not "${options.backend}"`,
+			)
+		}
 
 		return {
 			...DefaultDirStorageOptions(),
