@@ -7,6 +7,7 @@ import DirStorageOptions, {
 import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
 import assert from "assert"
+import IndexedDbDirStorage from "./IndexedDbDirStorage"
 
 export default class IDBDirStorage implements DirStorage {
 	private constructor(
@@ -87,36 +88,22 @@ export default class IDBDirStorage implements DirStorage {
 			throw new Error(`Path must include file extension: ${path}`)
 		}
 
-		if (!options?.policy) {
-			const optionsResolved = IDBDirStorage.resolveOptions(options)
-			const policies = await this.getAvailablePolicies(
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		const policies = options?.policy
+			? [optionsResolved.policy!]
+			: await this.getAvailablePolicies(optionsResolved.profile!)
+
+		for (const policy of policies) {
+			const key = IDBDirStorage.toKey(
+				path,
+				policy as StoragePolicy,
 				optionsResolved.profile!,
 			)
+			const val = await this.db.get(this.storeName, key)
 
-			for (const policy of policies) {
-				const key = IDBDirStorage.toKey(
-					path,
-					policy as StoragePolicy,
-					optionsResolved.profile!,
-				)
-				const val = await this.db.get(this.storeName, key)
-
-				if (val) return val
-			}
-			throw new Error(`File not found: ${path} with options ${options}`)
+			if (val) return val
 		}
-
-		const optionsResolved = IDBDirStorage.resolveOptions(options)
-		const key = IDBDirStorage.toKey(
-			path,
-			optionsResolved.policy!,
-			optionsResolved.profile!,
-		)
-		const val = await this.db.get(this.storeName, key)
-
-		if (!val)
-			throw new Error(`File not found: ${path} with options ${options}`)
-		return val
+		throw new Error(`File not found: ${path} with options ${options}`)
 	}
 
 	private static toMetaEntryKey(
@@ -138,37 +125,21 @@ export default class IDBDirStorage implements DirStorage {
 			throw new Error(`Path must include file extension: ${path}`)
 		}
 
-		if (!options?.policy) {
-			const optionsResolved = IDBDirStorage.resolveOptions(options)
-			const policies = await this.getAvailablePolicies(
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		const policies = options?.policy
+			? [optionsResolved.policy!]
+			: await this.getAvailablePolicies(optionsResolved.profile!)
+
+		for (const policy of policies) {
+			const key = IDBDirStorage.toMetaEntryKey(
+				path,
+				policy as StoragePolicy,
 				optionsResolved.profile!,
 			)
-			for (const policy of policies) {
-				const key = IDBDirStorage.toMetaEntryKey(
-					path,
-					policy as StoragePolicy,
-					optionsResolved.profile!,
-				)
-				const val = await this.db.get(this.storeName, key)
-				if (val) return val
-			}
-			throw new Error(
-				`Metadata not found: ${path} with options ${options}`,
-			)
+			const val = await this.db.get(this.storeName, key)
+			if (val) return val
 		}
-
-		const optionsResolved = IDBDirStorage.resolveOptions(options)
-		const key = IDBDirStorage.toMetaEntryKey(
-			path,
-			optionsResolved.policy!,
-			optionsResolved.profile!,
-		)
-		const val = await this.db.get(this.storeName, key)
-		if (!val)
-			throw new Error(
-				`Metadata not found: ${path} with options ${options}`,
-			)
-		return val
+		throw new Error(`Metadata not found: ${path} with options ${options}`)
 	}
 
 	async read(path: string): Promise<string> {
@@ -180,11 +151,95 @@ export default class IDBDirStorage implements DirStorage {
 		return val
 	}
 
+	async writeN(
+		path: string,
+		data: StoredData,
+		options?: Partial<DirStorageOptions>,
+	) {
+		if (!this.isFile(path)) {
+			throw new Error(`Path must include file extension: ${path}`)
+		}
+	}
+
 	async write(path: string, data: string): Promise<void> {
 		if (!this.isFile(path)) {
 			throw new Error(`Path must include file extension: ${path}`)
 		}
 		await this.db.put(this.storeName, data, path)
+	}
+
+	async deleteN(path: string, options?: Partial<DirStorageOptions>) {
+		if (this.isFile(path)) {
+			await this.deleteFile(path, options)
+		} else {
+			await this.deleteFolder(path, options)
+		}
+	}
+
+	private async deleteFile(
+		path: string,
+		options?: Partial<DirStorageOptions>,
+	) {
+		if (!this.isFile(path)) {
+			throw Error(`Trying to remove folder with path ${path}`)
+		}
+
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		const policies = options?.policy
+			? [optionsResolved.policy!]
+			: await this.getAvailablePolicies(optionsResolved.profile!)
+
+		await Promise.all(
+			policies.map(async (policy) => {
+				const key = IDBDirStorage.toKey(
+					path,
+					policy as StoragePolicy,
+					optionsResolved.profile!,
+				)
+				const metaKey = IDBDirStorage.toMetaEntryKey(
+					path,
+					policy as StoragePolicy,
+					optionsResolved.profile!,
+				)
+
+				await Promise.all([
+					this.db.delete(this.storeName, key),
+					this.db.delete(this.storeName, metaKey),
+				])
+			}),
+		)
+	}
+
+	private async deleteFolder(
+		path: string,
+		options?: Partial<DirStorageOptions>,
+	) {
+		if (this.isFile(path)) {
+			throw Error(`Trying to remove file with path ${path}`)
+		}
+
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		const policies = options?.policy
+			? [optionsResolved.policy!]
+			: await this.getAvailablePolicies(optionsResolved.profile!)
+
+		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
+		const prefix = path.endsWith("/") ? path : path + "/"
+
+		await Promise.all(
+			keys.map(async (key) => {
+				for (const policy of policies) {
+					const compareKey = IDBDirStorage.toKey(
+						prefix,
+						policy as StoragePolicy,
+						optionsResolved.profile!,
+					)
+					if (!key.startsWith(compareKey)) continue
+
+					await this.db.delete(this.storeName, key)
+				}
+			}),
+		)
 	}
 
 	async delete(path: string): Promise<void> {
@@ -208,18 +263,48 @@ export default class IDBDirStorage implements DirStorage {
 	 * @param options if defined [options.policy] will search only in that policy
 	 * Lists all files and directories in directory, similar to the command ls, if undefined searches in all policies
 	 */
-	async listd(
+	async listN(
 		path: string,
 		options?: Partial<DirStorageOptions>,
 	): Promise<DirEntry[]> {
 		if (this.isFile(path)) {
 			throw new Error(`Unable to list from a file ${path}`)
 		}
+
+		const optionsResolved = IDBDirStorage.resolveOptions(options)
+		const policies = options?.policy
+			? [optionsResolved.policy!]
+			: await this.getAvailablePolicies(optionsResolved.profile!)
+
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
 		const prefix = path.endsWith("/") ? path : path + "/"
 		const entriesMap: Record<string, DirEntry> = {}
 
-		throw new Error()
+		for (const policy of policies) {
+			for (const key of keys) {
+				const fullPath = IDBDirStorage.toKey(
+					prefix,
+					policy as StoragePolicy,
+					optionsResolved.profile!,
+				)
+				if (!key.startsWith(fullPath)) continue
+				if (key.startsWith(fullPath + ".meta/")) continue // Don't add meta folder unless explicitly specified
+
+				const remainder = key.slice(prefix.length)
+				const parts = remainder.split("/")
+				const name = parts[0]
+
+				if (!entriesMap[name]) {
+					entriesMap[name] = {
+						name,
+						path: prefix + name,
+						type: parts.length > 1 ? "directory" : "file",
+					}
+				}
+			}
+		}
+
+		return Object.values(entriesMap)
 	}
 
 	async list(path: string): Promise<DirEntry[]> {
