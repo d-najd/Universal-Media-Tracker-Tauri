@@ -14,10 +14,6 @@ import DirStorageOptions from "./DirStorageOptions"
  * If `options.policy` is defined, operations are scoped to that policy only.
  * If undefined, operations search or apply across all policies
  *
- * @remarks
- * A file can only exist in one policy at a time. Writing a file to a different
- * policy than it currently resides in will remove it from the old one.
- *
  * @see {@link DirStorageOptions}
  */
 export default interface DirStorageNew {
@@ -47,16 +43,21 @@ export default interface DirStorageNew {
 	 * Reads the metadata for the stored file
 	 * @param options if defined [options.policy] will search only in that policy
 	 * @remarks must include extension
-	 * @returns [DirStorageOptions] if found or null if not
+	 * @returns [DirStorageOptions] if found
+	 * @throws if file is not found
 	 */
 	readMetadata(
 		path: string,
 		options?: Partial<DirStorageOptions>,
-	): Promise<DirStorageOptions | null>
+	): Promise<DirStorageOptions>
 
 	/**
 	 * Write file
 	 * @remarks must include file extension
+	 * @remarks A file can only exist in one policy at a time. Writing a file to a different
+	 * policy than it currently resides in will remove it from the old one.
+	 * @remarks if the file already exists to a policy and no options are passed it will be
+	 * overriden in that policy instead of being moved
 	 */
 	write(
 		path: string,
@@ -69,4 +70,9 @@ export default interface DirStorageNew {
 	 * @remarks if file extension is not included dir will be removed
 	 */
 	delete(path: string, options?: Partial<DirStorageOptions>): Promise<void>
+
+	/**
+	 * Deletes all data inside the database
+	 */
+	deleteAll(): Promise<void>
 }

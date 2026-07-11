@@ -5,7 +5,6 @@ import DirStorageOptions, {
 } from "./DirStorageOptions"
 import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
-import assert from "assert"
 import DirStorageNew from "./DirStorageNew"
 
 export default class IDBDirStorage implements DirStorageNew {
@@ -47,7 +46,7 @@ export default class IDBDirStorage implements DirStorageNew {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = path.endsWith("/") ? path : path + "/"
+		const prefix = this.getPrefix(path)
 		const entriesMap: Record<string, DirEntry> = {}
 
 		for (const policy of policies) {
@@ -60,7 +59,7 @@ export default class IDBDirStorage implements DirStorageNew {
 				if (!key.startsWith(fullPath)) continue
 				if (key.startsWith(fullPath + ".meta/")) continue // Don't add meta folder unless explicitly specified
 
-				const remainder = key.slice(prefix.length)
+				const remainder = key.slice(fullPath.length)
 				const parts = remainder.split("/")
 				const name = parts[0]
 
@@ -98,7 +97,7 @@ export default class IDBDirStorage implements DirStorageNew {
 			)
 			const val = await this.db.get(this.storeName, key)
 
-			if (val) return val
+			if (val !== undefined) return val
 		}
 		throw new Error(`File not found: ${path} with options ${options}`)
 	}
@@ -123,7 +122,7 @@ export default class IDBDirStorage implements DirStorageNew {
 				optionsResolved.profile!,
 			)
 			const val = await this.db.get(this.storeName, key)
-			if (val) return JSON.parse(val)
+			if (val !== undefined) return JSON.parse(val)
 		}
 		throw new Error(`Metadata not found: ${path} with options ${options}`)
 	}
@@ -137,13 +136,24 @@ export default class IDBDirStorage implements DirStorageNew {
 			throw new Error(`Path must include file extension: ${path}`)
 		}
 
-		// Delete old file
-		await this.deleteFile(path, options)
-
-		const optionsResolved = IDBDirStorage.resolveOptions(options)
-		if (!optionsResolved.policy) {
-			optionsResolved.policy = "cache"
+		let optionsResolved: Partial<DirStorageOptions> = options ?? {}
+		try {
+			optionsResolved = {
+				...(await this.readMetadata(path)),
+				...options,
+			}
+		} catch {
+			optionsResolved = IDBDirStorage.resolveOptions(optionsResolved)
+		} finally {
+			if (!optionsResolved.policy) {
+				optionsResolved.policy = "cache"
+			}
+			optionsResolved.updatedAt = Date.now()
 		}
+
+		// Delete old file, location irrelevant
+		await this.deleteFile(path)
+
 		const key = IDBDirStorage.toKey(
 			path,
 			optionsResolved.policy,
@@ -221,7 +231,7 @@ export default class IDBDirStorage implements DirStorageNew {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = path.endsWith("/") ? path : path + "/"
+		const prefix = this.getPrefix(path)
 
 		await Promise.all(
 			keys.map(async (key) => {
@@ -293,7 +303,7 @@ export default class IDBDirStorage implements DirStorageNew {
 			const parts = remainder.split("/")
 			const name = parts[0]
 
-			if (!entries.includes(name) && parts.length === 1) {
+			if (!entries.includes(name)) {
 				entries.push(name)
 			}
 		}
@@ -304,5 +314,10 @@ export default class IDBDirStorage implements DirStorageNew {
 	private isFile(path: string) {
 		const last = path.split("/").pop()!
 		return last.includes(".")
+	}
+
+	private getPrefix(path: string) {
+		if (path === "") return path
+		return path.endsWith("/") ? path : path + "/"
 	}
 }
