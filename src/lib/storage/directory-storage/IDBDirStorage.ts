@@ -7,6 +7,7 @@ import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
 import DirStorageNew from "./DirStorageNew"
 
+// TODO transactions are not used on deletion and other things I.E they aren't atomic
 export default class IDBDirStorage implements DirStorageNew {
 	private constructor(
 		private db: IDBPDatabase,
@@ -57,7 +58,6 @@ export default class IDBDirStorage implements DirStorageNew {
 					optionsResolved.profile!,
 				)
 				if (!key.startsWith(fullPath)) continue
-				if (key.startsWith(fullPath + ".meta/")) continue // Don't add meta folder unless explicitly specified
 
 				const remainder = key.slice(fullPath.length)
 				const parts = remainder.split("/")
@@ -115,16 +115,24 @@ export default class IDBDirStorage implements DirStorageNew {
 			? [optionsResolved.policy!]
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
-		for (const policy of policies) {
-			const key = IDBDirStorage.toMetaEntryKey(
-				path,
-				policy as StoragePolicy,
-				optionsResolved.profile!,
-			)
-			const val = await this.db.get(this.storeName, key)
-			if (val !== undefined) return JSON.parse(val)
-		}
-		throw new Error(`Metadata not found: ${path} with options ${options}`)
+		const key = IDBDirStorage.toKey(
+			path,
+			policies[0] as StoragePolicy,
+			optionsResolved.profile!,
+		)
+		const metaKey = IDBDirStorage.keyToMetaEntryKey(key)
+
+		const error = new Error(
+			`Metadata not found: ${path} with options ${options}`,
+		)
+
+		const val = await this.db.get(this.storeName, metaKey)
+		if (val === undefined) throw error
+
+		const parsed = (await JSON.parse(val)) as DirStorageOptions
+		if (policies.some((o) => o === parsed.policy)) return parsed
+
+		throw error
 	}
 
 	async write(
@@ -151,7 +159,7 @@ export default class IDBDirStorage implements DirStorageNew {
 			optionsResolved.updatedAt = Date.now()
 		}
 
-		// Delete old file, location irrelevant
+		// Delete old file, policy irrelevant, also removes metadata
 		await this.deleteFile(path)
 
 		const key = IDBDirStorage.toKey(
@@ -159,11 +167,13 @@ export default class IDBDirStorage implements DirStorageNew {
 			optionsResolved.policy,
 			optionsResolved.profile!,
 		)
-		const metaKey = IDBDirStorage.toMetaEntryKey(
-			path,
-			optionsResolved.policy,
-			optionsResolved.profile!,
-		)
+
+		const metaKey = IDBDirStorage.keyToMetaEntryKey(key)
+		// const metaKey = IDBDirStorage.toMetaEntryKey(
+		// 	path,
+		// 	optionsResolved.policy,
+		// 	optionsResolved.profile!,
+		// )
 
 		await Promise.all([
 			await this.db.put(this.storeName, data, key),
@@ -183,6 +193,8 @@ export default class IDBDirStorage implements DirStorageNew {
 		}
 	}
 
+	// Removes file and metadata
+	// TODO add test if file with same name exists but in different policy to check whether metadata is removed
 	private async deleteFile(
 		path: string,
 		options?: Partial<DirStorageOptions>,
@@ -196,27 +208,37 @@ export default class IDBDirStorage implements DirStorageNew {
 			? [optionsResolved.policy!]
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
-		await Promise.all(
-			policies.map(async (policy) => {
-				const key = IDBDirStorage.toKey(
-					path,
-					policy as StoragePolicy,
-					optionsResolved.profile!,
-				)
-				const metaKey = IDBDirStorage.toMetaEntryKey(
-					path,
-					policy as StoragePolicy,
-					optionsResolved.profile!,
-				)
+		let foundPolicy: StoragePolicy | null = null
 
-				await Promise.all([
-					this.db.delete(this.storeName, key),
-					this.db.delete(this.storeName, metaKey),
-				])
-			}),
-		)
+		for (const policy of policies) {
+			const key = IDBDirStorage.toKey(
+				path,
+				policy as StoragePolicy,
+				optionsResolved.profile!,
+			)
+			const count = await this.db.count(this.storeName, key)
+			if (count > 0) {
+				foundPolicy = policy as StoragePolicy
+				break
+			}
+		}
+
+		if (foundPolicy) {
+			const key = IDBDirStorage.toKey(
+				path,
+				foundPolicy,
+				optionsResolved.profile!,
+			)
+			const metaKey = IDBDirStorage.keyToMetaEntryKey(key)
+
+			const tx = this.db.transaction(this.storeName, "readwrite")
+			await Promise.all([tx.store.delete(key), tx.store.delete(metaKey)])
+			await tx.done
+		}
 	}
 
+	// Removes files in folder and metadata associated with the files
+	// TODO add test if file with same name exists but in different policy to check whether metadata is removed
 	private async deleteFolder(
 		path: string,
 		options?: Partial<DirStorageOptions>,
@@ -233,9 +255,10 @@ export default class IDBDirStorage implements DirStorageNew {
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
 		const prefix = this.getPrefix(path)
 
+		// TODO add test whether saved metadata across multiple policies is removed properly
 		await Promise.all(
 			keys.map(async (key) => {
-				for (const policy of policies) {
+				for (const [index, policy] of policies.entries()) {
 					const compareKey = IDBDirStorage.toKey(
 						prefix,
 						policy as StoragePolicy,
@@ -243,7 +266,24 @@ export default class IDBDirStorage implements DirStorageNew {
 					)
 					if (!key.startsWith(compareKey)) continue
 
-					await this.db.delete(this.storeName, key)
+					// console.error(
+					// 	"TESTINGGG " +
+					// 		prefix +
+					// 		" " +
+					// 		policy +
+					// 		" " +
+					// 		optionsResolved.profile +
+					// 		" " +
+					// 		key +
+					// 		" " +
+					// 		IDBDirStorage.keyToMetaEntryKey(key),
+					// )
+
+					this.db.delete(this.storeName, key)
+
+					if (index !== 0) continue // meta is policy independent I.E only one exists per policy, shouldn't change much here but just in case
+					const metaKey = IDBDirStorage.keyToMetaEntryKey(key)
+					this.db.delete(this.storeName, metaKey)
 				}
 			}),
 		)
@@ -278,17 +318,26 @@ export default class IDBDirStorage implements DirStorageNew {
 		return `${profile}/${policy}/${path}`
 	}
 
-	private static toMetaEntryKey(
-		path: string,
-		policy: StoragePolicy,
-		profile: string,
-	): string {
-		const jsonPath = `${path.split(".")[0]}.json`
-		return `${profile}/${policy}/.meta/dir-storage/entries/${jsonPath}`
+	// TODO rework
+	private static toMetaEntryKey(path: string, profile: string): string {
+		const parts = path.split("/")
+		const jsonPath = parts.at(-1)
+		// const jsonPath = `${path.split("/").at(-1).split(".")[0]}.json`
+		return `${profile}/.meta/dir-storage/${path}/entries/${jsonPath}`
+	}
+
+	// Must contain path with policy otherwise it will give wrong path
+	private static keyToMetaEntryKey(keyPath: string) {
+		const parts = keyPath.split("/")
+		const profile = parts[0]
+		const path = parts.slice(2, -1).join("/")
+		const jsonFile = `${parts.at(-1)?.split(".")[0]}.json`
+
+		return `${profile}/.meta/dir-storage/${path}/entries/${jsonFile}`
 	}
 
 	/**
-	 * TODO this can easily be cached, just needs to check on modifications (there is listener available) and the current profile
+	 * This could easily be cached but it is probably not worth it to do so?
 	 *
 	 * @param profile is [DirStorageOptions.profile]
 	 */
@@ -299,6 +348,8 @@ export default class IDBDirStorage implements DirStorageNew {
 
 		for (const key of keys) {
 			if (!key.startsWith(prefix)) continue
+			if (key.startsWith(prefix + ".")) continue // Ignore hidden folders, they are probably metadata
+
 			const remainder = key.slice(prefix.length)
 			const parts = remainder.split("/")
 			const name = parts[0]

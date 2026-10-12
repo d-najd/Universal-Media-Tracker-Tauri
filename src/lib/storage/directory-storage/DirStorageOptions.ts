@@ -2,7 +2,7 @@ import StorageOptions from "../StorageOptions"
 
 type DirStorageOptions = StorageOptions & {}
 
-// Policy is undefined because if it is, it checks across all available policies
+// If policy is undefined it checks across all policies
 export const DefaultDirStorageOptions = (): Partial<DirStorageOptions> => ({
 	backend: "indexeddb",
 	profile: "default",
