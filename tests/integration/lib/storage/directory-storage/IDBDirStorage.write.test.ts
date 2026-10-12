@@ -102,7 +102,7 @@ describe("IDBDirStorage.write", () => {
 			).toEqual("Hello")
 		})
 
-		it("moves a file when written to another policy", async () => {
+		it("overrides a file when written to another policy", async () => {
 			await storage.write("test.json", "Cache", {
 				policy: "cache",
 			})

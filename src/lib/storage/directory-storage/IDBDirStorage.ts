@@ -171,9 +171,15 @@ export default class IDBDirStorage implements DirStorageNew {
 		const policies = await this.getAvailablePolicies(
 			optionsResolved.profile!,
 		)
-		console.error("POLICIES IS " + policies)
+
 		const tx = this.db.transaction(this.storeName, "readwrite")
-		await this.deleteFile(path, optionsResolved, tx, policies) // Delete old file, policy is irrelevant, also removes metadata
+
+		// Delete old file, policy is irrelevant, also removes metadata
+		const prevPolicy = optionsResolved.policy
+		optionsResolved.policy = undefined
+		await this.deleteFile(path, optionsResolved, tx, policies)
+
+		optionsResolved.policy = prevPolicy
 		await Promise.all([
 			tx.store.put(data, key),
 			tx.store.put(JSON.stringify(optionsResolved), metaKey),
@@ -204,6 +210,8 @@ export default class IDBDirStorage implements DirStorageNew {
 		if (!this.isFile(path)) {
 			throw Error(`Trying to remove folder with path ${path}`)
 		}
+
+		console.error("Removing " + path + " " + options?.policy)
 
 		const optionsResolved = IDBDirStorage.resolveOptions(options)
 
@@ -347,7 +355,6 @@ export default class IDBDirStorage implements DirStorageNew {
 	 * @param profile is [DirStorageOptions.profile]
 	 */
 	private async getAvailablePolicies(profile: string): Promise<string[]> {
-		console.error("RUNNING")
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
 		const prefix = profile + "/"
 		const entries: string[] = []
