@@ -142,7 +142,7 @@ describe("IDBDirStorage.metadata", () => {
 			expect(metadata?.policy).toEqual("persistent")
 		})
 
-		it("reads metadata only from selected policy", async () => {
+		it("throws if no metadata in matching policy", async () => {
 			await storage.write("test.json", "Hello", {
 				policy: "persistent",
 			})
@@ -161,7 +161,21 @@ describe("IDBDirStorage.metadata", () => {
 				policy: "persistent",
 			})
 
-			expect(metadata?.policy).toEqual("persistent")
+			expect(metadata.policy).toEqual("persistent")
+		})
+
+		it("overrides metadata if policy changed", async () => {
+			await storage.write("test1.json", "Hello", {
+				policy: "persistent",
+			})
+			const oldMetadata = await storage.readMetadata("test1.json")
+			expect(oldMetadata.policy).toEqual("persistent")
+
+			await storage.write("test1.json", "Hello", {
+				policy: "cache",
+			})
+			const newMetadata = await storage.readMetadata("test1.json")
+			expect(newMetadata.policy).toEqual("cache")
 		})
 	})
 

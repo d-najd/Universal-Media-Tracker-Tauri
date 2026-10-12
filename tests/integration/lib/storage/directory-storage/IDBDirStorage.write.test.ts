@@ -106,6 +106,13 @@ describe("IDBDirStorage.write", () => {
 			await storage.write("test.json", "Cache", {
 				policy: "cache",
 			})
+
+			expect(
+				await storage.read("test.json", {
+					policy: "cache",
+				}),
+			).toEqual("Cache")
+
 			await storage.write("test.json", "Persistent", {
 				policy: "persistent",
 			})

@@ -7,7 +7,7 @@ import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
 import DirStorageNew from "./DirStorageNew"
 
-// TODO transactions are not used on deletion and other things I.E they aren't atomic
+// TODO make completely transactional
 export default class IDBDirStorage implements DirStorageNew {
 	private constructor(
 		private db: IDBPDatabase,
@@ -135,7 +135,6 @@ export default class IDBDirStorage implements DirStorageNew {
 		throw error
 	}
 
-	// TODO test whether policy overriding is correct
 	async write(
 		path: string,
 		data: StoredData,
@@ -200,7 +199,6 @@ export default class IDBDirStorage implements DirStorageNew {
 	 * @param tx optional, used in contexts where deleting file is not the only operation executed (such as overriding file with the write method)
 	 * @param policies must be passed if tx is defined
 	 */
-	// TODO add test if file with same name exists but in different policy to check whether metadata is removed
 	private async deleteFile(
 		path: string,
 		options?: Partial<DirStorageOptions>,
@@ -252,11 +250,9 @@ export default class IDBDirStorage implements DirStorageNew {
 		const metaKey = IDBDirStorage.keyToMetaEntryKey(key)
 
 		if (tx) {
-			// Use caller's transaction
 			tx.store.delete(key)
 			tx.store.delete(metaKey)
 		} else {
-			// own transaction
 			const ownTx = this.db.transaction(this.storeName, "readwrite")
 			await Promise.all([
 				ownTx.store.delete(key),
@@ -267,7 +263,6 @@ export default class IDBDirStorage implements DirStorageNew {
 	}
 
 	// Removes files in folder and metadata associated with the files
-	// TODO add test if file with same name exists but in different policy to check whether metadata is removed
 	private async deleteFolder(
 		path: string,
 		options?: Partial<DirStorageOptions>,
@@ -286,7 +281,6 @@ export default class IDBDirStorage implements DirStorageNew {
 
 		const keysToDelete = new Set<string>()
 
-		// TODO add test whether saved metadata across multiple policies is removed properly
 		for (const key of keys) {
 			for (const [index, policy] of policies.entries()) {
 				const compareKey = IDBDirStorage.toKey(

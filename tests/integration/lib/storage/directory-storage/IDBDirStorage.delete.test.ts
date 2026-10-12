@@ -19,6 +19,7 @@ describe("IDBDirStorage.delete", () => {
 			await storage.delete("test.json")
 
 			await expect(storage.read("test.json")).rejects.toThrow()
+			await expect(storage.readMetadata("test.json")).rejects.toThrow()
 		})
 
 		it("does not delete sibling files", async () => {
@@ -45,6 +46,13 @@ describe("IDBDirStorage.delete", () => {
 
 			await expect(storage.read("folder/a.json")).rejects.toThrow()
 			await expect(storage.read("folder/b.json")).rejects.toThrow()
+
+			await expect(
+				storage.readMetadata("folder/a.json"),
+			).rejects.toThrow()
+			await expect(
+				storage.readMetadata("folder/b.json"),
+			).rejects.toThrow()
 		})
 
 		it("removes empty parent directories after deleting file", async () => {
@@ -88,10 +96,22 @@ describe("IDBDirStorage.delete", () => {
 					policy: "cache",
 				}),
 			).rejects.toThrow()
+			await expect(
+				storage.readMetadata("test.json", {
+					policy: "cache",
+				}),
+			).rejects.toThrow()
 			expect(
 				await storage.read("test.json", {
 					policy: "persistent",
 				}),
+			).toEqual("persistent")
+			expect(
+				(
+					await storage.readMetadata("test.json", {
+						policy: "persistent",
+					})
+				).policy,
 			).toEqual("persistent")
 		})
 
@@ -106,6 +126,7 @@ describe("IDBDirStorage.delete", () => {
 			await storage.delete("test.json")
 
 			await expect(storage.read("test.json")).rejects.toThrow()
+			await expect(storage.readMetadata("test.json")).rejects.toThrow()
 			expect(await storage.read("other.json")).toEqual("persistent")
 		})
 	})
