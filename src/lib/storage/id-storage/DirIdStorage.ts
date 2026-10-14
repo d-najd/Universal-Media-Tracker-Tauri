@@ -1,4 +1,3 @@
-import { TargetIcon } from "lucide-react"
 import DirStorageNew from "../directory-storage/DirStorageNew"
 import StoredData from "../StoredData"
 import IdStorageNew from "./IdStorageNew"
@@ -23,27 +22,41 @@ export default class DirIdStorage implements IdStorageNew {
 		return inst
 	}
 
-	async write(
-		data: StoredData,
+	async upsert(
 		ids: string[],
+		data?: StoredData,
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
+		if (ids.length === 0) {
+			throw new Error("No id's passed")
+		}
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		if (!options?.idsMode) {
-			optionsResolved.idsMode = "replace"
+			optionsResolved.idsMode = "merge"
 		}
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = DirIdStorage.resolveDocId(
+		const [docId, wasDocIdCreated] = DirIdStorage.resolveDocId(
 			ids,
 			optionsResolved,
 			idIndexMap,
 		)
+
+		if (wasDocIdCreated && !data) {
+			throw new Error(
+				"No data found with the passed id's, and no data was passed to be saved so nothing to do.",
+			)
+		}
+
 		const metaDataPath = this.metadataEntryPath(optionsResolved, docId)
 		const optionsString = JSON.stringify(optionsResolved)
 
-		await this.dirStorage.write(this.filePath(docId), data)
+		if (data) {
+			await this.dirStorage.write(this.filePath(docId), data)
+		}
 		await this.writeIds(ids, optionsResolved, idIndexMap, docId)
+		// TODO make sure the options aren't overriden, currently they are, check how its done in dirstorage
 		await this.dirStorage.write(metaDataPath, optionsString)
 	}
 
@@ -71,15 +84,6 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 
 		return await this.dirStorage.read(this.filePath(docId))
-	}
-
-	async updateById(
-		id: string,
-		data?: string,
-		ids?: Record<string, string>,
-		options?: Partial<IdStorageOptions>,
-	): Promise<void> {
-		throw new Error("Method not implemented.")
 	}
 
 	async deleteById(
@@ -148,11 +152,14 @@ export default class DirIdStorage implements IdStorageNew {
 		return `${this.path}/${docId}`
 	}
 
+	/**
+	 * @returns [string, boolean] where the string is the docId, boolean true if the docId was created false if it was found in the ids
+	 */
 	private static resolveDocId(
 		ids: string[],
 		options: Partial<IdStorageOptions>,
 		idIndexMap: Record<string, string>,
-	) {
+	): [string, boolean] {
 		let docId = undefined
 		for (const id of ids) {
 			if (!docId && docId !== idIndexMap[id]) {
@@ -164,10 +171,10 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 
 		if (!docId) {
-			docId = `${crypto.randomUUID()}.${options.fileExtension}`
+			return [`${crypto.randomUUID()}.${options.fileExtension}`, true]
 		}
 
-		return docId
+		return [docId, false]
 	}
 
 	private static resolveOptions(

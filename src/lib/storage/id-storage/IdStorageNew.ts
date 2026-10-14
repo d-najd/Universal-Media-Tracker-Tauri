@@ -6,17 +6,6 @@ import IdStorageOptions from "./IdStorageOptions"
  */
 export default interface IdStorageNew {
 	/**
-	 * If any of the id's match will override that entry otherwise writes new entry,
-	 * Default {IdStorageOptions.idsMode} is replace
-	 * @throws Error if the given id's belong to more than 1 entry
-	 */
-	write(
-		data: StoredData,
-		ids: string[],
-		options?: Partial<IdStorageOptions>,
-	): Promise<void>
-
-	/**
 	 * finds by id
 	 * @throws Error if entry with id not found
 	 */
@@ -26,16 +15,31 @@ export default interface IdStorageNew {
 	): Promise<StoredData>
 
 	/**
-	 * finds by given id and updates id's, data, or both, also updates options
-	 * Default {IdStorageOptions.idsMode} is merge
-	 * @throws Error if ids and data are undefined
-	 * @throws Error if entry with @param id doesn't exist
-	 * @throws Error if the given id's belong to more than 1 entry
+	 * Creates a new entry or updates an existing one.
+	 *
+	 * If any of the provided IDs already resolve to an entry, that entry is
+	 * updated, its data (if provided) is written, and the provided IDs are
+	 * added to its alias set.
+	 *
+	 * If none of the provided IDs resolve to an existing entry, a new entry is
+	 * created and all provided IDs are registered as aliases.
+	 *
+	 * @param ids     IDs to associate with the entry. Used both to locate an
+	 *                existing entry and to register aliases on it.
+	 * @param data    Data to store. If omitted, the entry's existing data is
+	 *                preserved (only aliases are updated).
+	 * @param options Storage options. `idsMode` controls alias semantics:
+	 *                'merge' (default) adds the provided IDs to the entry's
+	 *                existing alias set, preserving aliases not in `ids`;
+	 *                'replace' drops aliases not in `ids`.
+	 *
+	 * @throws Error if the provided IDs resolve to more than one existing entry.
+	 * @throws Error if no entry matches and `data` is undefined (nothing to create).
+	 * @throws Error if empty array of `ids` is passed
 	 */
-	updateById(
-		id: string,
+	upsert(
+		ids: string[],
 		data?: StoredData,
-		ids?: string[],
 		options?: Partial<IdStorageOptions>,
 	): Promise<void>
 
