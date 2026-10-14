@@ -31,30 +31,28 @@ export default class DirIdStorage implements IdStorageNew {
 		if (!options?.idsMode) {
 			optionsResolved.idsMode = "replace"
 		}
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const prevIdIndexMap = this.safeReadIdIndexMap(optionsResolved.profile!)
+		const targetDocId = DirIdStorage.resolveDocId(
+			ids,
+			optionsResolved,
+			idIndexMap,
+		)
+		const metaDataPath = this.metadataEntryPath(
+			optionsResolved,
+			targetDocId,
+		)
+		const optionsString = JSON.stringify(optionsResolved)
 
-		let targetDocId = undefined
-		for (const id of ids) {
-			if (!targetDocId && targetDocId !== prevIdIndexMap[id]) {
-				throw new Error(
-					"Id's refer to more than one entry, thus can't decide which to edit",
-				)
-			}
-			targetDocId = prevIdIndexMap[id]
-		}
-
-		if (targetDocId === undefined) {
-			targetDocId = `${crypto.randomUUID()}.${optionsResolved.fileExtension}`
-		}
+		await this.dirStorage.write(this.path, data)
+		await this.writeIds(ids, optionsResolved, idIndexMap, targetDocId)
+		await this.dirStorage.write(metaDataPath, optionsString)
 	}
 
 	async readById(
 		id: string,
 		options?: Partial<IdStorageOptions>,
-	): Promise<string> {
-		throw new Error("Method not implemented.")
-	}
+	): Promise<string> {}
 
 	async updateById(
 		id: string,
@@ -72,24 +70,81 @@ export default class DirIdStorage implements IdStorageNew {
 		throw new Error("Method not implemented.")
 	}
 
-	private safeReadIdIndexMap(profile: string): Record<string, string> {
+	private async writeIds(
+		ids: string[],
+		options: Partial<IdStorageOptions>,
+		idIndexMap: Record<string, string>,
+		targetDocId: string,
+	) {
+		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
+		if (options.idsMode === "replace") {
+			for (const [existingId, docId] of Object.entries(idIndexMap)) {
+				if (docId === targetDocId) {
+					delete idIndexMap[existingId]
+				}
+			}
+		}
+
+		for (const id of ids) {
+			idIndexMap[id] = targetDocId
+		}
+
+		this.dirStorage.write(
+			this.idIndexMapPath(options),
+			JSON.stringify(idIndexMap),
+		)
+	}
+
+	private async safeReadIdIndexMap(
+		options: Partial<IdStorageOptions>,
+	): Promise<Record<string, string>> {
 		try {
 			const rawPreviousIdData = await this.dirStorage.read(
-				this.idIndexMapPath(profile),
+				this.idIndexMapPath(options),
 			)
 			return (await JSON.parse(rawPreviousIdData as string)) as Record<
 				string,
 				string
 			>
-		} catch (e) {
+		} catch {
 			return {}
 		}
 	}
 
-	private appendToFile() {}
+	private idIndexMapPath(options: Partial<IdStorageOptions>) {
+		return `${options.profile!}/.meta/id-storage/${this.path}/idIndexMap.json`
+	}
 
-	private idIndexMapPath(profile: string) {
-		return `${profile}/.meta/id-storage/${this.path}/idIndexMap.json`
+	/**
+	 * @param targetDocId should contain the file itself for ex video.mp4
+	 */
+	private metadataEntryPath(
+		options: Partial<IdStorageOptions>,
+		targetDocId: string,
+	) {
+		return `${options.profile!}/.meta/id-storage/${this.path}/entries/${targetDocId}`
+	}
+
+	private static resolveDocId(
+		ids: string[],
+		options: Partial<IdStorageOptions>,
+		idIndexMap: Record<string, string>,
+	) {
+		let targetDocId = undefined
+		for (const id of ids) {
+			if (!targetDocId && targetDocId !== idIndexMap[id]) {
+				throw new Error(
+					"Id's refer to more than one entry, thus can't decide which to edit",
+				)
+			}
+			targetDocId = idIndexMap[id]
+		}
+
+		if (!targetDocId) {
+			targetDocId = `${crypto.randomUUID()}.${options.fileExtension}`
+		}
+
+		return targetDocId
 	}
 
 	private static resolveOptions(
