@@ -37,7 +37,7 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const [docId, wasDocIdCreated] = DirIdStorage.resolveDocId(
+		const [docId, wasDocIdCreated] = DirIdStorage.resolveOrCreateDocId(
 			ids,
 			optionsResolved,
 			idIndexMap,
@@ -67,21 +67,7 @@ export default class DirIdStorage implements IdStorageNew {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = idIndexMap[id]
-
-		if (!docId) {
-			throw new Error(`File by id: ${id} not found`)
-		}
-
-		// We only want to check if the user passed the extension
-		if (options?.fileExtension) {
-			const extension = docId.split(".")[1]
-			if (extension !== options.fileExtension!) {
-				throw new Error(
-					`File extension for the requested file doesn't match with it's current, saved file is: ${docId}, requested file extension: ${options.fileExtension}, and requested id: ${id}`,
-				)
-			}
-		}
+		const docId = this.lookupDocId(id, idIndexMap)
 
 		return await this.dirStorage.read(this.filePath(docId))
 	}
@@ -90,7 +76,19 @@ export default class DirIdStorage implements IdStorageNew {
 		id: string,
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
-		throw new Error("Method not implemented.")
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		const docId = this.lookupDocId(id, idIndexMap)
+
+		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
+		for (const [existingId, docId] of Object.entries(idIndexMap)) {
+			if (docId === docId) {
+				delete idIndexMap[existingId]
+			}
+		}
+
+		// Reemove the file and the associated indexes to it
 	}
 
 	private async writeIds(
@@ -101,8 +99,10 @@ export default class DirIdStorage implements IdStorageNew {
 	) {
 		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
 		if (options.idsMode === "replace") {
-			for (const [existingId, docId] of Object.entries(idIndexMap)) {
-				if (docId === docId) {
+			for (const [existingId, existingDocId] of Object.entries(
+				idIndexMap,
+			)) {
+				if (existingDocId === docId) {
 					delete idIndexMap[existingId]
 				}
 			}
@@ -155,7 +155,7 @@ export default class DirIdStorage implements IdStorageNew {
 	/**
 	 * @returns [string, boolean] where the string is the docId, boolean true if the docId was created false if it was found in the ids
 	 */
-	private static resolveDocId(
+	private static resolveOrCreateDocId(
 		ids: string[],
 		options: Partial<IdStorageOptions>,
 		idIndexMap: Record<string, string>,
@@ -175,6 +175,37 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 
 		return [docId, false]
+	}
+
+	/**
+	 * Looks up the docId mapped to `id` and validates its file extension
+	 * against `options.fileExtension` if provided.
+	 *
+	 * @throws Error if `id` is not mapped to any document.
+	 * @throws Error if the mapped document's extension doesn't match `options.fileExtension`.
+	 */
+	private lookupDocId(
+		id: string,
+		idIndexMap: Record<string, string>,
+		options?: Partial<IdStorageOptions>,
+	): string {
+		const docId = idIndexMap[id]
+
+		if (!docId) {
+			throw new Error(`File by id: ${id} not found`)
+		}
+
+		// We only want to check if the user passed the extension
+		if (options?.fileExtension) {
+			const extension = docId.split(".")[1]
+			if (extension !== options.fileExtension) {
+				throw new Error(
+					`File extension for the requested file doesn't match with its current saved file. Saved file is: ${docId}, requested extension: ${options.fileExtension}, requested id: ${id}`,
+				)
+			}
+		}
+
+		return docId
 	}
 
 	private static resolveOptions(
