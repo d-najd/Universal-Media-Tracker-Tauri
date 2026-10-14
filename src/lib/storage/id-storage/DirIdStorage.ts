@@ -1,3 +1,4 @@
+import { TargetIcon } from "lucide-react"
 import DirStorageNew from "../directory-storage/DirStorageNew"
 import StoredData from "../StoredData"
 import IdStorageNew from "./IdStorageNew"
@@ -33,26 +34,44 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const targetDocId = DirIdStorage.resolveDocId(
+		const docId = DirIdStorage.resolveDocId(
 			ids,
 			optionsResolved,
 			idIndexMap,
 		)
-		const metaDataPath = this.metadataEntryPath(
-			optionsResolved,
-			targetDocId,
-		)
+		const metaDataPath = this.metadataEntryPath(optionsResolved, docId)
 		const optionsString = JSON.stringify(optionsResolved)
 
-		await this.dirStorage.write(this.path, data)
-		await this.writeIds(ids, optionsResolved, idIndexMap, targetDocId)
+		await this.dirStorage.write(this.filePath(docId), data)
+		await this.writeIds(ids, optionsResolved, idIndexMap, docId)
 		await this.dirStorage.write(metaDataPath, optionsString)
 	}
 
 	async readById(
 		id: string,
 		options?: Partial<IdStorageOptions>,
-	): Promise<string> {}
+	): Promise<StoredData> {
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		const docId = idIndexMap[id]
+
+		if (!docId) {
+			throw new Error(`File by id: ${id} not found`)
+		}
+
+		// We only want to check if the user passed the extension
+		if (options?.fileExtension) {
+			const extension = docId.split(".")[1]
+			if (extension !== options.fileExtension!) {
+				throw new Error(
+					`File extension for the requested file doesn't match with it's current, saved file is: ${docId}, requested file extension: ${options.fileExtension}, and requested id: ${id}`,
+				)
+			}
+		}
+
+		return await this.dirStorage.read(this.filePath(docId))
+	}
 
 	async updateById(
 		id: string,
@@ -74,19 +93,19 @@ export default class DirIdStorage implements IdStorageNew {
 		ids: string[],
 		options: Partial<IdStorageOptions>,
 		idIndexMap: Record<string, string>,
-		targetDocId: string,
+		docId: string,
 	) {
 		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
 		if (options.idsMode === "replace") {
 			for (const [existingId, docId] of Object.entries(idIndexMap)) {
-				if (docId === targetDocId) {
+				if (docId === docId) {
 					delete idIndexMap[existingId]
 				}
 			}
 		}
 
 		for (const id of ids) {
-			idIndexMap[id] = targetDocId
+			idIndexMap[id] = docId
 		}
 
 		this.dirStorage.write(
@@ -116,13 +135,17 @@ export default class DirIdStorage implements IdStorageNew {
 	}
 
 	/**
-	 * @param targetDocId should contain the file itself for ex video.mp4
+	 * @param docId should contain the file itself for ex video.mp4
 	 */
 	private metadataEntryPath(
 		options: Partial<IdStorageOptions>,
-		targetDocId: string,
+		docId: string,
 	) {
-		return `${options.profile!}/.meta/id-storage/${this.path}/entries/${targetDocId}`
+		return `${options.profile!}/.meta/id-storage/${this.path}/entries/${docId}`
+	}
+
+	private filePath(docId: string) {
+		return `${this.path}/${docId}`
 	}
 
 	private static resolveDocId(
@@ -130,21 +153,21 @@ export default class DirIdStorage implements IdStorageNew {
 		options: Partial<IdStorageOptions>,
 		idIndexMap: Record<string, string>,
 	) {
-		let targetDocId = undefined
+		let docId = undefined
 		for (const id of ids) {
-			if (!targetDocId && targetDocId !== idIndexMap[id]) {
+			if (!docId && docId !== idIndexMap[id]) {
 				throw new Error(
 					"Id's refer to more than one entry, thus can't decide which to edit",
 				)
 			}
-			targetDocId = idIndexMap[id]
+			docId = idIndexMap[id]
 		}
 
-		if (!targetDocId) {
-			targetDocId = `${crypto.randomUUID()}.${options.fileExtension}`
+		if (!docId) {
+			docId = `${crypto.randomUUID()}.${options.fileExtension}`
 		}
 
-		return targetDocId
+		return docId
 	}
 
 	private static resolveOptions(
