@@ -14,6 +14,11 @@ export default interface IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<StoredData>
 
+	readMetadataById(
+		id: string,
+		options?: Partial<IdStorageOptions>,
+	): Promise<IdStorageOptions>
+
 	/**
 	 * Creates a new entry or updates an existing one.
 	 *
@@ -28,10 +33,8 @@ export default interface IdStorageNew {
 	 *                existing entry and to register aliases on it.
 	 * @param data    Data to store. If omitted, the entry's existing data is
 	 *                preserved (only aliases are updated).
-	 * @param options Storage options. `idsMode` controls alias semantics:
-	 *                'merge' (default) adds the provided IDs to the entry's
-	 *                existing alias set, preserving aliases not in `ids`;
-	 *                'replace' drops aliases not in `ids`.
+	 * @param options Storage options. `idsMode` controls alias semantics,
+	 *                see {@link IdStorageOptions} for `idsMode` semantics
 	 *
 	 * @throws Error if the provided IDs resolve to more than one existing entry.
 	 * @throws Error if no entry matches and `data` is undefined (nothing to create).

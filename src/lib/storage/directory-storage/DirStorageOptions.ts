@@ -8,6 +8,7 @@ export const DefaultDirStorageOptions = (): Partial<DirStorageOptions> => ({
 	profile: "default",
 	createdAt: Date.now(),
 	updatedAt: Date.now(),
+	driver: "directory-storage",
 })
 
 export default DirStorageOptions

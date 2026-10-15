@@ -8,6 +8,7 @@ import StoredData from "../StoredData"
 import DirStorageNew from "./DirStorageNew"
 
 // TODO make completely transactional
+// TODO add tests to check whether there are race conditions for removing/writing something
 export default class IDBDirStorage implements DirStorageNew {
 	private constructor(
 		private db: IDBPDatabase,
@@ -178,6 +179,7 @@ export default class IDBDirStorage implements DirStorageNew {
 		optionsResolved.policy = undefined
 		await this.deleteFile(path, optionsResolved, tx, policies)
 
+		// TODO make sure that options aren't overriden when not necessary if there even is such case
 		optionsResolved.policy = prevPolicy
 		await Promise.all([
 			tx.store.put(data, key),
@@ -208,8 +210,6 @@ export default class IDBDirStorage implements DirStorageNew {
 		if (!this.isFile(path)) {
 			throw Error(`Trying to remove folder with path ${path}`)
 		}
-
-		console.error("Removing " + path + " " + options?.policy)
 
 		const optionsResolved = IDBDirStorage.resolveOptions(options)
 
@@ -320,6 +320,7 @@ export default class IDBDirStorage implements DirStorageNew {
 
 		return {
 			...DefaultDirStorageOptions(),
+			...{ driver: "directory-storage-default" },
 			...options,
 			backend: "indexeddb",
 		}

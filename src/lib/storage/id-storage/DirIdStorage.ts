@@ -1,21 +1,18 @@
 import DirStorageNew from "../directory-storage/DirStorageNew"
+import DirStorageOptions from "../directory-storage/DirStorageOptions"
 import StoredData from "../StoredData"
 import IdStorageNew from "./IdStorageNew"
 import IdStorageOptions, { DefaultIdStorageOptions } from "./IdStorageOptions"
 
+// TODO add tests to check whether there are race conditions for removing/writing something
 export default class DirIdStorage implements IdStorageNew {
-	// readonly idIndexMapPath: string
-
 	private constructor(
 		private dirStorage: DirStorageNew,
 		private path: string,
-	) {
-		// Prevent not found errors
-		// dirStorage.write(this.idIndexMapPath, "")
-	}
+	) {}
 
 	/**
-	 * @param path must not be metapath, ex media/movies
+	 * @param path must not be metapath, ex .meta/media/movies
 	 */
 	static async create(dirStorage: DirStorageNew, path: string) {
 		const inst = new DirIdStorage(dirStorage, path)
@@ -32,10 +29,7 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		if (!options?.idsMode) {
-			optionsResolved.idsMode = "merge"
-		}
-		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+		const idIndexMap = await this.safeReadIdIndexMap()
 
 		const [docId, wasDocIdCreated] = DirIdStorage.resolveOrCreateDocId(
 			ids,
@@ -49,15 +43,12 @@ export default class DirIdStorage implements IdStorageNew {
 			)
 		}
 
-		const metaDataPath = this.metadataEntryPath(optionsResolved, docId)
-		const optionsString = JSON.stringify(optionsResolved)
+		const filePath = this.filePath(docId)
 
 		if (data) {
-			await this.dirStorage.write(this.filePath(docId), data)
+			await this.dirStorage.write(filePath, data, optionsResolved)
 		}
-		await this.writeIds(ids, optionsResolved, idIndexMap, docId)
-		// TODO make sure the options aren't overriden, currently they are, check how its done in dirstorage
-		await this.dirStorage.write(metaDataPath, optionsString)
+		await this.writeIds(idIndexMap, optionsResolved, docId, ids)
 	}
 
 	async readById(
@@ -65,11 +56,25 @@ export default class DirIdStorage implements IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<StoredData> {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+		const idIndexMap = await this.safeReadIdIndexMap()
 
 		const docId = this.lookupDocId(id, idIndexMap)
+		const filePath = this.filePath(docId)
 
-		return await this.dirStorage.read(this.filePath(docId))
+		return await this.dirStorage.read(filePath, optionsResolved)
+	}
+
+	async readMetadataById(
+		id: string,
+		options?: Partial<IdStorageOptions>,
+	): Promise<IdStorageOptions> {
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap()
+
+		const docId = this.lookupDocId(id, idIndexMap)
+		const filePath = this.filePath(docId)
+
+		return await this.dirStorage.readMetadata(filePath, optionsResolved)
 	}
 
 	async deleteById(
@@ -77,25 +82,28 @@ export default class DirIdStorage implements IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+		const idIndexMap = await this.safeReadIdIndexMap()
 
 		const docId = this.lookupDocId(id, idIndexMap)
 
 		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
-		for (const [existingId, docId] of Object.entries(idIndexMap)) {
-			if (docId === docId) {
+		for (const [existingId, existingDocId] of Object.entries(idIndexMap)) {
+			if (docId === existingDocId) {
 				delete idIndexMap[existingId]
 			}
 		}
 
-		// Reemove the file and the associated indexes to it
+		const filePath = this.filePath(docId)
+
+		await this.dirStorage.delete(filePath, optionsResolved)
+		await this.writeIdIndexMap(idIndexMap, optionsResolved)
 	}
 
 	private async writeIds(
-		ids: string[],
-		options: Partial<IdStorageOptions>,
 		idIndexMap: Record<string, string>,
+		options: Partial<IdStorageOptions>,
 		docId: string,
+		ids: string[],
 	) {
 		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
 		if (options.idsMode === "replace") {
@@ -112,18 +120,33 @@ export default class DirIdStorage implements IdStorageNew {
 			idIndexMap[id] = docId
 		}
 
-		this.dirStorage.write(
-			this.idIndexMapPath(options),
+		await this.writeIdIndexMap(idIndexMap, options)
+	}
+
+	private async writeIdIndexMap(
+		idIndexMap: Record<string, string>,
+		options: Partial<IdStorageOptions>,
+	) {
+		// Test whether its always persisent
+		const idMapOptions: DirStorageOptions = {
+			policy: "persistent",
+			backend: options.backend!,
+			profile: options.profile!,
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+		}
+
+		await this.dirStorage.write(
+			this.idIndexMapPath(),
 			JSON.stringify(idIndexMap),
+			idMapOptions,
 		)
 	}
 
-	private async safeReadIdIndexMap(
-		options: Partial<IdStorageOptions>,
-	): Promise<Record<string, string>> {
+	private async safeReadIdIndexMap(): Promise<Record<string, string>> {
 		try {
 			const rawPreviousIdData = await this.dirStorage.read(
-				this.idIndexMapPath(options),
+				this.idIndexMapPath(),
 			)
 			return (await JSON.parse(rawPreviousIdData as string)) as Record<
 				string,
@@ -134,18 +157,8 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 	}
 
-	private idIndexMapPath(options: Partial<IdStorageOptions>) {
-		return `${options.profile!}/.meta/id-storage/${this.path}/idIndexMap.json`
-	}
-
-	/**
-	 * @param docId should contain the file itself for ex video.mp4
-	 */
-	private metadataEntryPath(
-		options: Partial<IdStorageOptions>,
-		docId: string,
-	) {
-		return `${options.profile!}/.meta/id-storage/${this.path}/entries/${docId}`
+	private idIndexMapPath() {
+		return `.meta/id-storage/${this.path}/idIndexMap.json`
 	}
 
 	private filePath(docId: string) {
@@ -219,6 +232,7 @@ export default class DirIdStorage implements IdStorageNew {
 
 		return {
 			...DefaultIdStorageOptions(),
+			...{ driver: "id-storage-dir" },
 			...options,
 			backend: "indexeddb",
 		}

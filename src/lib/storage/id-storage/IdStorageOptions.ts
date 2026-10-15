@@ -18,6 +18,8 @@ export const DefaultIdStorageOptions = (): Partial<IdStorageOptions> => ({
 	createdAt: Date.now(),
 	updatedAt: Date.now(),
 	fileExtension: "bin",
+	idsMode: "merge",
+	driver: "id-storage",
 })
 
 export default IdStorageOptions

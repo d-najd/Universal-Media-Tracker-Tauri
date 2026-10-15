@@ -42,6 +42,10 @@ type StorageOptions = {
 	 */
 	ttl?: number
 	custom?: Record<string, string>
+	/**
+	 * What driver is responsible for creating/managing the metadata and the file
+	 */
+	driver?: string
 }
 
 export default StorageOptions
