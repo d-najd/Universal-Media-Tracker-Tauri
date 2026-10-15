@@ -1,5 +1,5 @@
-import IndexedDbDirStorage from "./directory-storage/IndexedDbDirStorage"
 import DirStorage from "./directory-storage/DirStorage"
+import IDBDirStorage from "./directory-storage/IDBDirStorage"
 
 let storage: DirStorage | null = null
 
@@ -9,7 +9,7 @@ export async function getStorage(): Promise<DirStorage> {
 	// 	return await FileSystemStorage.create()
 	// }
 	if (storage === null) {
-		storage = await IndexedDbDirStorage.create()
+		storage = await IDBDirStorage.create()
 	}
 	return storage
 }

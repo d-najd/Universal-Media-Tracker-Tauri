@@ -1,20 +1,20 @@
-import DirStorageNew from "../directory-storage/DirStorageNew"
+import DirStorage from "../directory-storage/DirStorage"
 import DirStorageOptions from "../directory-storage/DirStorageOptions"
 import StoredData from "../StoredData"
-import IdStorageNew from "./IdStorageNew"
+import IdStorage from "./IdStorage"
 import IdStorageOptions, { DefaultIdStorageOptions } from "./IdStorageOptions"
 
 // TODO add tests to check whether there are race conditions for removing/writing something
-export default class DirIdStorage implements IdStorageNew {
+export default class DirIdStorage implements IdStorage {
 	private constructor(
-		private dirStorage: DirStorageNew,
+		private dirStorage: DirStorage,
 		private path: string,
 	) {}
 
 	/**
 	 * @param path must not be metapath, ex .meta/media/movies
 	 */
-	static async create(dirStorage: DirStorageNew, path: string) {
+	static async create(dirStorage: DirStorage, path: string) {
 		const inst = new DirIdStorage(dirStorage, path)
 		return inst
 	}

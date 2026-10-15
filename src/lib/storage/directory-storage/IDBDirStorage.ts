@@ -5,11 +5,11 @@ import DirStorageOptions, {
 } from "./DirStorageOptions"
 import StoragePolicy from "../StoragePolicy"
 import StoredData from "../StoredData"
-import DirStorageNew from "./DirStorageNew"
+import DirStorage from "./DirStorage"
 
 // TODO make completely transactional
 // TODO add tests to check whether there are race conditions for removing/writing something
-export default class IDBDirStorage implements DirStorageNew {
+export default class IDBDirStorage implements DirStorage {
 	private constructor(
 		private db: IDBPDatabase,
 		private storeName: string,

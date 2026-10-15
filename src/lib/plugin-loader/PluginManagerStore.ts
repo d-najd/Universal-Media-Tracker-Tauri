@@ -129,9 +129,9 @@ export default class PluginManagerStore {
 				continue
 			}
 
-			const jsonStr = await storage.read(
+			const jsonStr = (await storage.read(
 				folder.path + "/" + pluginConfigName,
-			)
+			)) as string
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
 			if (config.status === "disabled") continue
 
@@ -355,7 +355,9 @@ export default class PluginManagerStore {
 		config: LocalPluginConfig,
 	) {
 		const storage = await getStorage()
-		const codeStr = await storage.read(folder.path + "/" + pluginFileName)
+		const codeStr = (await storage.read(
+			folder.path + "/" + pluginFileName,
+		)) as string
 		const plugin = await this.loadPluginFromCode(codeStr)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const spec = (await (plugin! as any).getSpec()) as PluginSpec
@@ -474,9 +476,9 @@ export default class PluginManagerStore {
 	): Promise<LocalPluginConfig> {
 		const storage = await getStorage()
 		const curPluginPath = pluginPath + "/" + spec.config.id
-		const configStr = await storage.read(
+		const configStr = (await storage.read(
 			curPluginPath + "/" + pluginConfigName,
-		)
+		)) as string
 		const config = JSON.parse(configStr) as LocalPluginConfig
 		return config
 	}
