@@ -127,7 +127,8 @@ describe("IDBDirStorage.metadata", () => {
 			await storage.write("test.json", "Second")
 			const after = await storage.readMetadata("test.json")
 
-			expect(after?.updatedAt).toBeGreaterThanOrEqual(before!.updatedAt)
+			expect(after.createdAt).toEqual(before.createdAt)
+			expect(after.updatedAt).toBeGreaterThanOrEqual(before.updatedAt)
 		})
 	})
 

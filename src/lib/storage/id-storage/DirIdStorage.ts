@@ -31,15 +31,11 @@ export default class DirIdStorage implements IdStorageNew {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		console.log("BEFORE WITH IDS " + ids.join(", "))
-
 		const [docId, wasDocIdCreated] = DirIdStorage.resolveOrCreateDocId(
 			ids,
 			optionsResolved,
 			idIndexMap,
 		)
-
-		console.log("TEST " + wasDocIdCreated)
 
 		if (wasDocIdCreated && data === undefined && ids.length === 1) {
 			throw new Error(
@@ -62,7 +58,7 @@ export default class DirIdStorage implements IdStorageNew {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap)
+		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
 		const filePath = this.filePath(docId)
 
 		return await this.dirStorage.read(filePath, optionsResolved)
@@ -75,7 +71,7 @@ export default class DirIdStorage implements IdStorageNew {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap)
+		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
 		const filePath = this.filePath(docId)
 
 		return await this.dirStorage.readMetadata(filePath, optionsResolved)
@@ -88,7 +84,11 @@ export default class DirIdStorage implements IdStorageNew {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap)
+		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+
+		if (!docId) {
+			throw new Error(`Can't find id refering to file with id: ${id}`)
+		}
 
 		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
 		for (const [existingId, existingDocId] of Object.entries(idIndexMap)) {
@@ -192,7 +192,6 @@ export default class DirIdStorage implements IdStorageNew {
 			}
 		}
 
-		console.error("FOUND is " + docId)
 		if (!docId) {
 			return [`${crypto.randomUUID()}.${options.fileExtension}`, true]
 		}
@@ -210,7 +209,7 @@ export default class DirIdStorage implements IdStorageNew {
 	private lookupDocId(
 		id: string,
 		idIndexMap: Record<string, string>,
-		options?: Partial<IdStorageOptions>,
+		options: Partial<IdStorageOptions>,
 	): string {
 		const docId = idIndexMap[id]
 

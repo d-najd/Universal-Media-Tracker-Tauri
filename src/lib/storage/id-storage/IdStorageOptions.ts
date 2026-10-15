@@ -15,8 +15,8 @@ type IdStorageOptions = StorageOptions & {
 export const DefaultIdStorageOptions = (): Partial<IdStorageOptions> => ({
 	backend: "indexeddb", // Unsure what to put here so leave this?
 	profile: "default",
-	createdAt: Date.now(),
-	updatedAt: Date.now(),
+	// createdAt: Date.now(), // Managed by DirIdStorage
+	// updatedAt: Date.now(), // Managed by DirIdStorage
 	fileExtension: "bin",
 	idsMode: "merge",
 	driver: "id-storage",

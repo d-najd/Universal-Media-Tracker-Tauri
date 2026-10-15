@@ -125,6 +125,19 @@ describe("DirIdStorage.upsert", () => {
 				expect(await idStorage.readById("B")).toEqual("hello")
 				expect(await idStorage.readById("C")).toEqual("hello")
 			})
+
+			it("does not throw or create a new entry when the same ids are written twice", async () => {
+				await idStorage.upsert(["A", "B"], "hello", {
+					idsMode: "merge",
+				})
+				await idStorage.upsert(["A", "B"], undefined, {
+					idsMode: "merge",
+				})
+
+				// Same entry, same data — no split, no error
+				expect(await idStorage.readById("A")).toEqual("hello")
+				expect(await idStorage.readById("B")).toEqual("hello")
+			})
 		})
 
 		describe("replace mode", () => {
