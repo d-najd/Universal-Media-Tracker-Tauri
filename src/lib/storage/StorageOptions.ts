@@ -2,6 +2,8 @@ import StorageBackend from "./StorageBackend"
 import StoragePolicy from "./StoragePolicy"
 
 /**
+ * TODO update this doc, the meta layout is not like this anymore
+ *
  * storage layout
  *
  * default/ (profile)
@@ -45,7 +47,7 @@ type StorageOptions = {
 	/**
 	 * What driver is responsible for creating/managing the metadata and the file
 	 */
-	driver?: string
+	driver?: string // TODO add tests for this
 }
 
 export default StorageOptions

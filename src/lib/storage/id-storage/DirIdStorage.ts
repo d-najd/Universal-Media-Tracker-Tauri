@@ -29,7 +29,9 @@ export default class DirIdStorage implements IdStorageNew {
 		}
 
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap()
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		console.log("BEFORE WITH IDS " + ids.join(", "))
 
 		const [docId, wasDocIdCreated] = DirIdStorage.resolveOrCreateDocId(
 			ids,
@@ -37,7 +39,9 @@ export default class DirIdStorage implements IdStorageNew {
 			idIndexMap,
 		)
 
-		if (wasDocIdCreated && !data) {
+		console.log("TEST " + wasDocIdCreated)
+
+		if (wasDocIdCreated && data === undefined && ids.length === 1) {
 			throw new Error(
 				"No data found with the passed id's, and no data was passed to be saved so nothing to do.",
 			)
@@ -45,7 +49,7 @@ export default class DirIdStorage implements IdStorageNew {
 
 		const filePath = this.filePath(docId)
 
-		if (data) {
+		if (data !== undefined) {
 			await this.dirStorage.write(filePath, data, optionsResolved)
 		}
 		await this.writeIds(idIndexMap, optionsResolved, docId, ids)
@@ -56,7 +60,7 @@ export default class DirIdStorage implements IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<StoredData> {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap()
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
 		const docId = this.lookupDocId(id, idIndexMap)
 		const filePath = this.filePath(docId)
@@ -69,7 +73,7 @@ export default class DirIdStorage implements IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<IdStorageOptions> {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap()
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
 		const docId = this.lookupDocId(id, idIndexMap)
 		const filePath = this.filePath(docId)
@@ -82,7 +86,7 @@ export default class DirIdStorage implements IdStorageNew {
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
 		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap()
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
 		const docId = this.lookupDocId(id, idIndexMap)
 
@@ -143,10 +147,13 @@ export default class DirIdStorage implements IdStorageNew {
 		)
 	}
 
-	private async safeReadIdIndexMap(): Promise<Record<string, string>> {
+	private async safeReadIdIndexMap(
+		options: Partial<IdStorageOptions>,
+	): Promise<Record<string, string>> {
 		try {
 			const rawPreviousIdData = await this.dirStorage.read(
 				this.idIndexMapPath(),
+				options,
 			)
 			return (await JSON.parse(rawPreviousIdData as string)) as Record<
 				string,
@@ -175,14 +182,17 @@ export default class DirIdStorage implements IdStorageNew {
 	): [string, boolean] {
 		let docId = undefined
 		for (const id of ids) {
-			if (!docId && docId !== idIndexMap[id]) {
+			if (docId && idIndexMap[id] && docId !== idIndexMap[id]) {
 				throw new Error(
 					"Id's refer to more than one entry, thus can't decide which to edit",
 				)
 			}
-			docId = idIndexMap[id]
+			if (idIndexMap[id]) {
+				docId = idIndexMap[id]
+			}
 		}
 
+		console.error("FOUND is " + docId)
 		if (!docId) {
 			return [`${crypto.randomUUID()}.${options.fileExtension}`, true]
 		}
