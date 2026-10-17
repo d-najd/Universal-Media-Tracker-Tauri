@@ -19,6 +19,99 @@ export default class DirIdStorage implements IdStorage {
 		return inst
 	}
 
+	async write(
+		ids: string[],
+		data: StoredData,
+		options?: Partial<IdStorageOptions>,
+	): Promise<void> {
+		if (ids.length === 0) {
+			throw new Error("No id's passed")
+		}
+
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		const [docId] = DirIdStorage.resolveOrCreateDocId(
+			ids,
+			optionsResolved,
+			idIndexMap,
+		)
+
+		const filePath = this.filePath(docId)
+
+		for (const [existingId, existingDocId] of Object.entries(idIndexMap)) {
+			if (existingDocId === docId) {
+				delete idIndexMap[existingId]
+			}
+		}
+
+		for (const id of ids) {
+			idIndexMap[id] = docId
+		}
+
+		await this.dirStorage.write(filePath, data, optionsResolved)
+		await this.writeIdIndexMap(idIndexMap, optionsResolved)
+	}
+
+	async addAliases(
+		id: string,
+		ids: string[],
+		options?: Partial<IdStorageOptions>,
+	): Promise<void> {
+		if (ids.length === 0) return
+
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+
+		// Check for conflicts (if the new IDs already belong to another doc)
+		for (const newId of ids) {
+			const existingDocId = idIndexMap[newId]
+			if (existingDocId && existingDocId !== docId) {
+				throw new Error(
+					`Cannot add ID "${newId}" because it already belongs to a different entry.`,
+				)
+			}
+		}
+
+		for (const newId of ids) {
+			idIndexMap[newId] = docId
+		}
+
+		await this.writeIdIndexMap(idIndexMap, optionsResolved)
+	}
+
+	async removeAliases(
+		id: string,
+		ids: string[],
+		options?: Partial<IdStorageOptions>,
+	): Promise<void> {
+		if (ids.length === 0) return
+
+		const optionsResolved = DirIdStorage.resolveOptions(options)
+		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
+
+		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+
+		// Remove the requested IDs, but only if they actually belong to this docId
+		for (const idToRemove of ids) {
+			if (idIndexMap[idToRemove] && idIndexMap[idToRemove] !== docId) {
+				throw new Error(
+					`Trying to remove id that exists in another doc, id is: ${idToRemove} in doc ${idIndexMap[idToRemove]}`,
+				)
+			}
+			delete idIndexMap[idToRemove]
+		}
+
+		const hasRemainingAliases = Object.values(idIndexMap).includes(docId)
+		if (!hasRemainingAliases) {
+			await this.dirStorage.delete(this.filePath(docId), optionsResolved)
+		}
+
+		await this.writeIdIndexMap(idIndexMap, optionsResolved)
+	}
+
 	async upsert(
 		ids: string[],
 		data?: StoredData,
@@ -160,6 +253,7 @@ export default class DirIdStorage implements IdStorage {
 				string
 			>
 		} catch {
+			// TODO only catch on file not exists
 			return {}
 		}
 	}
@@ -182,12 +276,12 @@ export default class DirIdStorage implements IdStorage {
 	): [string, boolean] {
 		let docId = undefined
 		for (const id of ids) {
-			if (docId && idIndexMap[id] && docId !== idIndexMap[id]) {
-				throw new Error(
-					"Id's refer to more than one entry, thus can't decide which to edit",
-				)
-			}
 			if (idIndexMap[id]) {
+				if (docId && docId !== idIndexMap[id]) {
+					throw new Error(
+						"Id's refer to more than one entry, thus can't decide which to edit",
+					)
+				}
 				docId = idIndexMap[id]
 			}
 		}

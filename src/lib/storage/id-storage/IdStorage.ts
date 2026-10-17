@@ -40,9 +40,54 @@ export default interface IdStorage {
 	 * @throws Error if no entry matches and `data` is undefined (nothing to create).
 	 * @throws Error if empty array of `ids` is passed
 	 */
-	upsert(
+	// upsert(
+	// 	ids: string[],
+	// 	data?: StoredData,
+	// 	options?: Partial<IdStorageOptions>,
+	// ): Promise<void>
+
+	/**
+	 * Creates a new entry or updates the data of an existing one.
+	 *
+	 * @param ids IDs to associate with this data. If any ID already exists,
+	 *            the data is updated for that entry. If none exist, a new entry is created.
+	 *
+	 * @throws Error if the provided IDs resolve to more than one existing entry.
+	 * @throws Error if empty array of `ids` is passed.
+	 */
+	write(
 		ids: string[],
-		data?: StoredData,
+		data: StoredData,
+		options?: Partial<IdStorageOptions>,
+	): Promise<void>
+
+	/**
+	 * Adds aliases to an existing entry.
+	 *
+	 * @param id An existing ID used to locate the entry.
+	 * @param ids The new aliases to add.
+	 *
+	 * @throws Error if no entry matches `id`.
+	 * @throws Error if any of the new `ids` already belong to a different entry.
+	 */
+	addAliases(
+		id: string,
+		ids: string[],
+		options?: Partial<IdStorageOptions>,
+	): Promise<void>
+
+	/**
+	 * Removes aliases from an existing entry.
+	 * Does not delete the entry itself, unless all IDs are removed.
+	 *
+	 * @param id An existing ID used to locate the entry.
+	 * @param ids The aliases to remove.
+	 *
+	 * @throws Error if no entry matches `id`.
+	 */
+	removeAliases(
+		id: string,
+		ids: string[],
 		options?: Partial<IdStorageOptions>,
 	): Promise<void>
 
