@@ -9,6 +9,7 @@ import {
 } from "@/lib/storage/directory-storage/StoragePaths"
 import {
 	Handler,
+	LocalPluginConfig,
 	Plugin,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
@@ -448,6 +449,10 @@ export default class PluginManagerStore {
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
 		await this.loadPlugins()
+
+		const te = HandlerRegistry.getHandlersMatching(() => true)
+		console.error("HANDELRS ")
+		console.error(te)
 	}
 
 	private static async loadLocalPluginSource() {
