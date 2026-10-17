@@ -1,8 +1,11 @@
-import DirStorage from "../directory-storage/DirStorage"
-import DirStorageOptions from "../directory-storage/DirStorageOptions"
-import StoredData from "../StoredData"
-import IdStorage from "./IdStorage"
-import IdStorageOptions, { DefaultIdStorageOptions } from "./IdStorageOptions"
+import {
+	DefaultIdStorageOptions,
+	DirStorage,
+	DirStorageOptions,
+	IdStorage,
+	IdStorageOptions,
+	StoredData,
+} from "@d-najd/universal-media-tracker-sdk"
 
 // TODO add tests to check whether there are race conditions for removing/writing something
 export default class DirIdStorage implements IdStorage {
@@ -112,38 +115,6 @@ export default class DirIdStorage implements IdStorage {
 		await this.writeIdIndexMap(idIndexMap, optionsResolved)
 	}
 
-	async upsert(
-		ids: string[],
-		data?: StoredData,
-		options?: Partial<IdStorageOptions>,
-	): Promise<void> {
-		if (ids.length === 0) {
-			throw new Error("No id's passed")
-		}
-
-		const optionsResolved = DirIdStorage.resolveOptions(options)
-		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
-
-		const [docId, wasDocIdCreated] = DirIdStorage.resolveOrCreateDocId(
-			ids,
-			optionsResolved,
-			idIndexMap,
-		)
-
-		if (wasDocIdCreated && data === undefined && ids.length === 1) {
-			throw new Error(
-				"No data found with the passed id's, and no data was passed to be saved so nothing to do.",
-			)
-		}
-
-		const filePath = this.filePath(docId)
-
-		if (data !== undefined) {
-			await this.dirStorage.write(filePath, data, optionsResolved)
-		}
-		await this.writeIds(idIndexMap, optionsResolved, docId, ids)
-	}
-
 	async readById(
 		id: string,
 		options?: Partial<IdStorageOptions>,
@@ -194,30 +165,6 @@ export default class DirIdStorage implements IdStorage {
 
 		await this.dirStorage.delete(filePath, optionsResolved)
 		await this.writeIdIndexMap(idIndexMap, optionsResolved)
-	}
-
-	private async writeIds(
-		idIndexMap: Record<string, string>,
-		options: Partial<IdStorageOptions>,
-		docId: string,
-		ids: string[],
-	) {
-		// If this eats too much performance consider reverse index in second file, I.E: A -> O1, B: O1 would be O -> [A, B]
-		if (options.idsMode === "replace") {
-			for (const [existingId, existingDocId] of Object.entries(
-				idIndexMap,
-			)) {
-				if (existingDocId === docId) {
-					delete idIndexMap[existingId]
-				}
-			}
-		}
-
-		for (const id of ids) {
-			idIndexMap[id] = docId
-		}
-
-		await this.writeIdIndexMap(idIndexMap, options)
 	}
 
 	private async writeIdIndexMap(

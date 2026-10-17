@@ -1,4 +1,4 @@
-import DirStorage from "./directory-storage/DirStorage"
+import { DirStorage } from "@d-najd/universal-media-tracker-sdk"
 import IDBDirStorage from "./directory-storage/IDBDirStorage"
 
 let storage: DirStorage | null = null

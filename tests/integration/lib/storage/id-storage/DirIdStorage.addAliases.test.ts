@@ -1,8 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import IDBDirStorage from "../../../../../src/lib/storage/directory-storage/IDBDirStorage"
 import DirIdStorage from "../../../../../src/lib/storage/id-storage/DirIdStorage"
-import IdStorage from "../../../../../src/lib/storage/id-storage/IdStorage"
-import DirStorage from "../../../../../src/lib/storage/directory-storage/DirStorage"
+import { DirStorage, IdStorage } from "@d-najd/universal-media-tracker-sdk"
 
 describe("DirIdStorage.addAliases", () => {
 	let dirStorage: DirStorage

@@ -3,21 +3,19 @@ import basePlugins from "@/app/plugins/basePlugins"
 import HandlerRegistry from "@/lib/plugin-loader/HandlerRegistry"
 import { getStorage } from "@/lib/storage"
 import {
-	pluginConfigName,
-	pluginFileName,
-	pluginPath,
-} from "@/lib/storage/directory-storage/StoragePaths"
-import {
+	DirEntry,
 	Handler,
 	LocalPluginConfig,
 	Plugin,
+	pluginConfigName,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
+	pluginFileName,
+	pluginPath,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 	PluginSpec,
 } from "@d-najd/universal-media-tracker-sdk"
-import DirEntry from "@/lib/storage/directory-storage/DirEntry"
 import LocalPluginSource from "@/app/plugins/LocalPluginSource"
 import getAppApi from "./appApiImpl"
 

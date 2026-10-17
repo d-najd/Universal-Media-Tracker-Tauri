@@ -1,11 +1,12 @@
-import DirEntry from "@/lib/storage/directory-storage/DirEntry"
-import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
-import DirStorageOptions, {
+import {
 	DefaultDirStorageOptions,
-} from "./DirStorageOptions"
-import StoragePolicy from "../StoragePolicy"
-import StoredData from "../StoredData"
-import DirStorage from "./DirStorage"
+	DirEntry,
+	DirStorage,
+	DirStorageOptions,
+	StoragePolicy,
+	StoredData,
+} from "@d-najd/universal-media-tracker-sdk"
+import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
 
 // TODO make completely transactional
 // TODO add tests to check whether there are race conditions for removing/writing something
