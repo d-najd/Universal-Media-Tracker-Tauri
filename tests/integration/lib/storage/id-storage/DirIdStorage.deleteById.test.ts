@@ -1,10 +1,12 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import IDBDirStorage from "../../../../../src/lib/storage/directory-storage/IDBDirStorage.ts"
 import DirIdStorage from "../../../../../src/lib/storage/id-storage/DirIdStorage.ts"
+import IdStorage from "../../../../../src/lib/storage/id-storage/IdStorage.ts"
+import DirStorage from "../../../../../src/lib/storage/directory-storage/DirStorage.ts"
 
 describe("DirIdStorage.deleteById", () => {
-	let dirStorage: IDBDirStorage
-	let idStorage: DirIdStorage
+	let dirStorage: DirStorage
+	let idStorage: IdStorage
 
 	beforeAll(async () => {
 		const dbName = `db-${crypto.randomUUID()}`
@@ -22,14 +24,14 @@ describe("DirIdStorage.deleteById", () => {
 
 	describe("basic deletes", () => {
 		it("deletes an entry when one of its ids is passed", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 			await idStorage.deleteById("A")
 
 			await expect(idStorage.readById("A")).rejects.toThrow()
 		})
 
 		it("deletes the data file along with the entry", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 
 			// capture the actual data path via metadata read
 			const meta = await idStorage.readMetadataById("A")
@@ -42,7 +44,7 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("removes all aliases pointing at the deleted entry", async () => {
-			await idStorage.upsert(["A", "B", "C"], "hello")
+			await idStorage.write(["A", "B", "C"], "hello")
 
 			await idStorage.deleteById("A")
 
@@ -52,8 +54,8 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("does not delete entries with different docIds", async () => {
-			await idStorage.upsert(["A"], "one")
-			await idStorage.upsert(["B"], "two")
+			await idStorage.write(["A"], "one")
+			await idStorage.write(["B"], "two")
 
 			await idStorage.deleteById("A")
 
@@ -63,7 +65,7 @@ describe("DirIdStorage.deleteById", () => {
 
 	describe("alias resolution", () => {
 		it("works when the passed id is not the first alias", async () => {
-			await idStorage.upsert(["A", "B"], "hello")
+			await idStorage.write(["A", "B"], "hello")
 
 			await idStorage.deleteById("B")
 
@@ -72,8 +74,8 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("does not affect other entries that share no aliases", async () => {
-			await idStorage.upsert(["A", "B"], "first")
-			await idStorage.upsert(["C", "D"], "second")
+			await idStorage.write(["A", "B"], "first")
+			await idStorage.write(["C", "D"], "second")
 
 			await idStorage.deleteById("B")
 
@@ -88,7 +90,7 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("throws when deleting the same id twice", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 			await idStorage.deleteById("A")
 
 			await expect(idStorage.deleteById("A")).rejects.toThrow()
@@ -97,7 +99,7 @@ describe("DirIdStorage.deleteById", () => {
 
 	describe("fileExtension validation", () => {
 		it("throws when fileExtension doesn't match", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "bin" })
+			await idStorage.write(["A"], "hello", { fileExtension: "bin" })
 
 			await expect(
 				idStorage.deleteById("A", { fileExtension: "json" }),
@@ -105,7 +107,7 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("deletes when fileExtension matches", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "gson" })
+			await idStorage.write(["A"], "hello", { fileExtension: "gson" })
 
 			await idStorage.deleteById("A", { fileExtension: "gson" })
 
@@ -117,8 +119,8 @@ describe("DirIdStorage.deleteById", () => {
 
 	describe("profile isolation", () => {
 		it("deletes only from the selected profile", async () => {
-			await idStorage.upsert(["A"], "profile-a", { profile: "a" })
-			await idStorage.upsert(["A"], "profile-b", { profile: "b" })
+			await idStorage.write(["A"], "profile-a", { profile: "a" })
+			await idStorage.write(["A"], "profile-b", { profile: "b" })
 
 			await idStorage.deleteById("A", { profile: "a" })
 
@@ -138,8 +140,8 @@ describe("DirIdStorage.deleteById", () => {
 				`other-${crypto.randomUUID()}`,
 			)
 
-			await idStorage.upsert(["A"], "from-first")
-			await other.upsert(["A"], "from-second")
+			await idStorage.write(["A"], "from-first")
+			await other.write(["A"], "from-second")
 
 			await idStorage.deleteById("A")
 
@@ -150,8 +152,8 @@ describe("DirIdStorage.deleteById", () => {
 
 	describe("idempotency of the index", () => {
 		it("leaves other aliases in the index intact", async () => {
-			await idStorage.upsert(["A"], "one")
-			await idStorage.upsert(["B"], "two")
+			await idStorage.write(["A"], "one")
+			await idStorage.write(["B"], "two")
 
 			await idStorage.deleteById("A")
 
@@ -160,10 +162,10 @@ describe("DirIdStorage.deleteById", () => {
 		})
 
 		it("can re-add a deleted id as a new entry", async () => {
-			await idStorage.upsert(["A"], "first")
+			await idStorage.write(["A"], "first")
 			await idStorage.deleteById("A")
 
-			await idStorage.upsert(["A"], "second")
+			await idStorage.write(["A"], "second")
 
 			expect(await idStorage.readById("A")).toEqual("second")
 		})

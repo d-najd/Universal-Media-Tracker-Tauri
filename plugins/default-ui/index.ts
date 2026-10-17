@@ -24,10 +24,7 @@ plugin.defineScreenHandler({
 	pattern: "/",
 	callback(args: ScreenHandlerArgs): ScreenHandlerResponse {
 		// TODO this could be simplified? also not sure if I want to let the user pass args like this since it can break
-		const ComponentWithProps = () =>
-			React.createElement(LibraryPage, {
-				navigator: plugin.app.ui.navigator,
-			})
+		const ComponentWithProps = () => React.createElement(LibraryPage, {})
 
 		const result: ScreenHandlerResponse = {
 			content: ComponentWithProps,

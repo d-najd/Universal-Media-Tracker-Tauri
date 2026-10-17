@@ -15,6 +15,7 @@ type LibraryGridProps = {
 }
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
+	// TODO save in cache instead of this
 	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
 		new Map<string, MetaPreview>(),
 	)

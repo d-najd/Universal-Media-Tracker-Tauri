@@ -107,7 +107,8 @@ plugin.definePluginFactoryHandler({
 			})
 
 			defineCatalogs(pluginCreated, manifest)
-			defineMetas(pluginCreated, manifest)
+			// TODO fix the meta handler
+			// defineMetas(pluginCreated, manifest)
 
 			return { status: "valid", plugin: pluginCreated }
 		} catch (e) {
@@ -164,6 +165,8 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 				}
 				newUrl += ".json"
 
+				console.error("CATALOG " + newUrl)
+
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
@@ -216,6 +219,8 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 							.join("&")
 				}
 				newUrl += ".json"
+
+				console.error("METAS " + newUrl)
 
 				const result = (await (
 					await fetch(`${newUrl}`)
