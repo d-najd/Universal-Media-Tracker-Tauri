@@ -1,5 +1,5 @@
-import { useAppReactInit } from '@/lib/init/useAppinit'
-import { useEffect } from 'react'
+import { useAppReactInit } from "@/lib/init/useAppinit"
+import { useEffect } from "react"
 
 type Props = {
 	initializedCallback: () => void

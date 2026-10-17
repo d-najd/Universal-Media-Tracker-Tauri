@@ -1,10 +1,10 @@
-import initAppGlobals from './initGlobals'
-import PluginManagerStore from '@/stores/PluginManagerStore'
-import { useRouteStore } from '@/stores/useRouteStore'
+import initAppGlobals from "./initGlobals"
 
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
-import { setNavigator } from './navigator'
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
+import { setNavigator } from "./navigator"
+import PluginManagerStore from "../plugin-loader/PluginManagerStore"
+import { useRouteStore } from "../plugin-loader/useRouteStore"
 
 let coreInitialized = false
 let coreInitPromise: Promise<void> | null = null
@@ -90,5 +90,5 @@ export function useAppReactInit(): AppInitState {
 }
 
 function setTheme() {
-	document.documentElement.classList.add('dark')
+	document.documentElement.classList.add("dark")
 }

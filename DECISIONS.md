@@ -24,14 +24,32 @@
 - Because plugins like stremio ones are dynamic and deriving javascript code from that to persist is very difficult if
   not impossible, if there is a way the code one is preferred and the other one will be deprecated
 
-## Why not encode plugins and other data to Base64 or maybe even WASM? it will be faster when storing!
+## Why not encode plugins and other data to Base64 or maybe even WASM? it will be faster when storing
 
 - It will be faster but the user won't be able to read the code and Base64 will need to be decoded to js probably so
   don't think it will make much difference, WASM may be good idea in the future BUT hashes must be compared with the
-  code
-  of the plugin in case the user decided to manually change it which is lot of complexity
+  code of the plugin in case the user decided to manually change it which is lot of complexity right now
 
 ## Why force users to bundle code?
 
 - To avoid complexity and reduce app size, the plugins will have to be bundled any way or another anyway since it will
   be far too much complexity
+
+# SDK
+
+## Why is type Meta and MetaPreview type not reliable Mime-Type is preferred
+
+- The user of a plugin may incorrectly tag the media so if Mime-Type and the type match then you can use that to get more data in ui
+
+## Why is Meta and MetaPreview separate type
+
+- Meta has lots of fields which exist in MetaPreview but are null since if the data is not defined in the handler, the data can be retrieved from the MetaPreview
+
+## Why multiple id fields in Meta and MetaPreview
+
+- Better flexibility, instead of matching fields which end in \_id or some other odd pattern this seems easier to track
+
+## Why id based and directory based storage
+
+- the app must be compatible with all platforms and the storage implementation can be vastly different between platforms, and I want to allow the user to define
+  their own storage options in the future. This is the minimum I have found necessary to achieve the necessary flexibility so far

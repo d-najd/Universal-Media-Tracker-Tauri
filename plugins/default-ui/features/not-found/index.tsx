@@ -3,11 +3,12 @@ import {
 	ErrorHeader,
 	ErrorDescription,
 	ErrorActions,
-} from './components/error-base'
-import { Button } from '../../components/button'
-import plugin from '../..'
+} from "./components/error-base"
+import { Button } from "../../components/button"
+import { useNavigate } from "react-router"
 
 export default function NotFoundErrorPage() {
+	const navigator = useNavigate()
 	return (
 		<>
 			<ErrorView>
@@ -16,14 +17,11 @@ export default function NotFoundErrorPage() {
 					Sorry, we couldn’t find the page you’re looking for.
 				</ErrorDescription>
 				<ErrorActions>
-					<Button
-						size="lg"
-						onClick={() => plugin.app.ui.navigator.pop()}
-					>
+					<Button size="lg" onClick={() => navigator(-1)}>
 						Go back
 					</Button>
 					<Button size="lg" variant="ghost">
-						Contact support{' '}
+						Contact support{" "}
 						<span aria-hidden="true" className="ml-1">
 							&rarr;
 						</span>
