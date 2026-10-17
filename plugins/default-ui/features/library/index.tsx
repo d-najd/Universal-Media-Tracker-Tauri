@@ -6,6 +6,7 @@ import { green, purple } from "@mui/material/colors"
 import TopBar from "../../components/topbar"
 import LibraryGrid from "./components/libraryGrid"
 import NavigationBar from "../../components/navigationBar"
+import { useElementSize } from "../../hooks/useElementSize"
 
 // Create dark theme
 const darkTheme = createTheme({
@@ -24,14 +25,22 @@ const darkTheme = createTheme({
 	},
 })
 
-export default function LibraryPage() {
+export default function LibraryPage(args: Props) {
 	const navigator = useNavigate()
+	const [topbarSearchPadding, setTopbarSearchPadding] = useState<number>(0)
 	const [search, setSearch] = useState("")
-	const [topbarSize, setTopbarSize] = useState<{
-		width: number
-		height: number
-	}>({ width: 0, height: 0 })
 	const [debouncedSearch, setDebouncedSearch] = useState("")
+
+	// const [topbarSize, setTopbarSize] = useState<{
+	// 	width: number
+	// 	height: number
+	// }>({ width: 0, height: 0 })
+
+	const { ref: topbarRef, size: topbarSize } =
+		useElementSize<HTMLDivElement>()
+
+	const { ref: topBarIconsRef, size: topBarIconsSize } =
+		useElementSize<HTMLDivElement>()
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {

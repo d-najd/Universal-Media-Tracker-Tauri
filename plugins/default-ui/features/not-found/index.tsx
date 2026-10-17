@@ -9,7 +9,6 @@ import { useNavigate } from "react-router"
 
 export default function NotFoundErrorPage() {
 	const navigator = useNavigate()
-
 	return (
 		<>
 			<ErrorView>

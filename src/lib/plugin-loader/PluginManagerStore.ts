@@ -9,7 +9,6 @@ import {
 } from "@/lib/storage/directory-storage/StoragePaths"
 import {
 	Handler,
-	LocalPluginConfig,
 	Plugin,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
@@ -38,8 +37,8 @@ export default class PluginManagerStore {
 	 * key is plugin id
 	 * List of vaid local plugin configs
 	 */
-	private static localPluginConfigs: Map<string, LocalPluginConfig> =
-		new Map()
+	// private static localPluginConfigs: Map<string, LocalPluginConfig> =
+	// 	new Map()
 
 	private static initPromise: Promise<void> | null = null
 
@@ -495,4 +494,32 @@ export default class PluginManagerStore {
 		plugin.default.app = getAppApi()
 		return module.default
 	}
+	// private static appApi?: AppApi
+	// private static getAppApi(): AppApi {
+	// 	if (!this.appApi) {
+	// 		this.appApi = {
+	// 			plugins: {
+	// 				getHandlersMatching: (
+	// 					condition: (entry: Handler) => boolean,
+	// 				): Handler[] =>
+	// 					HandlerRegistry.getHandlersMatching(condition),
+	// 				getHandlersMatchingWithPluginId: (
+	// 					condition: (entry: [string, Handler]) => boolean,
+	// 				): Map<string, Handler[]> =>
+	// 					HandlerRegistry.getHandlersMatchingWithPluginId(
+	// 						condition,
+	// 					),
+	// 				invokeCallbackOnHandler: <T, R>(
+	// 					id: string,
+	// 					args: T,
+	// 				): Promise<R> =>
+	// 					HandlerRegistry.invokeCallbackOnHandler(id, args),
+	// 			},
+	// 			ui: {
+	// 				navigator: useAppNavigatorStore.getState(),
+	// 			},
+	// 		}
+	// 	}
+	// 	return this.appApi!
+	// }
 }

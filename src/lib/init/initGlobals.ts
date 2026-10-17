@@ -7,6 +7,7 @@ import * as RadixUi from "radix-ui"
 import * as MelancholySdk from "@d-najd/universal-media-tracker-sdk"
 import * as ReactJSXRuntime from "react/jsx-runtime"
 import * as RadixUiReactSlot from "@radix-ui/react-slot"
+import * as ReactRouterDom from "react-router-dom" // TODO check if this is needed
 
 // Expose to window for dynamic plugins
 export default async function initAppGlobals() {
@@ -18,4 +19,5 @@ export default async function initAppGlobals() {
 	;(window as any).MelancholySdk = MelancholySdk
 	;(window as any).ReactJSXRuntime = ReactJSXRuntime
 	;(window as any).RadixUiReactSlot = RadixUiReactSlot
+	;(window as any).ReactRouterDom = ReactRouterDom
 }

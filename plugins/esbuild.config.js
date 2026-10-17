@@ -40,6 +40,10 @@ for (const folder of fs.readdirSync(dir)) {
 					varName: "ReactRouter",
 					type: "cjs",
 				},
+				"react-router-dom": {
+					varName: "ReactRouterDom",
+					type: "cjs",
+				},
 			}),
 		],
 		define: {
