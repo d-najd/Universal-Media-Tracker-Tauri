@@ -58,6 +58,36 @@ describe("DirIdStorage.write", () => {
 		})
 	})
 
+	describe("id normalization", () => {
+		it("normalizes bare ids to unknown: when saving", async () => {
+			await idStorage.write(["A"], "hello")
+
+			expect(await idStorage.readById("unknown:A")).toEqual("hello")
+			expect(await idStorage.readById("A")).toEqual("hello")
+		})
+
+		it("does not normalize ids that already have a provider", async () => {
+			await idStorage.write(["imdb:A"], "hello")
+
+			expect(await idStorage.readById("imdb:A")).toEqual("hello")
+			await expect(idStorage.readById("A")).rejects.toThrow()
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await expect(
+				idStorage.write(["imdb:tt123:extra"], "hello"),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await expect(idStorage.write([":tt123"], "hello")).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await expect(idStorage.write(["imdb:"], "hello")).rejects.toThrow()
+		})
+	})
+
 	describe("updating existing entries", () => {
 		it("overrides data when an existing id is passed", async () => {
 			await idStorage.write(["A"], "first")
@@ -129,6 +159,14 @@ describe("DirIdStorage.write", () => {
 			await expect(idStorage.readById("C")).rejects.toThrow()
 			expect(await idStorage.readById("A")).toEqual("one")
 			expect(await idStorage.readById("B")).toEqual("two")
+		})
+
+		it("does not write any data if the incoming array contains an invalid format", async () => {
+			await expect(
+				idStorage.write(["A", "invalid:id:with:colons"], "hello"),
+			).rejects.toThrow()
+
+			await expect(idStorage.readById("A")).rejects.toThrow()
 		})
 	})
 

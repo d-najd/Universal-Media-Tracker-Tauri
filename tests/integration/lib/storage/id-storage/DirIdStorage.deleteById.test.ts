@@ -83,6 +83,57 @@ describe("DirIdStorage.deleteById", () => {
 		})
 	})
 
+	describe("id normalization", () => {
+		it("throws when passed a bare id that doesn't match an existing 'unknown:' alias", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.deleteById("tt123")).rejects.toThrow()
+			expect(await idStorage.readById("imdb:tt123")).toEqual("hello")
+		})
+
+		it("deletes an entry when passed a bare id that matches an 'unknown:' alias", async () => {
+			await idStorage.write(["tt123"], "hello")
+			await idStorage.deleteById("tt123")
+
+			await expect(idStorage.readById("tt123")).rejects.toThrow()
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.deleteById("imdb:tt123:extra"),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.deleteById(":tt123")).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.deleteById("imdb:")).rejects.toThrow()
+		})
+
+		it("deletes an entry when written with a bare id and deleted with 'unknown:'", async () => {
+			await idStorage.write(["A"], "hello")
+			await idStorage.deleteById("unknown:A")
+
+			await expect(idStorage.readById("A")).rejects.toThrow()
+			await expect(idStorage.readById("unknown:A")).rejects.toThrow()
+		})
+
+		it("fails to delete when written with 'imdb:' and deleted with 'unknown:'", async () => {
+			await idStorage.write(["imdb:A"], "hello")
+			await expect(idStorage.deleteById("unknown:A")).rejects.toThrow()
+
+			expect(await idStorage.readById("imdb:A")).toEqual("hello")
+		})
+	})
+
 	describe("validation and errors", () => {
 		it("throws when id is not found", async () => {
 			await expect(idStorage.deleteById("unknown")).rejects.toThrow()
@@ -93,6 +144,19 @@ describe("DirIdStorage.deleteById", () => {
 			await idStorage.deleteById("A")
 
 			await expect(idStorage.deleteById("A")).rejects.toThrow()
+		})
+
+		it("does not delete anything if the passed id format is invalid", async () => {
+			await idStorage.write(["A", "B"], "hello")
+
+			// "C" doesn't exist, and "invalid:id:with:colons" is malformed
+			await expect(
+				idStorage.deleteById("invalid:id:with:colons"),
+			).rejects.toThrow()
+
+			// Verify A and B are still intact
+			expect(await idStorage.readById("A")).toEqual("hello")
+			expect(await idStorage.readById("B")).toEqual("hello")
 		})
 	})
 

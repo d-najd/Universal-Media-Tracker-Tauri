@@ -57,6 +57,39 @@ describe("DirIdStorage.readById", () => {
 		})
 	})
 
+	describe("id normalization", () => {
+		it("reads an entry using a bare id when it was saved as a bare id", async () => {
+			await idStorage.write(["A"], "hello")
+
+			expect(await idStorage.readById("unknown:A")).toEqual("hello")
+			expect(await idStorage.readById("A")).toEqual("hello")
+		})
+
+		it("throws when reading a bare id that was saved with a provider", async () => {
+			await idStorage.write(["imdb:A"], "hello")
+
+			await expect(idStorage.readById("A")).rejects.toThrow()
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await expect(
+				idStorage.readById("imdb:tt123:extra"),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.readById(":tt123")).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.readById("imdb:")).rejects.toThrow()
+		})
+	})
+
 	describe("alias updates", () => {
 		it("removes other aliases when using write (override behavior)", async () => {
 			await idStorage.write(["A", "B"], "hello")

@@ -50,6 +50,44 @@ describe("DirIdStorage.removeIds", () => {
 		})
 	})
 
+	describe("id normalization", () => {
+		it("normalizes bare ids to unknown: when removing", async () => {
+			await idStorage.write(["imdb:tt123", "bare-id"], "hello")
+
+			// Pass bare id, should normalize to unknown:bare-id and remove
+			await idStorage.removeAliases("imdb:tt123", ["bare-id"])
+
+			expect(await idStorage.readById("imdb:tt123")).toEqual("hello")
+			await expect(
+				idStorage.readById("unknown:bare-id"),
+			).rejects.toThrow()
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.removeAliases("imdb:tt123", ["imdb:tt123:extra"]),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.removeAliases("imdb:tt123", [":tt123"]),
+			).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.removeAliases("imdb:tt123", ["imdb:"]),
+			).rejects.toThrow()
+		})
+	})
+
 	describe("auto-deletion (orphan prevention)", () => {
 		it("deletes the file and metadata when the last alias is removed", async () => {
 			await idStorage.write(["A"], "hello")
@@ -109,6 +147,19 @@ describe("DirIdStorage.removeIds", () => {
 			await expect(
 				idStorage.removeAliases("unknown", ["B"]),
 			).rejects.toThrow()
+		})
+
+		it("does not remove any aliases if the incoming array contains an invalid format", async () => {
+			await idStorage.write(["imdb:tt123", "tmdb:456"], "hello")
+
+			await expect(
+				idStorage.removeAliases("imdb:tt123", [
+					"tmdb:456",
+					"invalid:id:with:colons",
+				]),
+			).rejects.toThrow()
+
+			expect(await idStorage.readById("tmdb:456")).toEqual("hello")
 		})
 	})
 

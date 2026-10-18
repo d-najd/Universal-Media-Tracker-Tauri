@@ -32,6 +32,45 @@ describe("DirIdStorage.readMetadataById", () => {
 			expect(metadata.updatedAt).toBeTypeOf("number")
 		})
 
+		describe("id normalization", () => {
+			it("reads metadata using a bare id when it was saved as a bare id", async () => {
+				await idStorage.write(["A"], "hello")
+
+				expect(
+					await idStorage.readMetadataById("unknown:A"),
+				).toBeDefined()
+				expect(await idStorage.readMetadataById("A")).toBeDefined()
+			})
+
+			it("throws when reading a bare id that was saved with a provider", async () => {
+				await idStorage.write(["imdb:A"], "hello")
+
+				await expect(idStorage.readMetadataById("A")).rejects.toThrow()
+			})
+
+			it("throws if an ID contains more than one colon", async () => {
+				await expect(
+					idStorage.readMetadataById("imdb:tt123:extra"),
+				).rejects.toThrow()
+			})
+
+			it("throws if the provider is empty", async () => {
+				await idStorage.write(["imdb:tt123"], "hello")
+
+				await expect(
+					idStorage.readMetadataById(":tt123"),
+				).rejects.toThrow()
+			})
+
+			it("throws if the id part is empty", async () => {
+				await idStorage.write(["imdb:tt123"], "hello")
+
+				await expect(
+					idStorage.readMetadataById("imdb:"),
+				).rejects.toThrow()
+			})
+		})
+
 		it("returns metadata when looked up by any alias", async () => {
 			await idStorage.write(["A", "B", "C"], "hello")
 

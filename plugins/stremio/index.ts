@@ -99,25 +99,25 @@ plugin.definePluginFactoryHandler({
 				await fetch(`${args.url}`)
 			).json()) as StremioManifest
 
-			const pluginCreated = new Plugin({
+			const createdPlugin = new Plugin({
 				logo: manifest.logo ?? pluginSelf.config.logo,
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
 			})
 
-			defineCatalogs(pluginCreated, manifest)
+			defineCatalogs(createdPlugin, manifest)
 			// TODO fix the meta handler
 			// defineMetas(pluginCreated, manifest)
 
-			return { status: "valid", plugin: pluginCreated }
+			return { status: "valid", plugin: createdPlugin }
 		} catch (e) {
 			return { status: "invalid", reason: e!.toString() }
 		}
 	},
 })
 
-function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
+function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 	if (!manifest.resources.some((o) => o === "catalog")) return
 
 	for (const catalog of manifest.catalogs) {
@@ -136,7 +136,7 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 				return result
 			})
 
-		pluginCreated.defineCatalogHandler({
+		createdPlugin.defineCatalogHandler({
 			id: catalog.id,
 			name: catalog.name,
 			resourceType: catalog.type,
@@ -165,11 +165,12 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 				}
 				newUrl += ".json"
 
-				console.error("CATALOG " + newUrl)
-
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
+
+				console.error("response is ")
+				console.error(result)
 
 				const mappedData = result.metas.map((o) => {
 					const ids = Object.fromEntries(

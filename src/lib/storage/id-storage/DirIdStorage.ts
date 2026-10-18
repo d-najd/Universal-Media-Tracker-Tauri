@@ -30,7 +30,9 @@ export default class DirIdStorage implements IdStorage {
 		data: StoredData,
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
-		if (ids.length === 0) {
+		const normalizedIds = ids.map((id) => DirIdStorage.normalizeId(id))
+
+		if (normalizedIds.length === 0) {
 			throw new Error("No id's passed")
 		}
 
@@ -38,7 +40,7 @@ export default class DirIdStorage implements IdStorage {
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
 		const [docId] = DirIdStorage.resolveOrCreateDocId(
-			ids,
+			normalizedIds,
 			optionsResolved,
 			idIndexMap,
 		)
@@ -51,7 +53,7 @@ export default class DirIdStorage implements IdStorage {
 			}
 		}
 
-		for (const id of ids) {
+		for (const id of normalizedIds) {
 			idIndexMap[id] = docId
 		}
 
@@ -66,13 +68,20 @@ export default class DirIdStorage implements IdStorage {
 	): Promise<void> {
 		if (ids.length === 0) return
 
+		const normalizedId = DirIdStorage.normalizeId(id)
+		const normalizedIds = ids.map((id) => DirIdStorage.normalizeId(id))
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+		const docId = this.lookupDocId(
+			normalizedId,
+			idIndexMap,
+			optionsResolved,
+		)
 
 		// Check for conflicts (if the new IDs already belong to another doc)
-		for (const newId of ids) {
+		for (const newId of normalizedIds) {
 			const existingDocId = idIndexMap[newId]
 			if (existingDocId && existingDocId !== docId) {
 				throw new Error(
@@ -81,7 +90,7 @@ export default class DirIdStorage implements IdStorage {
 			}
 		}
 
-		for (const newId of ids) {
+		for (const newId of normalizedIds) {
 			idIndexMap[newId] = docId
 		}
 
@@ -95,13 +104,20 @@ export default class DirIdStorage implements IdStorage {
 	): Promise<void> {
 		if (ids.length === 0) return
 
+		const normalizedId = DirIdStorage.normalizeId(id)
+		const normalizedIds = ids.map((id) => DirIdStorage.normalizeId(id))
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+		const docId = this.lookupDocId(
+			normalizedId,
+			idIndexMap,
+			optionsResolved,
+		)
 
 		// Remove the requested IDs, but only if they actually belong to this docId
-		for (const idToRemove of ids) {
+		for (const idToRemove of normalizedIds) {
 			if (idIndexMap[idToRemove] && idIndexMap[idToRemove] !== docId) {
 				throw new Error(
 					`Trying to remove id that exists in another doc, id is: ${idToRemove} in doc ${idIndexMap[idToRemove]}`,
@@ -122,10 +138,16 @@ export default class DirIdStorage implements IdStorage {
 		id: string,
 		options?: Partial<IdStorageOptions>,
 	): Promise<StoredData> {
+		const normalizedId = DirIdStorage.normalizeId(id)
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+		const docId = this.lookupDocId(
+			normalizedId,
+			idIndexMap,
+			optionsResolved,
+		)
 		const filePath = this.filePath(docId)
 
 		return await this.dirStorage.read(filePath, optionsResolved)
@@ -135,10 +157,16 @@ export default class DirIdStorage implements IdStorage {
 		id: string,
 		options?: Partial<IdStorageOptions>,
 	): Promise<IdStorageOptions> {
+		const normalizedId = DirIdStorage.normalizeId(id)
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+		const docId = this.lookupDocId(
+			normalizedId,
+			idIndexMap,
+			optionsResolved,
+		)
 		const filePath = this.filePath(docId)
 
 		return await this.dirStorage.readMetadata(filePath, optionsResolved)
@@ -148,10 +176,16 @@ export default class DirIdStorage implements IdStorage {
 		id: string,
 		options?: Partial<IdStorageOptions>,
 	): Promise<void> {
+		const normalizedId = DirIdStorage.normalizeId(id)
+
 		const optionsResolved = DirIdStorage.resolveOptions(options)
 		const idIndexMap = await this.safeReadIdIndexMap(optionsResolved)
 
-		const docId = this.lookupDocId(id, idIndexMap, optionsResolved)
+		const docId = this.lookupDocId(
+			normalizedId,
+			idIndexMap,
+			optionsResolved,
+		)
 
 		if (!docId) {
 			throw new Error(`Can't find id refering to file with id: ${id}`)
@@ -289,5 +323,37 @@ export default class DirIdStorage implements IdStorage {
 			...options,
 			backend: "indexeddb",
 		}
+	}
+
+	private static normalizeId(rawId: string): string {
+		const trimmed = rawId.trim()
+
+		const colonCount = (trimmed.match(/:/g) || []).length
+
+		if (colonCount === 0) {
+			return `unknown:${trimmed}`
+		}
+
+		if (colonCount > 1) {
+			throw new Error(
+				`Invalid ID "${rawId}". Must contain exactly one colon (provider:id).`,
+			)
+		}
+
+		const [provider, id] = trimmed.split(":")
+
+		if (!provider || !id) {
+			throw new Error(
+				`Invalid ID "${rawId}". Both provider and id must be present.`,
+			)
+		}
+
+		if (/\s/.test(id)) {
+			throw new Error(
+				`Invalid ID "${rawId}". ID part cannot contain spaces.`,
+			)
+		}
+
+		return trimmed
 	}
 }

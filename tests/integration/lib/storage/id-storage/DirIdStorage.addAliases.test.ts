@@ -62,6 +62,40 @@ describe("DirIdStorage.addAliases", () => {
 		})
 	})
 
+	describe("id normalization", () => {
+		it("normalizes bare ids to unknown: when adding", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+			await idStorage.addAliases("imdb:tt123", ["bare-id"])
+
+			expect(await idStorage.readById("unknown:bare-id")).toEqual("hello")
+			expect(await idStorage.readById("bare-id")).toEqual("hello")
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.addAliases("imdb:tt123", ["imdb:tt123:extra"]),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.addAliases("imdb:tt123", [":tt123"]),
+			).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.addAliases("imdb:tt123", ["imdb:"]),
+			).rejects.toThrow()
+		})
+	})
+
 	describe("idempotency", () => {
 		it("does not throw when adding an alias that already exists on the same entry", async () => {
 			await idStorage.write(["A", "B"], "hello")
@@ -100,6 +134,19 @@ describe("DirIdStorage.addAliases", () => {
 				idStorage.addAliases("A", ["C", "B"]),
 			).rejects.toThrow()
 			await expect(idStorage.readById("C")).rejects.toThrow()
+		})
+
+		it("does not add any aliases if the incoming array contains an invalid format", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(
+				idStorage.addAliases("imdb:tt123", [
+					"tmdb:456",
+					"invalid:id:with:colons",
+				]),
+			).rejects.toThrow()
+
+			await expect(idStorage.readById("tmdb:456")).rejects.toThrow()
 		})
 	})
 
