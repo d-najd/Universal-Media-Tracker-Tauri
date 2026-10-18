@@ -6,13 +6,16 @@ import {
 	IdStorageOptions,
 	StoredData,
 } from "@d-najd/universal-media-tracker-sdk"
+import { ensureTrailingSlash } from "../utils"
 
 // TODO add tests to check whether there are race conditions for removing/writing something
 export default class DirIdStorage implements IdStorage {
 	private constructor(
 		private dirStorage: DirStorage,
 		private path: string,
-	) {}
+	) {
+		this.path = ensureTrailingSlash(path)
+	}
 
 	/**
 	 * @param path must not be metapath, ex .meta/media/movies

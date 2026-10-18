@@ -7,6 +7,7 @@ import {
 	StoredData,
 } from "@d-najd/universal-media-tracker-sdk"
 import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
+import { ensureTrailingSlash } from "../utils"
 
 // TODO make completely transactional
 // TODO add tests to check whether there are race conditions for removing/writing something
@@ -49,7 +50,7 @@ export default class IDBDirStorage implements DirStorage {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = this.getPrefix(path)
+		const prefix = ensureTrailingSlash(path)
 		const entriesMap: Record<string, DirEntry> = {}
 
 		for (const policy of policies) {
@@ -278,7 +279,7 @@ export default class IDBDirStorage implements DirStorage {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = this.getPrefix(path)
+		const prefix = ensureTrailingSlash(path)
 
 		const keysToDelete = new Set<string>()
 
@@ -374,10 +375,5 @@ export default class IDBDirStorage implements DirStorage {
 	private isFile(path: string) {
 		const last = path.split("/").pop()!
 		return last.includes(".")
-	}
-
-	private getPrefix(path: string) {
-		if (path === "") return path
-		return path.endsWith("/") ? path : path + "/"
 	}
 }

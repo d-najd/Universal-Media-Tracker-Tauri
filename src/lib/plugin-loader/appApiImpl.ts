@@ -2,9 +2,10 @@ import { LocalPluginConfig, Handler } from "@d-najd/universal-media-tracker-sdk"
 import AppApi from "node_modules/@d-najd/universal-media-tracker-sdk/dist/AppApi"
 import HandlerRegistry from "./HandlerRegistry"
 import PluginManagerStore from "./PluginManagerStore"
+import { getStorage } from "@/lib/storage"
 
 let appApi: AppApi | null = null
-export default function getAppApi(): AppApi {
+export default async function getAppApi(): Promise<AppApi> {
 	if (!appApi) {
 		appApi = {
 			plugin: {
@@ -23,7 +24,7 @@ export default function getAppApi(): AppApi {
 				): Promise<R> =>
 					HandlerRegistry.invokeCallbackOnHandler(id, args),
 			},
-			ui: {},
+			storage: await getStorage(),
 		}
 	}
 	return appApi!
