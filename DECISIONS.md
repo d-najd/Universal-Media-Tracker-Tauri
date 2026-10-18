@@ -49,6 +49,8 @@
 
 - Better flexibility, instead of matching fields which end in \_id or some other odd pattern this seems easier to track
 
+## Storage API
+
 ## Why id based and directory based storage
 
 - The app must be compatible with all platforms and the storage implementation can be vastly different between platforms, and I want to allow the user to define
