@@ -51,5 +51,9 @@
 
 ## Why id based and directory based storage
 
-- the app must be compatible with all platforms and the storage implementation can be vastly different between platforms, and I want to allow the user to define
+- The app must be compatible with all platforms and the storage implementation can be vastly different between platforms, and I want to allow the user to define
   their own storage options in the future. This is the minimum I have found necessary to achieve the necessary flexibility so far
+
+## Why is id-storage based on provider:id in a single string
+
+- Wanted to hide complexity for new developers while at the same time supporting apps that have systems for storing id's which use pairs (ex kodi which is Map<string, string> from what I know)
