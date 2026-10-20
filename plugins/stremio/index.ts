@@ -169,24 +169,48 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
 
-				console.error("response is ")
-				console.error(result)
+				const mappedData: MetaPreview[] = []
 
-				const mappedData = result.metas.map((o) => {
-					const ids = Object.fromEntries(
-						Object.entries(o).filter(([key]) =>
-							key.toLowerCase().endsWith("id"),
-						),
-					) as Record<string, string>
+				for (const meta of result.metas) {
+					const formatIdValue = (value: string) => {
+						return value.split(":").at(-1)
+					}
+
+					const formatIdKey = (key: string) => {
+						const idPattern = /.*[^a-zA-Z0-9]id$/
+
+						if (!idPattern.test(key)) {
+							return undefined
+						}
+
+						const idTypeSplitterPattern = /^(.*)[^a-zA-Z0-9]id$/
+						const splittedIdType = idTypeSplitterPattern.exec(key)
+						const idType = splittedIdType
+							? splittedIdType[1]
+							: undefined
+
+						return idType
+					}
+
+					const ids = [`unknown:${formatIdValue(meta.id)}`]
+					for (const [key, value] of Object.entries(meta)) {
+						const idType = formatIdKey(key)
+
+						if (!idType) {
+							continue
+						}
+
+						ids.push(`${idType}:${formatIdValue(value)}`)
+					}
 
 					const metaPreview: MetaPreview = {
 						ids: ids,
-						name: o.name,
-						poster: o.poster,
-						type: o.type,
+						name: meta.name,
+						poster: meta.poster,
+						type: meta.type,
 					}
-					return metaPreview
-				})
+					mappedData.push(metaPreview)
+				}
 
 				return {
 					data: mappedData,
