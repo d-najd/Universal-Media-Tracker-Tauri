@@ -165,6 +165,8 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				}
 				newUrl += ".json"
 
+				console.error("FETCHING WITH " + newUrl)
+
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse

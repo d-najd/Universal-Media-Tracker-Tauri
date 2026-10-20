@@ -16,9 +16,7 @@ type LibraryGridProps = {
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	// TODO save in cache instead of this
-	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
-		new Map<string, MetaPreview>(),
-	)
+	const [catalog, setCatalog] = useState<MetaPreview[]>([])
 	const [previousFetchSize, setPreviousFetchSize] = useState(0)
 	const [skip, setSkip] = useState(0)
 	const [loading, setLoading] = useState(false)
@@ -44,7 +42,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	useEffect(() => {
 		setFailedUniqueFetchTimes(0)
 		setReachedCatalogEnd(false)
-		setCatalog(new Map<string, MetaPreview>())
+		setCatalog([])
 		setSkip(0)
 	}, [search])
 
@@ -83,20 +81,31 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			}
 		}
 
-		const result = await handler.callback(args)
+		const result = (await handler.callback(args)) as CatalogHandlerResponse
 		if (result.data.length === 0) {
 			setReachedCatalogEnd(true)
 			return
 		}
 
 		setPreviousFetchSize(result.data.length)
-		const catalogSize = catalog.size
+		const catalogSize = catalog.length
+
 		setCatalog((prev) => {
-			result.data.forEach((o) => prev.set(o.id, o))
-			return prev
+			const prevIds = new Set(prev.flatMap((p) => p.ids))
+
+			const filteredData = result.data.filter(
+				(cur) => !cur.ids.some((id) => prevIds.has(id)),
+			)
+
+			if (filteredData.length > 0) {
+				setFailedUniqueFetchTimes(0)
+			}
+
+			return [...prev, ...filteredData]
 		})
 
-		if (catalog.size === catalogSize) {
+		if (catalog.length === catalogSize) {
+			console.error("FILED " + failedUniqueFetchTimes)
 			setFailedUniqueFetchTimes((o) => (o += 1))
 			if (failedUniqueFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES) {
 				setReachedCatalogEnd(true)
@@ -125,8 +134,8 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 						paddingTop: `${topbarSize.height + 10}px`,
 					}}
 				>
-					{[...catalog.values()].map((item, key) => (
-						<Card key={key} ref={lastItemRef}>
+					{catalog.map((o) => (
+						<Card key={o.ids[0]} ref={lastItemRef}>
 							<img
 								style={{
 									width: "100%",
@@ -134,7 +143,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 									objectFit: "fill",
 								}}
 								alt="no content"
-								src={item.poster}
+								src={o.poster}
 								onError={(e) => {
 									// TODO placeholder
 									e.currentTarget.style.display = "none"
