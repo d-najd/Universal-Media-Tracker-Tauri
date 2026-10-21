@@ -1,6 +1,5 @@
-import { StorageApi } from "@d-najd/universal-media-tracker-sdk"
+import { DirIdStorage, StorageApi } from "@d-najd/universal-media-tracker-sdk"
 import IDBDirStorage from "./directory-storage/IDBDirStorage"
-import DirIdStorage from "./id-storage/DirIdStorage"
 
 let storageApi: StorageApi | null = null
 

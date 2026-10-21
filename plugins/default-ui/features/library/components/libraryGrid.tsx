@@ -22,6 +22,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const [loading, setLoading] = useState(false)
 	const [reachedCatalogEnd, setReachedCatalogEnd] = useState(false)
 	const [failedUniqueFetchTimes, setFailedUniqueFetchTimes] = useState(0)
+	// TODO move the retry logic to stremio plugin
 	const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
 	const observer = useRef<IntersectionObserver | null>(null)
@@ -105,7 +106,6 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		})
 
 		if (catalog.length === catalogSize) {
-			console.error("FILED " + failedUniqueFetchTimes)
 			setFailedUniqueFetchTimes((o) => (o += 1))
 			if (failedUniqueFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES) {
 				setReachedCatalogEnd(true)

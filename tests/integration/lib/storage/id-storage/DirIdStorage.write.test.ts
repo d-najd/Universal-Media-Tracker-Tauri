@@ -1,7 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import IDBDirStorage from "../../../../../src/lib/storage/directory-storage/IDBDirStorage"
-import DirIdStorage from "../../../../../src/lib/storage/id-storage/DirIdStorage"
-import { DirStorage, IdStorage } from "@d-najd/universal-media-tracker-sdk"
+import {
+	DirIdStorage,
+	DirStorage,
+	IdStorage,
+} from "@d-najd/universal-media-tracker-sdk"
 
 describe("DirIdStorage.write", () => {
 	let dirStorage: DirStorage

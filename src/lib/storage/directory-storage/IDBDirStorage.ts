@@ -79,6 +79,21 @@ export default class IDBDirStorage implements DirStorage {
 		return Object.values(entriesMap)
 	}
 
+	// TODO this is quick and dirty way to get this done,
+	// Currently this does not check folders, if path is invalid it doesn't care
+	// Doesn't care about options for folder search, ignores any other errors
+	async exists(
+		path: string,
+		options?: Partial<DirStorageOptions>,
+	): Promise<boolean> {
+		try {
+			await this.readMetadata(path, options)
+			return true
+		} catch {
+			return false
+		}
+	}
+
 	async read(
 		path: string,
 		options?: Partial<DirStorageOptions>,

@@ -49,6 +49,10 @@
 
 - Better flexibility, instead of matching fields which end in \_id or some other odd pattern this seems easier to track
 
+## Why preferred page size instead of strict page size?
+
+- The plugins are responsible for making sure they don't return duplicate data, and the ui will only conclude that it reached end when it gets 0 items from catalog handler, this is because we will have at most 1 more fetch (with 0 items) this way and it will handle items which don't support auto-filling pagination and 1 more fetch shouldn't cause rate limiting issues
+
 ## Storage API
 
 ## Why id based and directory based storage
@@ -56,6 +60,6 @@
 - The app must be compatible with all platforms and the storage implementation can be vastly different between platforms, and I want to allow the user to define
   their own storage options in the future. This is the minimum I have found necessary to achieve the necessary flexibility so far
 
-## Why is id-storage based on provider:id in a single string
+## Why is id-storage based on `provider:id` in a single string
 
 - Wanted to hide complexity for new developers while at the same time supporting apps that have systems for storing id's which use pairs (ex kodi which is Map<string, string> from what I know)

@@ -11,10 +11,12 @@ import {
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
 	pluginFileName,
-	pluginPath,
+	pluginsPath,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 	PluginSpec,
+	curPluginConfigPath,
+	curPluginFilePath,
 } from "@d-najd/universal-media-tracker-sdk"
 import LocalPluginSource from "@/app/plugins/LocalPluginSource"
 import getAppApi from "./appApiImpl"
@@ -116,7 +118,7 @@ export default class PluginManagerStore {
 	 */
 	static async loadPlugins() {
 		const pathsApi = (await getStorage()).paths
-		const pluginFolders = await pathsApi.list(pluginPath)
+		const pluginFolders = await pathsApi.list(pluginsPath)
 		const pluginFactoryConfigs: LocalPluginConfig[] = []
 
 		for (const folder of pluginFolders) {
@@ -272,9 +274,8 @@ export default class PluginManagerStore {
 				}
 
 				const pathsApi = (await getStorage()).paths
-				const curPluginPath = pluginPath + "/" + spec.config.id
 				await pathsApi.write(
-					curPluginPath + "/" + pluginConfigName,
+					curPluginConfigPath(spec.config),
 					JSON.stringify(localConfig),
 				)
 
@@ -321,13 +322,12 @@ export default class PluginManagerStore {
 					loadedFrom: "plugin-source",
 				}
 				const pathsApi = (await getStorage()).paths
-				const curPluginPath = pluginPath + "/" + spec.config.id
 				await pathsApi.write(
-					curPluginPath + "/" + pluginFileName,
+					curPluginFilePath(spec.config),
 					response.code,
 				)
 				await pathsApi.write(
-					curPluginPath + "/" + pluginConfigName,
+					curPluginConfigPath(spec.config),
 					JSON.stringify(localConfig),
 				)
 
@@ -477,9 +477,8 @@ export default class PluginManagerStore {
 		spec: PluginSpec,
 	): Promise<LocalPluginConfig> {
 		const pathsApi = (await getStorage()).paths
-		const curPluginPath = pluginPath + "/" + spec.config.id
 		const configStr = (await pathsApi.read(
-			curPluginPath + "/" + pluginConfigName,
+			curPluginConfigPath(spec.config),
 		)) as string
 		const config = JSON.parse(configStr) as LocalPluginConfig
 		return config

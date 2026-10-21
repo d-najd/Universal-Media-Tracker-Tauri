@@ -1,6 +1,7 @@
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
+	curPluginPath,
 	Meta,
 	MetaHandlerArgs,
 	MetaHandlerResponse,
@@ -150,6 +151,41 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					-MANIFEST_STRING.length,
 				)
 
+				const paths = createdPlugin.app.storage.paths
+
+				// Contains list of the ids that were already fetched, for deduplication
+				const fetchedIdsPath =
+					curPluginPath(createdPlugin.config) +
+					"/" +
+					catalog.id +
+					"/" +
+					"fetchedIds.json"
+				// Contains the previous fetch options such as pageSize, skip etc
+				const previousOptions =
+					curPluginPath(createdPlugin.config) +
+					"/" +
+					catalog.id +
+					"/" +
+					"previousOptions.json"
+				// Contains list of the overflowed items from the previous fetch, lets say page size is 3 and we got 7 items
+				// That means 4 will be put here and the next time we will return the first 3, then the leftover 1 and with 2 more fetched items
+				const overflowedItems =
+					curPluginPath(createdPlugin.config) +
+					"/" +
+					catalog.id +
+					"/" +
+					"overflowedItems.json"
+
+				// if (paths.exists())
+
+				// 1. Check whether the options have changed in a way that it required clearing the cache, this includes new args option except adding/removing skip (should default to 0).
+				// If it did then remove the old cache
+				// 2. Read the cached data and compare if it matches with the retrieved data (duplicates)
+				// 3. If the ids already exist then de-duplicate them and if the pageSize doesn't match the current element count reduce/increase its count and cache the rest if needed and mark how much were cached if too many were fetched
+				// 4. For caching we can only put the ids, nothing else is needed
+
+				// createdPlugin.app.storage.paths.write(path, data)
+
 				let newUrl =
 					urlExceptManifest +
 					"/catalog/" +
@@ -165,54 +201,13 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				}
 				newUrl += ".json"
 
-				console.error("FETCHING WITH " + newUrl)
-
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
 
-				const mappedData: MetaPreview[] = []
+				const mappedData = mapMeta(result.metas)
 
-				for (const meta of result.metas) {
-					const formatIdValue = (value: string) => {
-						return value.split(":").at(-1)
-					}
-
-					const formatIdKey = (key: string) => {
-						const idPattern = /.*[^a-zA-Z0-9]id$/
-
-						if (!idPattern.test(key)) {
-							return undefined
-						}
-
-						const idTypeSplitterPattern = /^(.*)[^a-zA-Z0-9]id$/
-						const splittedIdType = idTypeSplitterPattern.exec(key)
-						const idType = splittedIdType
-							? splittedIdType[1]
-							: undefined
-
-						return idType
-					}
-
-					const ids = [`unknown:${formatIdValue(meta.id)}`]
-					for (const [key, value] of Object.entries(meta)) {
-						const idType = formatIdKey(key)
-
-						if (!idType) {
-							continue
-						}
-
-						ids.push(`${idType}:${formatIdValue(value)}`)
-					}
-
-					const metaPreview: MetaPreview = {
-						ids: ids,
-						name: meta.name,
-						poster: meta.poster,
-						type: meta.type,
-					}
-					mappedData.push(metaPreview)
-				}
+				// Find duplicates saved current
 
 				return {
 					data: mappedData,
@@ -270,6 +265,49 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 				}
 			},
 		})
+	}
+}
+
+function mapMeta(metas: StremioCatalogEntryResponse[]) {
+	const mappedData: MetaPreview[] = []
+
+	for (const meta of metas) {
+		const formatIdValue = (value: string) => {
+			return value.split(":").at(-1)
+		}
+
+		const formatIdKey = (key: string) => {
+			const idPattern = /.*[^a-zA-Z0-9]id$/
+
+			if (!idPattern.test(key)) {
+				return undefined
+			}
+
+			const idTypeSplitterPattern = /^(.*)[^a-zA-Z0-9]id$/
+			const splittedIdType = idTypeSplitterPattern.exec(key)
+			const idType = splittedIdType ? splittedIdType[1] : undefined
+
+			return idType
+		}
+
+		const ids = [`unknown:${formatIdValue(meta.id)}`]
+		for (const [key, value] of Object.entries(meta)) {
+			const idType = formatIdKey(key)
+
+			if (!idType) {
+				continue
+			}
+
+			ids.push(`${idType}:${formatIdValue(value)}`)
+		}
+
+		const metaPreview: MetaPreview = {
+			ids: ids,
+			name: meta.name,
+			poster: meta.poster,
+			type: meta.type,
+		}
+		mappedData.push(metaPreview)
 	}
 }
 
