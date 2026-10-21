@@ -11,6 +11,7 @@ import {
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
 	ResourceBrowseOption,
+	ResourceBrowseOptionArgs,
 	ResourceType,
 	StorageOptions,
 } from "@d-najd/universal-media-tracker-sdk"
@@ -120,12 +121,12 @@ plugin.definePluginFactoryHandler({
 })
 
 // Contains list of the ids that were already fetched, for deduplication
-const fetchedIdsPath = (
+const getFetchedIdsPath = (
 	pluginConfig: PluginConfig,
 	catalog: StremioCatalogEntry,
 ) => curPluginPath(pluginConfig) + "/" + catalog.id + "/" + "fetchedIds.json"
 // Contains the previous fetch options such as pageSize, skip etc
-const previousOptionsPath = (
+const getPreviousOptionsPath = (
 	pluginConfig: PluginConfig,
 	catalog: StremioCatalogEntry,
 ) =>
@@ -136,7 +137,7 @@ const previousOptionsPath = (
 	"previousOptions.json"
 // Contains list of the overflowed items from the previous fetch, lets say page size is 3 and we got 7 items
 // That means 4 will be put here and the next time we will return the first 3, then the leftover 1 and with 2 more fetched items
-const overflowedItems = (
+const getOverflowedItemsPath = (
 	pluginConfig: PluginConfig,
 	catalog: StremioCatalogEntry,
 ) =>
@@ -156,27 +157,36 @@ async function invalidateCacheIfNecessary(
 	args: CatalogHandlerArgs,
 ) {
 	const paths = plugin.app.storage.paths
+	const previousOptionsPath = getPreviousOptionsPath(plugin.config, catalog)
+	const overflowedItemsPath = getOverflowedItemsPath(plugin.config, catalog)
+	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
 
-	if (
-		!paths.exists(
-			previousOptionsPath(plugin.config, catalog),
-			catalogSessionStorageOptions,
-		)
-	) {
-		// No options were saved, meaning new search
+	if (!paths.exists(previousOptionsPath, catalogSessionStorageOptions)) {
 		return
 	}
 
-	console.error(args)
+	const previousArgs = JSON.parse(
+		(await paths.read(
+			previousOptionsPath,
+			catalogSessionStorageOptions,
+		)) as string,
+	) as ResourceBrowseOptionArgs[]
 
-	const argsCopy = { ...args }
+	let optionsCopy = { ...(args.options ?? []) }
+	optionsCopy = optionsCopy.filter((opt) => opt.name !== "skip")
 
-	delete argsCopy.options?.["skip"]
-	console.error(argsCopy)
+	optionsCopy.sort()
+	if (JSON.stringify(previousArgs) === JSON.stringify(optionsCopy)) {
+		return
+	}
 
-	// if (paths.exists(path))
-
-	// paths.read(previousOptions)
+	await paths.delete(previousOptionsPath, catalogSessionStorageOptions)
+	if (await paths.exists(overflowedItemsPath, catalogSessionStorageOptions)) {
+		await paths.delete(overflowedItemsPath, catalogSessionStorageOptions)
+	}
+	if (await paths.exists(fetchedIdsPath, catalogSessionStorageOptions)) {
+		await paths.delete(fetchedIdsPath, catalogSessionStorageOptions)
+	}
 }
 
 function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
