@@ -66,7 +66,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		let args: ResourceHandlerArgs = {
 			options: [
-				...(hasSkipOption && skip !== 0
+				...(hasSkipOption // && skip !== 0 // TODO revert this when done
 					? [{ name: "skip", input: skip }]
 					: []),
 				...(hasSearchOption && search !== ""

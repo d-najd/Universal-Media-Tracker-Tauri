@@ -21,6 +21,8 @@ import {
 import LocalPluginSource from "@/app/plugins/LocalPluginSource"
 import getAppApi from "./appApiImpl"
 
+// TODO this is in a dire need of rework
+
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
  * and everything is supposed to be loaded is: either first from the sort order
@@ -407,6 +409,7 @@ export default class PluginManagerStore {
 			const plugin = response.plugin
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin! as any).getSpec()) as PluginSpec
+			plugin.app = await getAppApi()
 			const localConfig = await this.loadLocalPluginConfig(spec)
 
 			const descriptor: PluginDescriptor = {
@@ -447,10 +450,6 @@ export default class PluginManagerStore {
 		await this.loadLocalPluginSource()
 		await this.registerPlugins(true, ...descriptors)
 		await this.loadPlugins()
-
-		const te = HandlerRegistry.getHandlersMatching(() => true)
-		console.error("HANDELRS ")
-		console.error(te)
 	}
 
 	private static async loadLocalPluginSource() {

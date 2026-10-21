@@ -12,6 +12,7 @@ import {
 	PluginFactoryHandlerResponse,
 	ResourceBrowseOption,
 	ResourceType,
+	StorageOptions,
 } from "@d-najd/universal-media-tracker-sdk"
 
 const options: PluginConfig = {
@@ -118,6 +119,66 @@ plugin.definePluginFactoryHandler({
 	},
 })
 
+// Contains list of the ids that were already fetched, for deduplication
+const fetchedIdsPath = (
+	pluginConfig: PluginConfig,
+	catalog: StremioCatalogEntry,
+) => curPluginPath(pluginConfig) + "/" + catalog.id + "/" + "fetchedIds.json"
+// Contains the previous fetch options such as pageSize, skip etc
+const previousOptionsPath = (
+	pluginConfig: PluginConfig,
+	catalog: StremioCatalogEntry,
+) =>
+	curPluginPath(pluginConfig) +
+	"/" +
+	catalog.id +
+	"/" +
+	"previousOptions.json"
+// Contains list of the overflowed items from the previous fetch, lets say page size is 3 and we got 7 items
+// That means 4 will be put here and the next time we will return the first 3, then the leftover 1 and with 2 more fetched items
+const overflowedItems = (
+	pluginConfig: PluginConfig,
+	catalog: StremioCatalogEntry,
+) =>
+	curPluginPath(pluginConfig) +
+	"/" +
+	catalog.id +
+	"/" +
+	"overflowedItems.json"
+
+const catalogSessionStorageOptions: Partial<StorageOptions> = {
+	policy: "session",
+}
+
+async function invalidateCacheIfNecessary(
+	plugin: Plugin,
+	catalog: StremioCatalogEntry,
+	args: CatalogHandlerArgs,
+) {
+	const paths = plugin.app.storage.paths
+
+	if (
+		!paths.exists(
+			previousOptionsPath(plugin.config, catalog),
+			catalogSessionStorageOptions,
+		)
+	) {
+		// No options were saved, meaning new search
+		return
+	}
+
+	console.error(args)
+
+	const argsCopy = { ...args }
+
+	delete argsCopy.options?.["skip"]
+	console.error(argsCopy)
+
+	// if (paths.exists(path))
+
+	// paths.read(previousOptions)
+}
+
 function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 	if (!manifest.resources.some((o) => o === "catalog")) return
 
@@ -153,29 +214,6 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 
 				const paths = createdPlugin.app.storage.paths
 
-				// Contains list of the ids that were already fetched, for deduplication
-				const fetchedIdsPath =
-					curPluginPath(createdPlugin.config) +
-					"/" +
-					catalog.id +
-					"/" +
-					"fetchedIds.json"
-				// Contains the previous fetch options such as pageSize, skip etc
-				const previousOptions =
-					curPluginPath(createdPlugin.config) +
-					"/" +
-					catalog.id +
-					"/" +
-					"previousOptions.json"
-				// Contains list of the overflowed items from the previous fetch, lets say page size is 3 and we got 7 items
-				// That means 4 will be put here and the next time we will return the first 3, then the leftover 1 and with 2 more fetched items
-				const overflowedItems =
-					curPluginPath(createdPlugin.config) +
-					"/" +
-					catalog.id +
-					"/" +
-					"overflowedItems.json"
-
 				// if (paths.exists())
 
 				// 1. Check whether the options have changed in a way that it required clearing the cache, this includes new args option except adding/removing skip (should default to 0).
@@ -206,6 +244,8 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				).json()) as StremioCatalogResponse
 
 				const mappedData = mapMeta(result.metas)
+
+				invalidateCacheIfNecessary(createdPlugin, catalog, args)
 
 				// Find duplicates saved current
 
