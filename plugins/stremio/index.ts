@@ -161,26 +161,33 @@ async function invalidateCacheIfNecessary(
 	const overflowedItemsPath = getOverflowedItemsPath(plugin.config, catalog)
 	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
 
-	if (!paths.exists(previousOptionsPath, catalogSessionStorageOptions)) {
+	if (
+		!(await paths.exists(previousOptionsPath, catalogSessionStorageOptions))
+	) {
 		return
 	}
 
-	const previousArgs = JSON.parse(
-		(await paths.read(
-			previousOptionsPath,
-			catalogSessionStorageOptions,
-		)) as string,
-	) as ResourceBrowseOptionArgs[]
+	const previousArgs = (await paths.read(
+		previousOptionsPath,
+		catalogSessionStorageOptions,
+	)) as string
 
 	let optionsCopy = { ...(args.options ?? []) }
 	optionsCopy = optionsCopy.filter((opt) => opt.name !== "skip")
 
 	optionsCopy.sort()
-	if (JSON.stringify(previousArgs) === JSON.stringify(optionsCopy)) {
+	if (previousArgs === JSON.stringify(optionsCopy)) {
 		return
 	}
 
 	await paths.delete(previousOptionsPath, catalogSessionStorageOptions)
+	// TODO refactor this? doesnt seem to belong in this method, maybe another method after this one is called (the parent method)
+	// Alternative is moving previousOptionsPath to this method and making it exclusive for this
+	await paths.write(
+		previousOptionsPath,
+		JSON.stringify(optionsCopy),
+		catalogSessionStorageOptions,
+	)
 	if (await paths.exists(overflowedItemsPath, catalogSessionStorageOptions)) {
 		await paths.delete(overflowedItemsPath, catalogSessionStorageOptions)
 	}
@@ -229,10 +236,27 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				// 1. Check whether the options have changed in a way that it required clearing the cache, this includes new args option except adding/removing skip (should default to 0).
 				// If it did then remove the old cache
 				// 2. Read the cached data and compare if it matches with the retrieved data (duplicates)
-				// 3. If the ids already exist then de-duplicate them and if the pageSize doesn't match the current element count reduce/increase its count and cache the rest if needed and mark how much were cached if too many were fetched
+				// 3. If the ids already exist then de-duplicate them and if the pageSize doesn't match the current element count
+				// reduce/increase its count and cache the rest if needed and mark how much were cached if too many were fetched
 				// 4. For caching we can only put the ids, nothing else is needed
 
 				// createdPlugin.app.storage.paths.write(path, data)
+
+				// TODO before next check already stored cached data if it exceeds page size n stuff
+
+				invalidateCacheIfNecessary(createdPlugin, catalog, args)
+
+				// 1. Get overflowed items
+				// 2. Check if overflowed items >= pageSize
+				// 3A. if overflowed items >= pageSize just return without fetch
+				// 4A. remove the fetched items, always take from beginning and add to end
+				// 3B. if overflowed items < pageSize then fetch as many times as needed till overflowed items + fetch size >= pageSize
+				// 4B. if items are overflowed save them and remove all previous in this case
+
+				const overflowedItemsPath = getOverflowedItemsPath(
+					createdPlugin.config,
+					catalog,
+				)
 
 				let newUrl =
 					urlExceptManifest +
@@ -253,11 +277,13 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					await fetch(`${newUrl}`)
 				).json()) as StremioCatalogResponse
 
-				const mappedData = mapMeta(result.metas)
+				let mappedData = mapMeta(result.metas)
 
-				invalidateCacheIfNecessary(createdPlugin, catalog, args)
-
-				// Find duplicates saved current
+				mappedData = await removeDuplicateMeta(
+					createdPlugin,
+					catalog,
+					mappedData,
+				)
 
 				return {
 					data: mappedData,
@@ -265,6 +291,34 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 			},
 		})
 	}
+}
+
+async function removeDuplicateMeta(
+	plugin: Plugin,
+	catalog: StremioCatalogEntry,
+	mappedData: MetaPreview[],
+) {
+	const paths = plugin.app.storage.paths
+	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
+
+	// Find duplicates saved current
+	if (await paths.exists(fetchedIdsPath, catalogSessionStorageOptions)) {
+		// TODO can use set here?
+		const prevFetchedIds = new Set(
+			JSON.parse(
+				(await paths.read(
+					fetchedIdsPath,
+					catalogSessionStorageOptions,
+				)) as string,
+			) as string[],
+		)
+
+		return mappedData.filter(
+			(entry) => !entry.ids.some((id) => prevFetchedIds.has(id)),
+		)
+	}
+
+	return mappedData
 }
 
 function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
@@ -359,6 +413,8 @@ function mapMeta(metas: StremioCatalogEntryResponse[]) {
 		}
 		mappedData.push(metaPreview)
 	}
+
+	return mappedData
 }
 
 function resourceBrowseOptionArgToTypeConverter(
