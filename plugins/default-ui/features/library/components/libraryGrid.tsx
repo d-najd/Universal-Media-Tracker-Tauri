@@ -15,24 +15,19 @@ type LibraryGridProps = {
 }
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
-	// TODO save in cache instead of this
 	const [catalog, setCatalog] = useState<MetaPreview[]>([])
-	const [previousFetchSize, setPreviousFetchSize] = useState(0)
 	const [skip, setSkip] = useState(0)
 	const [loading, setLoading] = useState(false)
 	const [reachedCatalogEnd, setReachedCatalogEnd] = useState(false)
-	const [failedUniqueFetchTimes, setFailedUniqueFetchTimes] = useState(0)
-	// TODO move the retry logic to stremio plugin
-	const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
 	const observer = useRef<IntersectionObserver | null>(null)
 	const lastItemRef = useCallback(
 		(node: HTMLDivElement | null) => {
-			if (loading) return
 			if (observer.current) observer.current.disconnect()
+			if (loading) return
 			observer.current = new IntersectionObserver((entries) => {
 				if (entries[0].isIntersecting) {
-					setSkip((o) => o + previousFetchSize)
+					fetchCatalog()
 				}
 			})
 			if (node) observer.current.observe(node)
@@ -40,25 +35,23 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 		[loading],
 	)
 
+	// TODO changing search is broken
 	useEffect(() => {
-		setFailedUniqueFetchTimes(0)
 		setReachedCatalogEnd(false)
 		setCatalog([])
 		setSkip(0)
+		fetchCatalog().then()
 	}, [search])
 
 	const fetchCatalog = async () => {
-		setLoading(true)
+		if (reachedCatalogEnd) return
+		if (loading) return
 
+		setLoading(true)
 		const handler = plugin.app.plugin.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
 			(o) => o.id === "kitsu-anime-list",
 		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
-
-		const hasSkipOption =
-			handler?.options?.some(
-				(o) => o.name === "skip" && o.type === "number",
-			) ?? false
 
 		const hasSearchOption = handler?.options?.some(
 			(o) => o.name === "search" && o.type === "string",
@@ -66,13 +59,11 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		let args: ResourceHandlerArgs = {
 			options: [
-				...(hasSkipOption // && skip !== 0 // TODO revert this when done
-					? [{ name: "skip", input: skip }]
-					: []),
+				...[{ name: "skip", input: skip }],
+				...[{ name: "preferredPageSize", input: 20 }],
 				...(hasSearchOption && search !== ""
 					? [{ name: "search", input: search }]
 					: []),
-				...[{ name: "preferredPageSize", input: 20 }],
 			],
 		}
 
@@ -89,36 +80,21 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			return
 		}
 
-		setPreviousFetchSize(result.data.length)
-		const catalogSize = catalog.length
+		setSkip((oldSkip) => result.data.length + oldSkip)
 
 		setCatalog((prev) => {
 			const prevIds = new Set(prev.flatMap((p) => p.ids))
 
+			// Handling react strict...
 			const filteredData = result.data.filter(
 				(cur) => !cur.ids.some((id) => prevIds.has(id)),
 			)
 
-			if (filteredData.length > 0) {
-				setFailedUniqueFetchTimes(0)
-			}
-
 			return [...prev, ...filteredData]
 		})
 
-		if (catalog.length === catalogSize) {
-			setFailedUniqueFetchTimes((o) => (o += 1))
-			if (failedUniqueFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES) {
-				setReachedCatalogEnd(true)
-			}
-		}
 		setLoading(false)
 	}
-
-	useEffect(() => {
-		if (reachedCatalogEnd) return
-		fetchCatalog().then()
-	}, [skip, search])
 
 	return (
 		<>

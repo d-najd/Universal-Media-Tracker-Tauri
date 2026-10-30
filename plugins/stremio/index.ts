@@ -96,6 +96,7 @@ type CatalogState = {
 let inputArgs: PluginFactoryHandlerArgs
 const MANIFEST_STRING = "/manifest.json"
 const STREMIO_PAGE_SIZE = 20
+const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
 plugin.definePluginFactoryHandler({
 	async callback(
@@ -239,6 +240,8 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				const skip = args!.options!.find((o) => o.name === "skip")!
 					.input as number
 
+				let failedFetchTimes = 0
+
 				while (catalogState.fetchedItems.length < skip + pageSize) {
 					let newUrl =
 						urlExceptManifest +
@@ -270,6 +273,18 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 						mappedData,
 						catalogState,
 					)
+
+					if (mappedData.length === 0) {
+						failedFetchTimes += 1
+
+						if (
+							failedFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES
+						) {
+							break
+						}
+					} else {
+						failedFetchTimes = 0
+					}
 
 					catalogState.fetchedItems.push(...mappedData)
 				}
