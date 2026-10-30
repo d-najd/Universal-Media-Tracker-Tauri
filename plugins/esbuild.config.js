@@ -54,7 +54,7 @@ for (const folder of fs.readdirSync(dir)) {
 		platform: "node",
 		format: "esm",
 		sourcemap: false,
-		minify: true,
+		minify: false,
 		outfile: path.join("src/app/plugins/js", `${folder}.js`),
 		jsx: "transform",
 	})

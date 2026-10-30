@@ -84,8 +84,18 @@ type StremioCatalogEntryResponse = {
 	poster: string
 }
 
+type CatalogState = {
+	// Includes options for searching, except skip, if the options don't match (say user searches with other category) the state should be wiped
+	options: ResourceBrowseOptionArgs[]
+	// old fetched items
+	fetchedItems: MetaPreview[]
+	// Stemio plugins aren't perfect, sometimes they return duplicates, sometiems they return less items, so we need to keep track of the real skip number
+	realSkip: number
+}
+
 let inputArgs: PluginFactoryHandlerArgs
 const MANIFEST_STRING = "/manifest.json"
+const STREMIO_PAGE_SIZE = 20
 
 plugin.definePluginFactoryHandler({
 	async callback(
@@ -120,80 +130,65 @@ plugin.definePluginFactoryHandler({
 	},
 })
 
-// Contains list of the ids that were already fetched, for deduplication
-const getFetchedIdsPath = (
+const getCatalogStatePath = (
 	pluginConfig: PluginConfig,
 	catalog: StremioCatalogEntry,
-) => curPluginPath(pluginConfig) + "/" + catalog.id + "/" + "fetchedIds.json"
-// Contains the previous fetch options such as pageSize, skip etc
-const getPreviousOptionsPath = (
-	pluginConfig: PluginConfig,
-	catalog: StremioCatalogEntry,
-) =>
-	curPluginPath(pluginConfig) +
-	"/" +
-	catalog.id +
-	"/" +
-	"previousOptions.json"
-// Contains list of the overflowed items from the previous fetch, lets say page size is 3 and we got 7 items
-// That means 4 will be put here and the next time we will return the first 3, then the leftover 1 and with 2 more fetched items
-const getOverflowedItemsPath = (
-	pluginConfig: PluginConfig,
-	catalog: StremioCatalogEntry,
-) =>
-	curPluginPath(pluginConfig) +
-	"/" +
-	catalog.id +
-	"/" +
-	"overflowedItems.json"
+) => curPluginPath(pluginConfig) + "/" + catalog.id + "/" + "catalogState.json"
 
 const catalogStateStorageOptions: Partial<StorageOptions> = {
 	policy: "session",
 }
 
-async function invalidateCacheIfNecessary(
+async function syncCatalogState(
 	plugin: Plugin,
 	catalog: StremioCatalogEntry,
 	args: CatalogHandlerArgs,
 ) {
 	const paths = plugin.app.storage.paths
-	const previousOptionsPath = getPreviousOptionsPath(plugin.config, catalog)
-	const overflowedItemsPath = getOverflowedItemsPath(plugin.config, catalog)
-	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
+
+	let optionsCopy = args.options ?? []
+	optionsCopy = optionsCopy.filter(
+		(opt) => opt.name !== "skip" && opt.name !== "preferredPageSize",
+	)
+
+	const cleanCatalogState: CatalogState = {
+		options: optionsCopy,
+		fetchedItems: [],
+		realSkip: 0,
+	}
+
+	const catalogStatePath = getCatalogStatePath(plugin.config, catalog)
+	if (!(await paths.exists(catalogStatePath, catalogStateStorageOptions))) {
+		await paths.write(
+			catalogStatePath,
+			JSON.stringify(cleanCatalogState),
+			catalogStateStorageOptions,
+		)
+
+		return cleanCatalogState
+	}
+
+	const previousCatalogState = JSON.parse(
+		(await paths.read(
+			catalogStatePath,
+			catalogStateStorageOptions,
+		)) as string,
+	) as CatalogState
 
 	if (
-		!(await paths.exists(previousOptionsPath, catalogStateStorageOptions))
+		previousCatalogState.options.length === optionsCopy.length &&
+		optionsCopy.every((o) => previousCatalogState.options.includes(o))
 	) {
-		return
+		return previousCatalogState
 	}
 
-	const previousArgs = (await paths.read(
-		previousOptionsPath,
-		catalogStateStorageOptions,
-	)) as string
-
-	let optionsCopy = { ...(args.options ?? []) }
-	optionsCopy = optionsCopy.filter((opt) => opt.name !== "skip")
-
-	optionsCopy.sort()
-	if (previousArgs === JSON.stringify(optionsCopy)) {
-		return
-	}
-
-	await paths.delete(previousOptionsPath, catalogStateStorageOptions)
-	// TODO refactor this? doesnt seem to belong in this method, maybe another method after this one is called (the parent method)
-	// Alternative is moving previousOptionsPath to this method and making it exclusive for this
 	await paths.write(
-		previousOptionsPath,
-		JSON.stringify(optionsCopy),
+		catalogStatePath,
+		JSON.stringify(cleanCatalogState),
 		catalogStateStorageOptions,
 	)
-	if (await paths.exists(overflowedItemsPath, catalogStateStorageOptions)) {
-		await paths.delete(overflowedItemsPath, catalogStateStorageOptions)
-	}
-	if (await paths.exists(fetchedIdsPath, catalogStateStorageOptions)) {
-		await paths.delete(fetchedIdsPath, catalogStateStorageOptions)
-	}
+
+	return cleanCatalogState
 }
 
 function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
@@ -231,97 +226,71 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 
 				const paths = createdPlugin.app.storage.paths
 
-				// if (paths.exists())
-
-				// 1. Check whether the options have changed in a way that it required clearing the cache, this includes new args option except adding/removing skip (should default to 0).
-				// If it did then remove the old cache
-				// 2. Read the cached data and compare if it matches with the retrieved data (duplicates)
-				// 3. If the ids already exist then de-duplicate them and if the pageSize doesn't match the current element count
-				// reduce/increase its count and cache the rest if needed and mark how much were cached if too many were fetched
-				// 4. For caching we can only put the ids, nothing else is needed
-
-				// createdPlugin.app.storage.paths.write(path, data)
-
-				// TODO before next check already stored cached data if it exceeds page size n stuff
-
-				invalidateCacheIfNecessary(createdPlugin, catalog, args)
-
-				// 1. Get overflowed items
-				// 2. Check if overflowed items >= pageSize
-				// 3A. if overflowed items >= pageSize just return without fetch
-				// 4A. remove the fetched items, always take from beginning and add to end
-				// 3B. if overflowed items < pageSize then fetch as many times as needed till overflowed items + fetch size >= pageSize
-				// 4B. if items are overflowed save them and remove all previous in this case
-
-				const overflowedItemsPath = getOverflowedItemsPath(
-					createdPlugin.config,
+				const catalogState = await syncCatalogState(
+					createdPlugin,
 					catalog,
+					args,
 				)
 
 				const pageSize = args!.options!.find(
 					(o) => o.name === "preferredPageSize",
 				)!.input as number
 
-				let overflowedItems: MetaPreview[] = []
-				if (
-					!(await paths.exists(
-						overflowedItemsPath,
-						catalogStateStorageOptions,
-					))
-				) {
-					overflowedItems = JSON.parse(
-						(await paths.read(
-							overflowedItemsPath,
-							catalogStateStorageOptions,
-						)) as string,
-					) as MetaPreview[]
-				}
+				const skip = args!.options!.find((o) => o.name === "skip")!
+					.input as number
 
-				// 20
-				// 10
-
-				while (overflowedItems.length < pageSize) {}
-
-				// if (overflowedItems.length <= pageSize) {
-				//    const itemsToReturn = overflowedItems.slice(0, pageSize)
-				//    overflowedItems = overflowedItems.slice(pageSize)
-				//
-				//    await paths.write(overflowedItemsPath, JSON.stringify(overflowedItems), catalogSessionStorageOptions)
-				//
-				//    return {
-				//       data: itemsToReturn
-				//    }
-				// }
-
-				let newUrl =
-					urlExceptManifest +
-					"/catalog/" +
-					catalog.type +
-					"/" +
-					catalog.id
-				if (args.options) {
-					newUrl +=
+				while (catalogState.fetchedItems.length < skip + pageSize) {
+					let newUrl =
+						urlExceptManifest +
+						"/catalog/" +
+						catalog.type +
 						"/" +
-						args.options
-							.map((o) => o.name + "=" + o.input)
-							.join("&")
+						catalog.id
+
+					// Using catalogState since it doesn't include skip, we need realSkip and want to avoid items like preferredPageSize also
+					if (catalogState.options) {
+						newUrl +=
+							"/" +
+							catalogState.options
+								.map((o) => o.name + "=" + o.input)
+								.join("&")
+					}
+					newUrl += `&skip=${catalogState.realSkip}`
+					newUrl += ".json"
+
+					catalogState.realSkip += STREMIO_PAGE_SIZE
+
+					const result = (await (
+						await fetch(`${newUrl}`)
+					).json()) as StremioCatalogResponse
+
+					let mappedData = mapMeta(result.metas)
+
+					mappedData = await removeDuplicateMeta(
+						mappedData,
+						catalogState,
+					)
+
+					catalogState.fetchedItems.push(...mappedData)
 				}
-				newUrl += ".json"
 
-				const result = (await (
-					await fetch(`${newUrl}`)
-				).json()) as StremioCatalogResponse
+				const itemsToReturn = catalogState.fetchedItems.slice(
+					skip,
+					skip + pageSize,
+				)
 
-				let mappedData = mapMeta(result.metas)
-
-				mappedData = await removeDuplicateMeta(
-					createdPlugin,
+				const catalogStatePath = getCatalogStatePath(
+					createdPlugin.config,
 					catalog,
-					mappedData,
+				)
+				await paths.write(
+					catalogStatePath,
+					JSON.stringify(catalogState),
+					catalogStateStorageOptions,
 				)
 
 				return {
-					data: mappedData,
+					data: itemsToReturn,
 				}
 			},
 		})
@@ -329,31 +298,14 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 }
 
 async function removeDuplicateMeta(
-	plugin: Plugin,
-	catalog: StremioCatalogEntry,
 	mappedData: MetaPreview[],
+	catalogState: CatalogState,
 ) {
-	const paths = plugin.app.storage.paths
-	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
+	const prevIds = new Set(catalogState.fetchedItems.flatMap((o) => o.ids))
 
-	// Find duplicates saved current
-	if (await paths.exists(fetchedIdsPath, catalogStateStorageOptions)) {
-		// TODO can use set here?
-		const prevFetchedIds = new Set(
-			JSON.parse(
-				(await paths.read(
-					fetchedIdsPath,
-					catalogStateStorageOptions,
-				)) as string,
-			) as string[],
-		)
-
-		return mappedData.filter(
-			(entry) => !entry.ids.some((id) => prevFetchedIds.has(id)),
-		)
-	}
-
-	return mappedData
+	return mappedData.filter(
+		(entry) => !entry.ids.some((id) => prevIds.has(id)),
+	)
 }
 
 function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
