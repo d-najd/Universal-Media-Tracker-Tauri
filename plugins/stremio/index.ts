@@ -147,7 +147,7 @@ const getOverflowedItemsPath = (
 	"/" +
 	"overflowedItems.json"
 
-const catalogSessionStorageOptions: Partial<StorageOptions> = {
+const catalogStateStorageOptions: Partial<StorageOptions> = {
 	policy: "session",
 }
 
@@ -162,14 +162,14 @@ async function invalidateCacheIfNecessary(
 	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
 
 	if (
-		!(await paths.exists(previousOptionsPath, catalogSessionStorageOptions))
+		!(await paths.exists(previousOptionsPath, catalogStateStorageOptions))
 	) {
 		return
 	}
 
 	const previousArgs = (await paths.read(
 		previousOptionsPath,
-		catalogSessionStorageOptions,
+		catalogStateStorageOptions,
 	)) as string
 
 	let optionsCopy = { ...(args.options ?? []) }
@@ -180,19 +180,19 @@ async function invalidateCacheIfNecessary(
 		return
 	}
 
-	await paths.delete(previousOptionsPath, catalogSessionStorageOptions)
+	await paths.delete(previousOptionsPath, catalogStateStorageOptions)
 	// TODO refactor this? doesnt seem to belong in this method, maybe another method after this one is called (the parent method)
 	// Alternative is moving previousOptionsPath to this method and making it exclusive for this
 	await paths.write(
 		previousOptionsPath,
 		JSON.stringify(optionsCopy),
-		catalogSessionStorageOptions,
+		catalogStateStorageOptions,
 	)
-	if (await paths.exists(overflowedItemsPath, catalogSessionStorageOptions)) {
-		await paths.delete(overflowedItemsPath, catalogSessionStorageOptions)
+	if (await paths.exists(overflowedItemsPath, catalogStateStorageOptions)) {
+		await paths.delete(overflowedItemsPath, catalogStateStorageOptions)
 	}
-	if (await paths.exists(fetchedIdsPath, catalogSessionStorageOptions)) {
-		await paths.delete(fetchedIdsPath, catalogSessionStorageOptions)
+	if (await paths.exists(fetchedIdsPath, catalogStateStorageOptions)) {
+		await paths.delete(fetchedIdsPath, catalogStateStorageOptions)
 	}
 }
 
@@ -258,6 +258,41 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					catalog,
 				)
 
+				const pageSize = args!.options!.find(
+					(o) => o.name === "preferredPageSize",
+				)!.input as number
+
+				let overflowedItems: MetaPreview[] = []
+				if (
+					!(await paths.exists(
+						overflowedItemsPath,
+						catalogStateStorageOptions,
+					))
+				) {
+					overflowedItems = JSON.parse(
+						(await paths.read(
+							overflowedItemsPath,
+							catalogStateStorageOptions,
+						)) as string,
+					) as MetaPreview[]
+				}
+
+				// 20
+				// 10
+
+				while (overflowedItems.length < pageSize) {}
+
+				// if (overflowedItems.length <= pageSize) {
+				//    const itemsToReturn = overflowedItems.slice(0, pageSize)
+				//    overflowedItems = overflowedItems.slice(pageSize)
+				//
+				//    await paths.write(overflowedItemsPath, JSON.stringify(overflowedItems), catalogSessionStorageOptions)
+				//
+				//    return {
+				//       data: itemsToReturn
+				//    }
+				// }
+
 				let newUrl =
 					urlExceptManifest +
 					"/catalog/" +
@@ -302,13 +337,13 @@ async function removeDuplicateMeta(
 	const fetchedIdsPath = getFetchedIdsPath(plugin.config, catalog)
 
 	// Find duplicates saved current
-	if (await paths.exists(fetchedIdsPath, catalogSessionStorageOptions)) {
+	if (await paths.exists(fetchedIdsPath, catalogStateStorageOptions)) {
 		// TODO can use set here?
 		const prevFetchedIds = new Set(
 			JSON.parse(
 				(await paths.read(
 					fetchedIdsPath,
-					catalogSessionStorageOptions,
+					catalogStateStorageOptions,
 				)) as string,
 			) as string[],
 		)

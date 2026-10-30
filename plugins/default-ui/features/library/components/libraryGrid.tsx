@@ -72,6 +72,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 				...(hasSearchOption && search !== ""
 					? [{ name: "search", input: search }]
 					: []),
+				...[{ name: "preferredPageSize", input: 20 }],
 			],
 		}
 
