@@ -16,38 +16,42 @@ type LibraryGridProps = {
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const [catalog, setCatalog] = useState<MetaPreview[]>([])
-	const [skip, setSkip] = useState(0)
-	const [loading, setLoading] = useState(false)
-	const [reachedCatalogEnd, setReachedCatalogEnd] = useState(false)
-
-	const observer = useRef<IntersectionObserver | null>(null)
-	const lastItemRef = useCallback(
-		(node: HTMLDivElement | null) => {
-			if (observer.current) observer.current.disconnect()
-			if (loading) return
-			observer.current = new IntersectionObserver((entries) => {
-				if (entries[0].isIntersecting) {
-					fetchCatalog()
-				}
-			})
-			if (node) observer.current.observe(node)
-		},
-		[loading],
-	)
+	const skipRef = useRef(0)
+	const loadingRef = useRef(false)
+	const reachedCatalogEndRef = useRef(false)
 
 	// TODO changing search is broken
 	useEffect(() => {
-		setReachedCatalogEnd(false)
+		console.error("FROM HERE")
+		// setReachedCatalogEnd(false)
+		reachedCatalogEndRef.current = false
 		setCatalog([])
-		setSkip(0)
+		skipRef.current = 0
+		// setSkip(0)
+		console.error("SKIP IS TEST " + skipRef.current)
 		fetchCatalog().then()
 	}, [search])
 
-	const fetchCatalog = async () => {
-		if (reachedCatalogEnd) return
-		if (loading) return
+	const observer = useRef<IntersectionObserver | null>(null)
+	const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+		if (observer.current) observer.current.disconnect()
+		if (loadingRef.current) return
+		observer.current = new IntersectionObserver((entries) => {
+			if (entries[0].isIntersecting) {
+				console.error("FROM HERE 2")
+				fetchCatalog()
+			}
+		})
+		if (node) observer.current.observe(node)
+	}, [])
 
-		setLoading(true)
+	// TODO perhaps use mutex since this seems to not be enough to prevent fetching multiple times in rare cases
+	const fetchCatalog = async () => {
+		if (reachedCatalogEndRef.current) return
+		if (loadingRef.current) return
+
+		// setLoading(true)
+		loadingRef.current = true
 		const handler = plugin.app.plugin.getHandlersMatching(
 			// (o) => o.id === 'kitsu-anime-rating'
 			(o) => o.id === "kitsu-anime-list",
@@ -57,9 +61,11 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			(o) => o.name === "search" && o.type === "string",
 		)
 
+		console.error("FROM SKIP " + skipRef.current)
+
 		let args: ResourceHandlerArgs = {
 			options: [
-				...[{ name: "skip", input: skip }],
+				...[{ name: "skip", input: skipRef.current }],
 				...[{ name: "preferredPageSize", input: 20 }],
 				...(hasSearchOption && search !== ""
 					? [{ name: "search", input: search }]
@@ -76,11 +82,15 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 
 		const result = (await handler.callback(args)) as CatalogHandlerResponse
 		if (result.data.length === 0) {
-			setReachedCatalogEnd(true)
+			reachedCatalogEndRef.current = true
+			loadingRef.current = false
+			// setReachedCatalogEnd(true)
 			return
 		}
 
-		setSkip((oldSkip) => result.data.length + oldSkip)
+		console.error("SETTING SKIP " + skipRef.current)
+		// setSkip((oldSkip) => result.data.length + oldSkip)
+		skipRef.current = result.data.length + skipRef.current
 
 		setCatalog((prev) => {
 			const prevIds = new Set(prev.flatMap((p) => p.ids))
@@ -93,7 +103,8 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 			return [...prev, ...filteredData]
 		})
 
-		setLoading(false)
+		//setLoading(false)
+		loadingRef.current = false
 	}
 
 	return (

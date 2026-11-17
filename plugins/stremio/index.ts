@@ -183,6 +183,9 @@ async function syncCatalogState(
 		return previousCatalogState
 	}
 
+	console.error("OVERRIDING CATALOG STATE")
+	console.error(cleanCatalogState.realSkip)
+
 	await paths.write(
 		catalogStatePath,
 		JSON.stringify(cleanCatalogState),
@@ -233,6 +236,9 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					args,
 				)
 
+				console.error("SYNCED STATE ")
+				console.error(catalogState)
+
 				const pageSize = args!.options!.find(
 					(o) => o.name === "preferredPageSize",
 				)!.input as number
@@ -240,6 +246,9 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				const skip = args!.options!.find((o) => o.name === "skip")!
 					.input as number
 
+				console.error(
+					`ARGS ARE ${skip} ${pageSize} ${catalogState.realSkip}`,
+				)
 				let failedFetchTimes = 0
 
 				while (catalogState.fetchedItems.length < skip + pageSize) {
@@ -303,6 +312,9 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					JSON.stringify(catalogState),
 					catalogStateStorageOptions,
 				)
+
+				console.error("RETURNING ")
+				console.error(itemsToReturn)
 
 				return {
 					data: itemsToReturn,
