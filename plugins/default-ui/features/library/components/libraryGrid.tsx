@@ -19,93 +19,90 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 	const skipRef = useRef(0)
 	const loadingRef = useRef(false)
 	const reachedCatalogEndRef = useRef(false)
+	// Invalidates in-flight responses when the search changes mid-request.
+	const epochRef = useRef(0)
 
-	// TODO changing search is broken
-	useEffect(() => {
-		console.error("FROM HERE")
-		// setReachedCatalogEnd(false)
-		reachedCatalogEndRef.current = false
-		setCatalog([])
-		skipRef.current = 0
-		// setSkip(0)
-		console.error("SKIP IS TEST " + skipRef.current)
-		fetchCatalog().then()
-	}, [search])
-
-	const observer = useRef<IntersectionObserver | null>(null)
-	const lastItemRef = useCallback((node: HTMLDivElement | null) => {
-		if (observer.current) observer.current.disconnect()
-		if (loadingRef.current) return
-		observer.current = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) {
-				console.error("FROM HERE 2")
-				fetchCatalog()
-			}
-		})
-		if (node) observer.current.observe(node)
-	}, [])
-
-	// TODO perhaps use mutex since this seems to not be enough to prevent fetching multiple times in rare cases
-	const fetchCatalog = async () => {
+	const fetchCatalog = useCallback(async () => {
 		if (reachedCatalogEndRef.current) return
 		if (loadingRef.current) return
 
-		// setLoading(true)
 		loadingRef.current = true
-		const handler = plugin.app.plugin.getHandlersMatching(
-			// (o) => o.id === 'kitsu-anime-rating'
-			(o) => o.id === "kitsu-anime-list",
-		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
+		const epoch = epochRef.current
 
-		const hasSearchOption = handler?.options?.some(
-			(o) => o.name === "search" && o.type === "string",
-		)
+		try {
+			const handler = plugin.app.plugin.getHandlersMatching(
+				(o) => o.id === "kitsu-anime-list",
+			)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
 
-		console.error("FROM SKIP " + skipRef.current)
-
-		let args: ResourceHandlerArgs = {
-			options: [
-				...[{ name: "skip", input: skipRef.current }],
-				...[{ name: "preferredPageSize", input: 20 }],
-				...(hasSearchOption && search !== ""
-					? [{ name: "search", input: search }]
-					: []),
-			],
-		}
-
-		if (args.options?.length === 0) {
-			args = {
-				...args,
-				options: undefined,
-			}
-		}
-
-		const result = (await handler.callback(args)) as CatalogHandlerResponse
-		if (result.data.length === 0) {
-			reachedCatalogEndRef.current = true
-			loadingRef.current = false
-			// setReachedCatalogEnd(true)
-			return
-		}
-
-		console.error("SETTING SKIP " + skipRef.current)
-		// setSkip((oldSkip) => result.data.length + oldSkip)
-		skipRef.current = result.data.length + skipRef.current
-
-		setCatalog((prev) => {
-			const prevIds = new Set(prev.flatMap((p) => p.ids))
-
-			// Handling react strict...
-			const filteredData = result.data.filter(
-				(cur) => !cur.ids.some((id) => prevIds.has(id)),
+			const hasSearchOption = handler?.options?.some(
+				(o) => o.name === "search" && o.type === "string",
 			)
 
-			return [...prev, ...filteredData]
-		})
+			const args: ResourceHandlerArgs = {
+				options: [
+					{ name: "skip", input: skipRef.current },
+					{ name: "preferredPageSize", input: 20 },
+					...(hasSearchOption && search !== ""
+						? [{ name: "search", input: search }]
+						: []),
+				],
+			}
 
-		//setLoading(false)
+			const result = (await handler.callback(
+				args,
+			)) as CatalogHandlerResponse
+
+			// A newer search started while we awaited → discard this page.
+			if (epoch !== epochRef.current) return
+
+			if (result.data.length === 0) {
+				reachedCatalogEndRef.current = true
+				return
+			}
+
+			skipRef.current += result.data.length
+
+			setCatalog((prev) => {
+				const prevIds = new Set(prev.flatMap((p) => p.ids))
+				// Handles React StrictMode double-invoke and any residual dupes.
+				const filteredData = result.data.filter(
+					(cur) => !cur.ids.some((id) => prevIds.has(id)),
+				)
+				return [...prev, ...filteredData]
+			})
+		} finally {
+			// Only release the lock if we still own the current epoch.
+			// If a newer search already reset it, don't clobber its state.
+			if (epoch === epochRef.current) loadingRef.current = false
+		}
+	}, [search])
+
+	// Stable handle so the IntersectionObserver always calls the latest
+	// fetchCatalog (with the current `search`) without re-observing.
+	const fetchCatalogRef = useRef(fetchCatalog)
+	useEffect(() => {
+		fetchCatalogRef.current = fetchCatalog
+	}, [fetchCatalog])
+
+	// Reset + first fetch on search change.
+	useEffect(() => {
+		epochRef.current += 1
+		skipRef.current = 0
 		loadingRef.current = false
-	}
+		reachedCatalogEndRef.current = false
+		setCatalog([])
+		fetchCatalog()
+	}, [fetchCatalog]) // == [search], via useCallback
+
+	const observer = useRef<IntersectionObserver | null>(null)
+	const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+		observer.current?.disconnect()
+		if (!node) return
+		observer.current = new IntersectionObserver((entries) => {
+			if (entries[0].isIntersecting) fetchCatalogRef.current()
+		})
+		observer.current.observe(node)
+	}, [])
 
 	return (
 		<>
