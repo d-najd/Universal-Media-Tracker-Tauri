@@ -1,8 +1,6 @@
 import initAppGlobals from "./initGlobals"
 
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router"
-import { setNavigator } from "./navigator"
 import PluginManagerStore from "../plugin-loader/PluginManagerStore"
 import { useRouteStore } from "../plugin-loader/useRouteStore"
 
@@ -62,15 +60,12 @@ export function useAppReactInit(): AppInitState {
 	const [isInitialized, setIsInitialized] = useState<AppInitState>({
 		initialized: reactInitialized,
 	})
-	const navigator = useNavigate()
 
 	useEffect(() => {
 		if (reactInitialized || !coreInitialized) return
 
 		if (!reactInitPromise) {
 			reactInitPromise = (async () => {
-				setNavigator(navigator)
-
 				reactInitialized = true
 				setIsInitialized({
 					initialized: true,

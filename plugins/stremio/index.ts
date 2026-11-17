@@ -1,6 +1,7 @@
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
+	curPluginPath,
 	Meta,
 	MetaHandlerArgs,
 	MetaHandlerResponse,
@@ -10,7 +11,9 @@ import {
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
 	ResourceBrowseOption,
+	ResourceBrowseOptionArgs,
 	ResourceType,
+	StorageOptions,
 } from "@d-najd/universal-media-tracker-sdk"
 
 const options: PluginConfig = {
@@ -81,8 +84,19 @@ type StremioCatalogEntryResponse = {
 	poster: string
 }
 
+type CatalogState = {
+	// Includes options for searching, except skip, if the options don't match (say user searches with other category) the state should be wiped
+	options: ResourceBrowseOptionArgs[]
+	// old fetched items
+	fetchedItems: MetaPreview[]
+	// Stemio plugins aren't perfect, sometimes they return duplicates, sometiems they return less items, so we need to keep track of the real skip number
+	realSkip: number
+}
+
 let inputArgs: PluginFactoryHandlerArgs
 const MANIFEST_STRING = "/manifest.json"
+const STREMIO_PAGE_SIZE = 20
+const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
 plugin.definePluginFactoryHandler({
 	async callback(
@@ -99,24 +113,89 @@ plugin.definePluginFactoryHandler({
 				await fetch(`${args.url}`)
 			).json()) as StremioManifest
 
-			const pluginCreated = new Plugin({
+			const createdPlugin = new Plugin({
 				logo: manifest.logo ?? pluginSelf.config.logo,
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
 			})
 
-			defineCatalogs(pluginCreated, manifest)
-			defineMetas(pluginCreated, manifest)
+			defineCatalogs(createdPlugin, manifest)
+			// TODO fix the meta handler
+			// defineMetas(pluginCreated, manifest)
 
-			return { status: "valid", plugin: pluginCreated }
+			return { status: "valid", plugin: createdPlugin }
 		} catch (e) {
 			return { status: "invalid", reason: e!.toString() }
 		}
 	},
 })
 
-function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
+const getCatalogStatePath = (
+	pluginConfig: PluginConfig,
+	catalog: StremioCatalogEntry,
+) => curPluginPath(pluginConfig) + "/" + catalog.id + "/" + "catalogState.json"
+
+const catalogStateStorageOptions: Partial<StorageOptions> = {
+	policy: "session",
+}
+
+async function syncCatalogState(
+	plugin: Plugin,
+	catalog: StremioCatalogEntry,
+	args: CatalogHandlerArgs,
+) {
+	const paths = plugin.app.storage.paths
+
+	let optionsCopy = args.options ?? []
+	optionsCopy = optionsCopy.filter(
+		(opt) => opt.name !== "skip" && opt.name !== "preferredPageSize",
+	)
+
+	const cleanCatalogState: CatalogState = {
+		options: optionsCopy,
+		fetchedItems: [],
+		realSkip: 0,
+	}
+
+	const catalogStatePath = getCatalogStatePath(plugin.config, catalog)
+	if (!(await paths.exists(catalogStatePath, catalogStateStorageOptions))) {
+		await paths.write(
+			catalogStatePath,
+			JSON.stringify(cleanCatalogState),
+			catalogStateStorageOptions,
+		)
+
+		return cleanCatalogState
+	}
+
+	const previousCatalogState = JSON.parse(
+		(await paths.read(
+			catalogStatePath,
+			catalogStateStorageOptions,
+		)) as string,
+	) as CatalogState
+
+	if (
+		previousCatalogState.options.length === optionsCopy.length &&
+		optionsCopy.every((o) => previousCatalogState.options.includes(o))
+	) {
+		return previousCatalogState
+	}
+
+	console.error("OVERRIDING CATALOG STATE")
+	console.error(cleanCatalogState.realSkip)
+
+	await paths.write(
+		catalogStatePath,
+		JSON.stringify(cleanCatalogState),
+		catalogStateStorageOptions,
+	)
+
+	return cleanCatalogState
+}
+
+function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 	if (!manifest.resources.some((o) => o === "catalog")) return
 
 	for (const catalog of manifest.catalogs) {
@@ -135,7 +214,7 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 				return result
 			})
 
-		pluginCreated.defineCatalogHandler({
+		createdPlugin.defineCatalogHandler({
 			id: catalog.id,
 			name: catalog.name,
 			resourceType: catalog.type,
@@ -149,47 +228,111 @@ function defineCatalogs(pluginCreated: Plugin, manifest: StremioManifest) {
 					-MANIFEST_STRING.length,
 				)
 
-				let newUrl =
-					urlExceptManifest +
-					"/catalog/" +
-					catalog.type +
-					"/" +
-					catalog.id
-				if (args.options) {
-					newUrl +=
+				const paths = createdPlugin.app.storage.paths
+
+				const catalogState = await syncCatalogState(
+					createdPlugin,
+					catalog,
+					args,
+				)
+
+				console.error("SYNCED STATE ")
+				console.error(catalogState)
+
+				const pageSize = args!.options!.find(
+					(o) => o.name === "preferredPageSize",
+				)!.input as number
+
+				const skip = args!.options!.find((o) => o.name === "skip")!
+					.input as number
+
+				console.error(
+					`ARGS ARE ${skip} ${pageSize} ${catalogState.realSkip}`,
+				)
+				let failedFetchTimes = 0
+
+				while (catalogState.fetchedItems.length < skip + pageSize) {
+					let newUrl =
+						urlExceptManifest +
+						"/catalog/" +
+						catalog.type +
 						"/" +
-						args.options
-							.map((o) => o.name + "=" + o.input)
-							.join("&")
-				}
-				newUrl += ".json"
+						catalog.id
 
-				const result = (await (
-					await fetch(`${newUrl}`)
-				).json()) as StremioCatalogResponse
-
-				const mappedData = result.metas.map((o) => {
-					const ids = Object.fromEntries(
-						Object.entries(o).filter(([key]) =>
-							key.toLowerCase().endsWith("id"),
-						),
-					) as Record<string, string>
-
-					const metaPreview: MetaPreview = {
-						ids: ids,
-						name: o.name,
-						poster: o.poster,
-						type: o.type,
+					// Using catalogState since it doesn't include skip, we need realSkip and want to avoid items like preferredPageSize also
+					if (catalogState.options) {
+						newUrl +=
+							"/" +
+							catalogState.options
+								.map((o) => o.name + "=" + o.input)
+								.join("&")
 					}
-					return metaPreview
-				})
+					newUrl += `&skip=${catalogState.realSkip}`
+					newUrl += ".json"
+
+					catalogState.realSkip += STREMIO_PAGE_SIZE
+
+					const result = (await (
+						await fetch(`${newUrl}`)
+					).json()) as StremioCatalogResponse
+
+					let mappedData = mapMeta(result.metas)
+
+					mappedData = await removeDuplicateMeta(
+						mappedData,
+						catalogState,
+					)
+
+					if (mappedData.length === 0) {
+						failedFetchTimes += 1
+
+						if (
+							failedFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES
+						) {
+							break
+						}
+					} else {
+						failedFetchTimes = 0
+					}
+
+					catalogState.fetchedItems.push(...mappedData)
+				}
+
+				const itemsToReturn = catalogState.fetchedItems.slice(
+					skip,
+					skip + pageSize,
+				)
+
+				const catalogStatePath = getCatalogStatePath(
+					createdPlugin.config,
+					catalog,
+				)
+				await paths.write(
+					catalogStatePath,
+					JSON.stringify(catalogState),
+					catalogStateStorageOptions,
+				)
+
+				console.error("RETURNING ")
+				console.error(itemsToReturn)
 
 				return {
-					data: mappedData,
+					data: itemsToReturn,
 				}
 			},
 		})
 	}
+}
+
+async function removeDuplicateMeta(
+	mappedData: MetaPreview[],
+	catalogState: CatalogState,
+) {
+	const prevIds = new Set(catalogState.fetchedItems.flatMap((o) => o.ids))
+
+	return mappedData.filter(
+		(entry) => !entry.ids.some((id) => prevIds.has(id)),
+	)
 }
 
 function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
@@ -217,6 +360,8 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 				}
 				newUrl += ".json"
 
+				console.error("METAS " + newUrl)
+
 				const result = (await (
 					await fetch(`${newUrl}`)
 				).json()) as StremioMetaResponse
@@ -239,6 +384,51 @@ function defineMetas(pluginCreated: Plugin, manifest: StremioManifest) {
 			},
 		})
 	}
+}
+
+function mapMeta(metas: StremioCatalogEntryResponse[]) {
+	const mappedData: MetaPreview[] = []
+
+	for (const meta of metas) {
+		const formatIdValue = (value: string) => {
+			return value.split(":").at(-1)
+		}
+
+		const formatIdKey = (key: string) => {
+			const idPattern = /.*[^a-zA-Z0-9]id$/
+
+			if (!idPattern.test(key)) {
+				return undefined
+			}
+
+			const idTypeSplitterPattern = /^(.*)[^a-zA-Z0-9]id$/
+			const splittedIdType = idTypeSplitterPattern.exec(key)
+			const idType = splittedIdType ? splittedIdType[1] : undefined
+
+			return idType
+		}
+
+		const ids = [`unknown:${formatIdValue(meta.id)}`]
+		for (const [key, value] of Object.entries(meta)) {
+			const idType = formatIdKey(key)
+
+			if (!idType) {
+				continue
+			}
+
+			ids.push(`${idType}:${formatIdValue(value)}`)
+		}
+
+		const metaPreview: MetaPreview = {
+			ids: ids,
+			name: meta.name,
+			poster: meta.poster,
+			type: meta.type,
+		}
+		mappedData.push(metaPreview)
+	}
+
+	return mappedData
 }
 
 function resourceBrowseOptionArgToTypeConverter(

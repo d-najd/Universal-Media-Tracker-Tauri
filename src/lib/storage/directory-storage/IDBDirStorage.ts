@@ -1,11 +1,13 @@
-import DirEntry from "@/lib/storage/directory-storage/DirEntry"
-import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
-import DirStorageOptions, {
+import {
 	DefaultDirStorageOptions,
-} from "./DirStorageOptions"
-import StoragePolicy from "../StoragePolicy"
-import StoredData from "../StoredData"
-import DirStorage from "./DirStorage"
+	DirEntry,
+	DirStorage,
+	DirStorageOptions,
+	StoragePolicy,
+	StoredData,
+} from "@d-najd/universal-media-tracker-sdk"
+import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
+import { ensureTrailingSlash } from "../utils"
 
 // TODO make completely transactional
 // TODO add tests to check whether there are race conditions for removing/writing something
@@ -48,7 +50,7 @@ export default class IDBDirStorage implements DirStorage {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = this.getPrefix(path)
+		const prefix = ensureTrailingSlash(path)
 		const entriesMap: Record<string, DirEntry> = {}
 
 		for (const policy of policies) {
@@ -75,6 +77,21 @@ export default class IDBDirStorage implements DirStorage {
 		}
 
 		return Object.values(entriesMap)
+	}
+
+	// TODO this is quick and dirty way to get this done,
+	// Currently this does not check folders, if path is invalid it doesn't care
+	// Doesn't care about options for folder search, ignores any other errors
+	async exists(
+		path: string,
+		options?: Partial<DirStorageOptions>,
+	): Promise<boolean> {
+		try {
+			await this.readMetadata(path, options)
+			return true
+		} catch {
+			return false
+		}
 	}
 
 	async read(
@@ -277,7 +294,7 @@ export default class IDBDirStorage implements DirStorage {
 			: await this.getAvailablePolicies(optionsResolved.profile!)
 
 		const keys = (await this.db.getAllKeys(this.storeName)) as string[]
-		const prefix = this.getPrefix(path)
+		const prefix = ensureTrailingSlash(path)
 
 		const keysToDelete = new Set<string>()
 
@@ -373,10 +390,5 @@ export default class IDBDirStorage implements DirStorage {
 	private isFile(path: string) {
 		const last = path.split("/").pop()!
 		return last.includes(".")
-	}
-
-	private getPrefix(path: string) {
-		if (path === "") return path
-		return path.endsWith("/") ? path : path + "/"
 	}
 }

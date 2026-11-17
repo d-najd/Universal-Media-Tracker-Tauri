@@ -1,15 +1,17 @@
-import DirStorage from "./directory-storage/DirStorage"
+import { DirIdStorage, StorageApi } from "@d-najd/universal-media-tracker-sdk"
 import IDBDirStorage from "./directory-storage/IDBDirStorage"
 
-let storage: DirStorage | null = null
+let storageApi: StorageApi | null = null
 
-export async function getStorage(): Promise<DirStorage> {
-	// TODO seems to be broken, will ignore for now
-	// if (isTauri()) {
-	// 	return await FileSystemStorage.create()
-	// }
-	if (storage === null) {
-		storage = await IDBDirStorage.create()
+export async function getStorage(): Promise<StorageApi> {
+	if (storageApi === null) {
+		const pathsApi = await IDBDirStorage.create()
+		const mediaApi = await DirIdStorage.create(pathsApi, "media")
+		storageApi = {
+			paths: pathsApi,
+			media: mediaApi,
+		}
 	}
-	return storage
+
+	return storageApi
 }

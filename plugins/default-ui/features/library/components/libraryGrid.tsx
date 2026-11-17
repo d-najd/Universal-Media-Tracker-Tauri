@@ -15,99 +15,94 @@ type LibraryGridProps = {
 }
 
 export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
-	const [catalog, setCatalog] = useState<Map<string, MetaPreview>>(
-		new Map<string, MetaPreview>(),
-	)
-	const [previousFetchSize, setPreviousFetchSize] = useState(0)
-	const [skip, setSkip] = useState(0)
-	const [loading, setLoading] = useState(false)
-	const [reachedCatalogEnd, setReachedCatalogEnd] = useState(false)
-	const [failedUniqueFetchTimes, setFailedUniqueFetchTimes] = useState(0)
-	const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
+	const [catalog, setCatalog] = useState<MetaPreview[]>([])
+	const skipRef = useRef(0)
+	const loadingRef = useRef(false)
+	const reachedCatalogEndRef = useRef(false)
+	// Invalidates in-flight responses when the search changes mid-request.
+	const epochRef = useRef(0)
 
-	const observer = useRef<IntersectionObserver | null>(null)
-	const lastItemRef = useCallback(
-		(node: HTMLDivElement | null) => {
-			if (loading) return
-			if (observer.current) observer.current.disconnect()
-			observer.current = new IntersectionObserver((entries) => {
-				if (entries[0].isIntersecting) {
-					setSkip((o) => o + previousFetchSize)
-				}
+	const fetchCatalog = useCallback(async () => {
+		if (reachedCatalogEndRef.current) return
+		if (loadingRef.current) return
+
+		loadingRef.current = true
+		const epoch = epochRef.current
+
+		try {
+			const handler = plugin.app.plugin.getHandlersMatching(
+				(o) => o.id === "kitsu-anime-list",
+			)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
+
+			const hasSearchOption = handler?.options?.some(
+				(o) => o.name === "search" && o.type === "string",
+			)
+
+			const args: ResourceHandlerArgs = {
+				options: [
+					{ name: "skip", input: skipRef.current },
+					{ name: "preferredPageSize", input: 20 },
+					...(hasSearchOption && search !== ""
+						? [{ name: "search", input: search }]
+						: []),
+				],
+			}
+
+			const result = (await handler.callback(
+				args,
+			)) as CatalogHandlerResponse
+
+			// A newer search started while we awaited → discard this page.
+			if (epoch !== epochRef.current) return
+
+			if (result.data.length === 0) {
+				reachedCatalogEndRef.current = true
+				return
+			}
+
+			skipRef.current += result.data.length
+
+			setCatalog((prev) => {
+				const prevIds = new Set(prev.flatMap((p) => p.ids))
+				// Handles React StrictMode double-invoke and any residual dupes.
+				const filteredData = result.data.filter(
+					(cur) => !cur.ids.some((id) => prevIds.has(id)),
+				)
+				return [...prev, ...filteredData]
 			})
-			if (node) observer.current.observe(node)
-		},
-		[loading],
-	)
-
-	useEffect(() => {
-		setFailedUniqueFetchTimes(0)
-		setReachedCatalogEnd(false)
-		setCatalog(new Map<string, MetaPreview>())
-		setSkip(0)
+		} finally {
+			// Only release the lock if we still own the current epoch.
+			// If a newer search already reset it, don't clobber its state.
+			if (epoch === epochRef.current) loadingRef.current = false
+		}
 	}, [search])
 
-	const fetchCatalog = async () => {
-		setLoading(true)
-
-		const handler = plugin.app.plugin.getHandlersMatching(
-			// (o) => o.id === 'kitsu-anime-rating'
-			(o) => o.id === "kitsu-anime-list",
-		)[0] as ResourceHandler<CatalogHandlerArgs, CatalogHandlerResponse>
-
-		const hasSkipOption =
-			handler?.options?.some(
-				(o) => o.name === "skip" && o.type === "number",
-			) ?? false
-
-		const hasSearchOption = handler?.options?.some(
-			(o) => o.name === "search" && o.type === "string",
-		)
-
-		let args: ResourceHandlerArgs = {
-			options: [
-				...(hasSkipOption && skip !== 0
-					? [{ name: "skip", input: skip }]
-					: []),
-				...(hasSearchOption && search !== ""
-					? [{ name: "search", input: search }]
-					: []),
-			],
-		}
-
-		if (args.options?.length === 0) {
-			args = {
-				...args,
-				options: undefined,
-			}
-		}
-
-		const result = await handler.callback(args)
-		if (result.data.length === 0) {
-			setReachedCatalogEnd(true)
-			return
-		}
-
-		setPreviousFetchSize(result.data.length)
-		const catalogSize = catalog.size
-		setCatalog((prev) => {
-			result.data.forEach((o) => prev.set(o.id, o))
-			return prev
-		})
-
-		if (catalog.size === catalogSize) {
-			setFailedUniqueFetchTimes((o) => (o += 1))
-			if (failedUniqueFetchTimes === MAX_UNIQUE_FETCH_FAILED_TIMES) {
-				setReachedCatalogEnd(true)
-			}
-		}
-		setLoading(false)
-	}
-
+	// Stable handle so the IntersectionObserver always calls the latest
+	// fetchCatalog (with the current `search`) without re-observing.
+	const fetchCatalogRef = useRef(fetchCatalog)
 	useEffect(() => {
-		if (reachedCatalogEnd) return
-		fetchCatalog().then()
-	}, [skip, search])
+		fetchCatalogRef.current = fetchCatalog
+	}, [fetchCatalog])
+
+	// Reset + first fetch on search change.
+	useEffect(() => {
+		epochRef.current += 1
+		skipRef.current = 0
+		loadingRef.current = false
+		reachedCatalogEndRef.current = false
+		setCatalog([])
+		fetchCatalog()
+	}, [fetchCatalog]) // == [search], via useCallback
+
+	const observer = useRef<IntersectionObserver | null>(null)
+	const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+		observer.current?.disconnect()
+		if (!node) return
+		observer.current = new IntersectionObserver((entries) => {
+			if (entries[0].isIntersecting) fetchCatalogRef.current()
+		})
+		observer.current.observe(node)
+	}, [])
 
 	return (
 		<>
@@ -124,8 +119,8 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 						paddingTop: `${topbarSize.height + 10}px`,
 					}}
 				>
-					{[...catalog.values()].map((item, key) => (
-						<Card key={key} ref={lastItemRef}>
+					{catalog.map((o) => (
+						<Card key={o.ids[0]} ref={lastItemRef}>
 							<img
 								style={{
 									width: "100%",
@@ -133,7 +128,7 @@ export default function LibraryGrid({ topbarSize, search }: LibraryGridProps) {
 									objectFit: "fill",
 								}}
 								alt="no content"
-								src={item.poster}
+								src={o.poster}
 								onError={(e) => {
 									// TODO placeholder
 									e.currentTarget.style.display = "none"

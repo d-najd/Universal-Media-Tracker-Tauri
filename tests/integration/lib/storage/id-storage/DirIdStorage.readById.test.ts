@@ -1,10 +1,14 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import IDBDirStorage from "../../../../../src/lib/storage/directory-storage/IDBDirStorage.ts"
-import DirIdStorage from "../../../../../src/lib/storage/id-storage/DirIdStorage.ts"
+import {
+	DirIdStorage,
+	DirStorage,
+	IdStorage,
+} from "@d-najd/universal-media-tracker-sdk"
 
 describe("DirIdStorage.readById", () => {
-	let dirStorage: IDBDirStorage
-	let idStorage: DirIdStorage
+	let dirStorage: DirStorage
+	let idStorage: IdStorage
 
 	beforeAll(async () => {
 		const dbName = `db-${crypto.randomUUID()}`
@@ -22,13 +26,13 @@ describe("DirIdStorage.readById", () => {
 
 	describe("basic reads", () => {
 		it("reads an entry by id", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 
 			expect(await idStorage.readById("A")).toEqual("hello")
 		})
 
 		it("reads by any registered alias", async () => {
-			await idStorage.upsert(["A", "B", "C"], "hello")
+			await idStorage.write(["A", "B", "C"], "hello")
 
 			expect(await idStorage.readById("A")).toEqual("hello")
 			expect(await idStorage.readById("B")).toEqual("hello")
@@ -36,41 +40,67 @@ describe("DirIdStorage.readById", () => {
 		})
 
 		it("returns empty string when data is empty string", async () => {
-			await idStorage.upsert(["A"], "")
+			await idStorage.write(["A"], "")
 
 			expect(await idStorage.readById("A")).toEqual("")
 		})
 
 		it("returns binary data unchanged", async () => {
 			const data = new Uint8Array([1, 2, 3, 4])
-			await idStorage.upsert(["A"], data)
+			await idStorage.write(["A"], data)
 
 			expect(await idStorage.readById("A")).toEqual(data)
 		})
 
 		it("returns JSON strings unchanged", async () => {
 			const data = JSON.stringify({ name: "test", value: 123 })
-			await idStorage.upsert(["A"], data)
+			await idStorage.write(["A"], data)
 
 			expect(await idStorage.readById("A")).toEqual(data)
 		})
 	})
 
-	describe("alias updates", () => {
-		it("reflects data from the latest upsert regardless of which alias was written", async () => {
-			await idStorage.upsert(["A", "B"], "first")
-			await idStorage.upsert(["B"], "second")
+	describe("id normalization", () => {
+		it("reads an entry using a bare id when it was saved as a bare id", async () => {
+			await idStorage.write(["A"], "hello")
 
-			expect(await idStorage.readById("A")).toEqual("second")
-			expect(await idStorage.readById("B")).toEqual("second")
+			expect(await idStorage.readById("unknown:A")).toEqual("hello")
+			expect(await idStorage.readById("A")).toEqual("hello")
 		})
 
-		it("reads original data when only new aliases are added", async () => {
-			await idStorage.upsert(["A"], "hello")
-			await idStorage.upsert(["A", "B"])
+		it("throws when reading a bare id that was saved with a provider", async () => {
+			await idStorage.write(["imdb:A"], "hello")
 
-			expect(await idStorage.readById("A")).toEqual("hello")
-			expect(await idStorage.readById("B")).toEqual("hello")
+			await expect(idStorage.readById("A")).rejects.toThrow()
+		})
+
+		it("throws if an ID contains more than one colon", async () => {
+			await expect(
+				idStorage.readById("imdb:tt123:extra"),
+			).rejects.toThrow()
+		})
+
+		it("throws if the provider is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.readById(":tt123")).rejects.toThrow()
+		})
+
+		it("throws if the id part is empty", async () => {
+			await idStorage.write(["imdb:tt123"], "hello")
+
+			await expect(idStorage.readById("imdb:")).rejects.toThrow()
+		})
+	})
+
+	describe("alias updates", () => {
+		it("removes other aliases when using write (override behavior)", async () => {
+			await idStorage.write(["A", "B"], "hello")
+			await idStorage.write(["A"], "hello again")
+
+			expect(await idStorage.readById("A")).toEqual("hello again")
+			// B was removed because write overrides the alias set
+			await expect(idStorage.readById("B")).rejects.toThrow()
 		})
 	})
 
@@ -80,21 +110,21 @@ describe("DirIdStorage.readById", () => {
 		})
 
 		it("throws after the entry is deleted", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 			await idStorage.deleteById("A")
 
 			await expect(idStorage.readById("A")).rejects.toThrow()
 		})
 
 		it("throws when accessing a removed alias", async () => {
-			await idStorage.upsert(["A", "B"], "hello", { idsMode: "replace" })
-			await idStorage.upsert(["A"], undefined, { idsMode: "replace" })
+			await idStorage.write(["A", "B"], "hello")
+			await idStorage.removeAliases("A", ["B"])
 
 			await expect(idStorage.readById("B")).rejects.toThrow()
 		})
 
 		it("throws on fileExtension mismatch", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "gson" })
+			await idStorage.write(["A"], "hello", { fileExtension: "gson" })
 
 			await expect(
 				idStorage.readById("A", { fileExtension: "json" }),
@@ -104,7 +134,7 @@ describe("DirIdStorage.readById", () => {
 
 	describe("fileExtension validation", () => {
 		it("allows reads when fileExtension matches", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "gson" })
+			await idStorage.write(["A"], "hello", { fileExtension: "gson" })
 
 			expect(
 				await idStorage.readById("A", { fileExtension: "gson" }),
@@ -112,7 +142,7 @@ describe("DirIdStorage.readById", () => {
 		})
 
 		it("allows reads when fileExtension is not specified", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "bin" })
+			await idStorage.write(["A"], "hello", { fileExtension: "bin" })
 
 			expect(await idStorage.readById("A")).toEqual("hello")
 		})
@@ -120,8 +150,8 @@ describe("DirIdStorage.readById", () => {
 
 	describe("profile isolation", () => {
 		it("reads from the specified profile", async () => {
-			await idStorage.upsert(["A"], "profile-a", { profile: "a" })
-			await idStorage.upsert(["A"], "profile-b", { profile: "b" })
+			await idStorage.write(["A"], "profile-a", { profile: "a" })
+			await idStorage.write(["A"], "profile-b", { profile: "b" })
 
 			expect(await idStorage.readById("A", { profile: "a" })).toEqual(
 				"profile-a",
@@ -132,7 +162,7 @@ describe("DirIdStorage.readById", () => {
 		})
 
 		it("throws when id exists in a different profile but not the requested one", async () => {
-			await idStorage.upsert(["A"], "profile-a", { profile: "a" })
+			await idStorage.write(["A"], "profile-a", { profile: "a" })
 
 			await expect(
 				idStorage.readById("A", { profile: "b" }),
@@ -147,8 +177,8 @@ describe("DirIdStorage.readById", () => {
 				`other-${crypto.randomUUID()}`,
 			)
 
-			await idStorage.upsert(["A"], "from-first")
-			await other.upsert(["A"], "from-second")
+			await idStorage.write(["A"], "from-first")
+			await other.write(["A"], "from-second")
 
 			expect(await idStorage.readById("A")).toEqual("from-first")
 			expect(await other.readById("A")).toEqual("from-second")
@@ -160,7 +190,7 @@ describe("DirIdStorage.readById", () => {
 				`other-${crypto.randomUUID()}`,
 			)
 
-			await other.upsert(["A"], "from-other")
+			await other.write(["A"], "from-other")
 
 			await expect(idStorage.readById("A")).rejects.toThrow()
 		})

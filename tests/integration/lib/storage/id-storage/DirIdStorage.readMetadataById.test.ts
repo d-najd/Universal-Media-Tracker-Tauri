@@ -1,10 +1,14 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import IDBDirStorage from "../../../../../src/lib/storage/directory-storage/IDBDirStorage.ts"
-import DirIdStorage from "../../../../../src/lib/storage/id-storage/DirIdStorage.ts"
+import {
+	DirIdStorage,
+	DirStorage,
+	IdStorage,
+} from "@d-najd/universal-media-tracker-sdk"
 
 describe("DirIdStorage.readMetadataById", () => {
-	let dirStorage: IDBDirStorage
-	let idStorage: DirIdStorage
+	let dirStorage: DirStorage
+	let idStorage: IdStorage
 
 	beforeAll(async () => {
 		const dbName = `db-${crypto.randomUUID()}`
@@ -22,7 +26,7 @@ describe("DirIdStorage.readMetadataById", () => {
 
 	describe("basic reads", () => {
 		it("returns metadata for an existing entry", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 
 			const metadata = await idStorage.readMetadataById("A")
 
@@ -31,8 +35,47 @@ describe("DirIdStorage.readMetadataById", () => {
 			expect(metadata.updatedAt).toBeTypeOf("number")
 		})
 
+		describe("id normalization", () => {
+			it("reads metadata using a bare id when it was saved as a bare id", async () => {
+				await idStorage.write(["A"], "hello")
+
+				expect(
+					await idStorage.readMetadataById("unknown:A"),
+				).toBeDefined()
+				expect(await idStorage.readMetadataById("A")).toBeDefined()
+			})
+
+			it("throws when reading a bare id that was saved with a provider", async () => {
+				await idStorage.write(["imdb:A"], "hello")
+
+				await expect(idStorage.readMetadataById("A")).rejects.toThrow()
+			})
+
+			it("throws if an ID contains more than one colon", async () => {
+				await expect(
+					idStorage.readMetadataById("imdb:tt123:extra"),
+				).rejects.toThrow()
+			})
+
+			it("throws if the provider is empty", async () => {
+				await idStorage.write(["imdb:tt123"], "hello")
+
+				await expect(
+					idStorage.readMetadataById(":tt123"),
+				).rejects.toThrow()
+			})
+
+			it("throws if the id part is empty", async () => {
+				await idStorage.write(["imdb:tt123"], "hello")
+
+				await expect(
+					idStorage.readMetadataById("imdb:"),
+				).rejects.toThrow()
+			})
+		})
+
 		it("returns metadata when looked up by any alias", async () => {
-			await idStorage.upsert(["A", "B", "C"], "hello")
+			await idStorage.write(["A", "B", "C"], "hello")
 
 			const viaA = await idStorage.readMetadataById("A")
 			const viaB = await idStorage.readMetadataById("B")
@@ -43,7 +86,7 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("reflects options stored on the file", async () => {
-			await idStorage.upsert(["A"], "hello", {
+			await idStorage.write(["A"], "hello", {
 				policy: "persistent",
 				profile: "user-1",
 				ttl: 5000,
@@ -63,11 +106,11 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("returns updated metadata after a same-doc rewrite", async () => {
-			await idStorage.upsert(["A"], "first")
+			await idStorage.write(["A"], "first")
 			const before = await idStorage.readMetadataById("A")
 
-			await new Promise((r) => setTimeout(r, 5))
-			await idStorage.upsert(["A"], "second")
+			await new Promise((r) => setTimeout(r, 15))
+			await idStorage.write(["A"], "second")
 			const after = await idStorage.readMetadataById("A")
 
 			// createdAt preserved, updatedAt bumped
@@ -84,14 +127,14 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("throws after the entry is deleted", async () => {
-			await idStorage.upsert(["A"], "hello")
+			await idStorage.write(["A"], "hello")
 			await idStorage.deleteById("A")
 
 			await expect(idStorage.readMetadataById("A")).rejects.toThrow()
 		})
 
 		it("throws on fileExtension mismatch", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "bin" })
+			await idStorage.write(["A"], "hello", { fileExtension: "bin" })
 
 			await expect(
 				idStorage.readMetadataById("A", { fileExtension: "json" }),
@@ -99,7 +142,7 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("allows reads when fileExtension matches", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "gson" })
+			await idStorage.write(["A"], "hello", { fileExtension: "gson" })
 
 			expect(
 				await idStorage.readMetadataById("A", {
@@ -117,7 +160,7 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("allows reads when fileExtension is not specified", async () => {
-			await idStorage.upsert(["A"], "hello", { fileExtension: "bin" })
+			await idStorage.write(["A"], "hello", { fileExtension: "bin" })
 
 			expect(await idStorage.readMetadataById("A")).toBeDefined()
 		})
@@ -125,8 +168,8 @@ describe("DirIdStorage.readMetadataById", () => {
 
 	describe("profile isolation", () => {
 		it("reads metadata from the specified profile", async () => {
-			await idStorage.upsert(["A"], "profile-a", { profile: "a" })
-			await idStorage.upsert(["A"], "profile-b", { profile: "b" })
+			await idStorage.write(["A"], "profile-a", { profile: "a" })
+			await idStorage.write(["A"], "profile-b", { profile: "b" })
 
 			const a = await idStorage.readMetadataById("A", { profile: "a" })
 			const b = await idStorage.readMetadataById("A", { profile: "b" })
@@ -136,7 +179,7 @@ describe("DirIdStorage.readMetadataById", () => {
 		})
 
 		it("throws when id exists in a different profile but not the requested one", async () => {
-			await idStorage.upsert(["A"], "profile-a", { profile: "a" })
+			await idStorage.write(["A"], "profile-a", { profile: "a" })
 
 			await expect(
 				idStorage.readMetadataById("A", { profile: "b" }),
@@ -151,16 +194,14 @@ describe("DirIdStorage.readMetadataById", () => {
 				`other-${crypto.randomUUID()}`,
 			)
 
-			await idStorage.upsert(["A"], "from-first")
-			await other.upsert(["A"], "from-second")
+			await idStorage.write(["A"], "from-first")
+			await other.write(["A"], "from-second")
 
 			const mine = await idStorage.readMetadataById("A")
 			const theirs = await other.readMetadataById("A")
 
 			expect(mine).toBeDefined()
 			expect(theirs).toBeDefined()
-			// Not a strict equality check, but they should be independent instances
-			// If your metadata carries any per-write value (like custom), assert it here.
 		})
 	})
 })

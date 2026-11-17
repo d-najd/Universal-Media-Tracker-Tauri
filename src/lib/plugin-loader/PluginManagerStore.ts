@@ -3,22 +3,25 @@ import basePlugins from "@/app/plugins/basePlugins"
 import HandlerRegistry from "@/lib/plugin-loader/HandlerRegistry"
 import { getStorage } from "@/lib/storage"
 import {
-	pluginConfigName,
-	pluginFileName,
-	pluginPath,
-} from "@/lib/storage/directory-storage/StoragePaths"
-import {
+	DirEntry,
 	Handler,
+	LocalPluginConfig,
 	Plugin,
+	pluginConfigName,
 	PluginFactoryHandlerArgs,
 	PluginFactoryHandlerResponse,
+	pluginFileName,
+	pluginsPath,
 	PluginSourceHandlerArgs,
 	PluginSourceHandlerResponse,
 	PluginSpec,
+	curPluginConfigPath,
+	curPluginFilePath,
 } from "@d-najd/universal-media-tracker-sdk"
-import DirEntry from "@/lib/storage/directory-storage/DirEntry"
 import LocalPluginSource from "@/app/plugins/LocalPluginSource"
 import getAppApi from "./appApiImpl"
+
+// TODO this is in a dire need of rework
 
 /**
  * Class for storing and managing plugins, the way that plugins, their descriptors
@@ -116,8 +119,8 @@ export default class PluginManagerStore {
 	 * load's locally saved plugins with the flag status enabled
 	 */
 	static async loadPlugins() {
-		const storage = await getStorage()
-		const pluginFolders = await storage.list(pluginPath)
+		const pathsApi = (await getStorage()).paths
+		const pluginFolders = await pathsApi.list(pluginsPath)
 		const pluginFactoryConfigs: LocalPluginConfig[] = []
 
 		for (const folder of pluginFolders) {
@@ -128,7 +131,7 @@ export default class PluginManagerStore {
 				continue
 			}
 
-			const jsonStr = (await storage.read(
+			const jsonStr = (await pathsApi.read(
 				folder.path + "/" + pluginConfigName,
 			)) as string
 			const config = JSON.parse(jsonStr) as LocalPluginConfig
@@ -272,10 +275,9 @@ export default class PluginManagerStore {
 					loadedFrom: "plugin-factory",
 				}
 
-				const storage = await getStorage()
-				const curPluginPath = pluginPath + "/" + spec.config.id
-				await storage.write(
-					curPluginPath + "/" + pluginConfigName,
+				const pathsApi = (await getStorage()).paths
+				await pathsApi.write(
+					curPluginConfigPath(spec.config),
 					JSON.stringify(localConfig),
 				)
 
@@ -321,14 +323,13 @@ export default class PluginManagerStore {
 					handlerPluginId: pluginId,
 					loadedFrom: "plugin-source",
 				}
-				const storage = await getStorage()
-				const curPluginPath = pluginPath + "/" + spec.config.id
-				await storage.write(
-					curPluginPath + "/" + pluginFileName,
+				const pathsApi = (await getStorage()).paths
+				await pathsApi.write(
+					curPluginFilePath(spec.config),
 					response.code,
 				)
-				await storage.write(
-					curPluginPath + "/" + pluginConfigName,
+				await pathsApi.write(
+					curPluginConfigPath(spec.config),
 					JSON.stringify(localConfig),
 				)
 
@@ -353,8 +354,8 @@ export default class PluginManagerStore {
 		folder: DirEntry,
 		config: LocalPluginConfig,
 	) {
-		const storage = await getStorage()
-		const codeStr = (await storage.read(
+		const pathsApi = (await getStorage()).paths
+		const codeStr = (await pathsApi.read(
 			folder.path + "/" + pluginFileName,
 		)) as string
 		const plugin = await this.loadPluginFromCode(codeStr)
@@ -408,6 +409,7 @@ export default class PluginManagerStore {
 			const plugin = response.plugin
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const spec = (await (plugin! as any).getSpec()) as PluginSpec
+			plugin.app = await getAppApi()
 			const localConfig = await this.loadLocalPluginConfig(spec)
 
 			const descriptor: PluginDescriptor = {
@@ -473,10 +475,9 @@ export default class PluginManagerStore {
 	private static async loadLocalPluginConfig(
 		spec: PluginSpec,
 	): Promise<LocalPluginConfig> {
-		const storage = await getStorage()
-		const curPluginPath = pluginPath + "/" + spec.config.id
-		const configStr = (await storage.read(
-			curPluginPath + "/" + pluginConfigName,
+		const pathsApi = (await getStorage()).paths
+		const configStr = (await pathsApi.read(
+			curPluginConfigPath(spec.config),
 		)) as string
 		const config = JSON.parse(configStr) as LocalPluginConfig
 		return config
@@ -491,35 +492,7 @@ export default class PluginManagerStore {
 		URL.revokeObjectURL(url)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const plugin = module! as any
-		plugin.default.app = getAppApi()
+		plugin.default.app = await getAppApi()
 		return module.default
 	}
-	// private static appApi?: AppApi
-	// private static getAppApi(): AppApi {
-	// 	if (!this.appApi) {
-	// 		this.appApi = {
-	// 			plugins: {
-	// 				getHandlersMatching: (
-	// 					condition: (entry: Handler) => boolean,
-	// 				): Handler[] =>
-	// 					HandlerRegistry.getHandlersMatching(condition),
-	// 				getHandlersMatchingWithPluginId: (
-	// 					condition: (entry: [string, Handler]) => boolean,
-	// 				): Map<string, Handler[]> =>
-	// 					HandlerRegistry.getHandlersMatchingWithPluginId(
-	// 						condition,
-	// 					),
-	// 				invokeCallbackOnHandler: <T, R>(
-	// 					id: string,
-	// 					args: T,
-	// 				): Promise<R> =>
-	// 					HandlerRegistry.invokeCallbackOnHandler(id, args),
-	// 			},
-	// 			ui: {
-	// 				navigator: useAppNavigatorStore.getState(),
-	// 			},
-	// 		}
-	// 	}
-	// 	return this.appApi!
-	// }
 }
