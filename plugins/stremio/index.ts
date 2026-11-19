@@ -1,7 +1,10 @@
 import {
 	CatalogHandlerArgs,
 	CatalogHandlerResponse,
+	CreateHandlerDecorator,
 	curPluginPath,
+	HandlerDecoratorArgs,
+	HandlerDecoratorResponse,
 	Meta,
 	MetaHandlerArgs,
 	MetaHandlerResponse,
@@ -98,6 +101,29 @@ const MANIFEST_STRING = "/manifest.json"
 const STREMIO_PAGE_SIZE = 20
 const MAX_UNIQUE_FETCH_FAILED_TIMES = 3
 
+////////////////////// TODO move this in default forced plugin
+
+// Decorates the meta to include data from the catalog if omitted
+
+// TODO handle decorators in the app
+const e: CreateHandlerDecorator = {
+	async callback(
+		args: HandlerDecoratorArgs,
+	): Promise<HandlerDecoratorResponse> {
+		const se: HandlerDecoratorResponse = {
+			handler: args.handler,
+		}
+
+		return se
+	},
+}
+
+// plugin.defineHandlerDecorator({
+//
+// })
+
+/////////////////
+
 plugin.definePluginFactoryHandler({
 	async callback(
 		args: PluginFactoryHandlerArgs,
@@ -140,6 +166,8 @@ const catalogStateStorageOptions: Partial<StorageOptions> = {
 	policy: "session",
 }
 
+// TODO this perhaps can be included with decorator by default for the catalog handler, by that I mean checking whether catalog with the same settings is requested multiple times
+// based on the settings, so basically if we ask for items 20-40 2 times in row instead of this there will be caching layer with decorator (may not work with realSkip fully?)
 async function syncCatalogState(
 	plugin: Plugin,
 	catalog: StremioCatalogEntry,
@@ -182,9 +210,6 @@ async function syncCatalogState(
 	) {
 		return previousCatalogState
 	}
-
-	console.error("OVERRIDING CATALOG STATE")
-	console.error(cleanCatalogState.realSkip)
 
 	await paths.write(
 		catalogStatePath,
@@ -236,9 +261,6 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					args,
 				)
 
-				console.error("SYNCED STATE ")
-				console.error(catalogState)
-
 				const pageSize = args!.options!.find(
 					(o) => o.name === "preferredPageSize",
 				)!.input as number
@@ -246,9 +268,6 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 				const skip = args!.options!.find((o) => o.name === "skip")!
 					.input as number
 
-				console.error(
-					`ARGS ARE ${skip} ${pageSize} ${catalogState.realSkip}`,
-				)
 				let failedFetchTimes = 0
 
 				while (catalogState.fetchedItems.length < skip + pageSize) {
@@ -307,14 +326,12 @@ function defineCatalogs(createdPlugin: Plugin, manifest: StremioManifest) {
 					createdPlugin.config,
 					catalog,
 				)
+
 				await paths.write(
 					catalogStatePath,
 					JSON.stringify(catalogState),
 					catalogStateStorageOptions,
 				)
-
-				console.error("RETURNING ")
-				console.error(itemsToReturn)
 
 				return {
 					data: itemsToReturn,
