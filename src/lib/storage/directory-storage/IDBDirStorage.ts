@@ -9,7 +9,7 @@ import {
 import { IDBPDatabase, IDBPTransaction, openDB } from "idb"
 import { ensureTrailingSlash } from "../utils"
 
-// TODO make completely transactional
+// TODO make completely transactional somehow...
 // TODO add tests to check whether there are race conditions for removing/writing something
 export default class IDBDirStorage implements DirStorage {
 	private constructor(
